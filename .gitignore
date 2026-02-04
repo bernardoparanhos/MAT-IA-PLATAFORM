@@ -1,0 +1,43 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente (nunca subir chaves secretas!)
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Build/compilação
+dist/
+build/
+.out/
+.next/
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backend
+/backend/.env
+/backend/*.pem
+/backend/*.key
+/backend/config/*.json
+
+# Frontend
+/frontend/.env
+/frontend/.env.local
+
+# Geral
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
