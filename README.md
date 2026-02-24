@@ -43,7 +43,7 @@ Apoiar estudantes com dificuldades em matemática básica por meio de trilhas de
 
 ## 📅 Período
 
-Abril — Novembro de 2026
+Abril — Dezembro de 2026
 
 ---
 
