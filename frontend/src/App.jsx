@@ -1,23 +1,35 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Login from './pages/Login'
+import Cadastro from './pages/Cadastro'
+import Dashboard from './pages/Dashboard'
+import DashboardProfessor from './pages/DashboardProfessor'
+import ProtectedRoute from './components/ProtectedRoute'
+
 function App() {
   return (
-    <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold text-white mb-2">
-          MAT<span className="text-blue-400">-IA</span>
-        </h1>
-        <p className="text-slate-400 text-lg mb-8">
-          Suporte Inteligente ao Aprendizado de Matemática na Engenharia
-        </p>
-        <div className="bg-slate-800 rounded-xl px-8 py-4 inline-block">
-          <p className="text-green-400 font-mono text-sm">
-            ✅ Plataforma inicializada com sucesso!
-          </p>
-        </div>
-        <p className="text-slate-600 text-xs mt-6">
-          UTFPR Campus Medianeira — 2026
-        </p>
-      </div>
-    </div>
+    <Routes>
+      {/* Públicas */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/cadastro" element={<Cadastro />} />
+
+      {/* Protegidas */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute perfil="aluno">
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard-professor" element={
+        <ProtectedRoute perfil="professor">
+          <DashboardProfessor />
+        </ProtectedRoute>
+      } />
+
+      {/* Redireciona raiz para login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Rota não encontrada */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   )
 }
 

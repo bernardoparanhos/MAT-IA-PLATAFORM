@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -37,7 +36,11 @@ app.use('/auth/login', limiterLogin);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// 6. Rota de teste
+// ✅ 6. Rotas — AQUI, depois do body parser e antes das rotas de erro
+const authRoutes = require('./routes/auth.routes');
+app.use('/auth', authRoutes);
+
+// 7. Rota de teste
 app.get('/', (req, res) => {
   res.json({ 
     mensagem: '🚀 MAT-IA API está funcionando!',
@@ -46,7 +49,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// 7. Rota não encontrada
+// 8. Rota não encontrada
 app.use((req, res) => {
   res.status(404).json({ erro: 'Rota não encontrada.' });
 });
