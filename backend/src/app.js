@@ -9,8 +9,16 @@ const app = express();
 app.use(helmet());
 
 // 2. CORS — só aceita o frontend autorizado
+// 2. CORS — só aceita o frontend autorizado
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGIN,
+  origin: function(origin, callback) {
+    // Permite requisições sem origin (Postman) e o frontend autorizado
+    if (!origin || origin === process.env.ALLOWED_ORIGIN) {
+      callback(null, true)
+    } else {
+      callback(new Error('Bloqueado pelo CORS'))
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
