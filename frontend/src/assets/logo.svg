@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 160" width="400" height="160">
+
+  <!-- Importa Outfit do Google Fonts -->
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@800;900&amp;display=swap');
+    </style>
+  </defs>
+
+  <rect width="400" height="160" fill="#ffffff"/>
+
+  <!-- MAT -->
+  <text
+    x="188"
+    y="105"
+    font-family="'Outfit', 'Arial Black', sans-serif"
+    font-weight="900"
+    font-size="72"
+    fill="#0d2b4e"
+    text-anchor="end"
+    letter-spacing="-1"
+  >MAT</text>
+
+  <!-- Linha divisória -->
+  <line
+    x1="200"
+    y1="38"
+    x2="200"
+    y2="118"
+    stroke="#2e7bc4"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+
+  <!-- IA -->
+  <text
+    x="212"
+    y="105"
+    font-family="'Outfit', 'Arial Black', sans-serif"
+    font-weight="900"
+    font-size="72"
+    fill="#00aadd"
+    text-anchor="start"
+    letter-spacing="-1"
+  >IA</text>
+
+</svg>
