@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 function Cadastro() {
   const navigate = useNavigate()
   const [perfil, setPerfil] = useState('')
-  const [form, setForm] = useState({ nome: '', email: '', senha: '', ra: '', codigoTurma: '' })
+  const [form, setForm] = useState({ nome: '', email: '', senha: '', ra: '', codigoTurma: '', siape: '' })
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
 
@@ -13,38 +13,40 @@ function Cadastro() {
   }
 
   async function handleSubmit(e) {
-  e.preventDefault()
-  setErro('')
-  setCarregando(true)
+    e.preventDefault()
+    setErro('')
+    setCarregando(true)
 
-  try {
-    const body = { ...form, perfil }
-    const res = await fetch('http://localhost:3000/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    try {
+      const url = perfil === 'aluno'
+        ? 'http://localhost:3000/auth/register/aluno'
+        : 'http://localhost:3000/auth/register/professor'
 
-    const data = await res.json()
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, perfil }),
+      })
 
-    if (!res.ok) {
-      // Mostra mensagem específica de validação
-      if (data.errors && data.errors.length > 0) {
-        setErro(data.errors[0].msg)
-      } else {
-        setErro(data.message || 'Erro ao criar conta.')
+      const data = await res.json()
+
+      if (!res.ok) {
+        if (data.errors && data.errors.length > 0) {
+          setErro(data.errors[0].msg)
+        } else {
+          setErro(data.message || 'Erro ao criar conta.')
+        }
+        return
       }
-      return
+
+      navigate('/login')
+
+    } catch {
+      setErro('Erro de conexão. Verifique se o servidor está rodando.')
+    } finally {
+      setCarregando(false)
     }
-
-    navigate('/login')
-
-  } catch {
-    setErro('Erro de conexão. Verifique se o servidor está rodando.')
-  } finally {
-    setCarregando(false)
   }
-}
 
   // ─── Etapa 1: escolha de perfil ───────────────────────────────────────────
   if (!perfil) {
@@ -97,13 +99,12 @@ function Cadastro() {
       </div>
     )
   }
-
-  // ─── Etapa 2: formulário ──────────────────────────────────────────────────
+// ─── Etapa 2: formulário ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-white mb-2">
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-bold text-white mb-1">
             MAT<span className="text-blue-400">-IA</span>
           </h1>
           <p className="text-slate-400 text-sm">
@@ -111,20 +112,20 @@ function Cadastro() {
           </p>
         </div>
 
-        <div className="bg-slate-800 rounded-2xl p-8 shadow-xl">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="bg-slate-800 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center gap-3 mb-5">
             <button
-              onClick={() => setPerfil('')}
+              onClick={() => { setPerfil(''); setErro('') }}
               className="text-slate-400 hover:text-white text-sm transition-colors"
             >
               ←
             </button>
-            <h2 className="text-white text-xl font-semibold">
+            <h2 className="text-white text-lg font-semibold">
               {perfil === 'professor' ? '👨‍🏫 Professor' : '🎓 Aluno'}
             </h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="text-slate-300 text-sm mb-1 block">Nome completo</label>
               <input
@@ -134,22 +135,38 @@ function Cadastro() {
                 onChange={handleChange}
                 placeholder="Seu nome"
                 required
-                className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                className="w-full bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
               />
             </div>
 
             <div>
-              <label className="text-slate-300 text-sm mb-1 block">Email</label>
+              <label className="text-slate-300 text-sm mb-1 block">Email institucional</label>
               <input
                 type="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                placeholder="seu@email.com"
+                placeholder={perfil === 'aluno' ? 'seu@alunos.utfpr.edu.br' : 'seu@utfpr.edu.br'}
                 required
-                className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                className="w-full bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
               />
             </div>
+
+            {/* Campo SIAPE — exclusivo do professor */}
+            {perfil === 'professor' && (
+              <div>
+                <label className="text-slate-300 text-sm mb-1 block">SIAPE</label>
+                <input
+                  type="text"
+                  name="siape"
+                  value={form.siape}
+                  onChange={handleChange}
+                  placeholder="Seu número SIAPE (6 ou 7 dígitos)"
+                  required
+                  className="w-full bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                />
+              </div>
+            )}
 
             <div>
               <label className="text-slate-300 text-sm mb-1 block">Senha</label>
@@ -160,7 +177,7 @@ function Cadastro() {
                 onChange={handleChange}
                 placeholder="Mín. 8 caracteres, 1 maiúscula e 1 número"
                 required
-                className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                className="w-full bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
               />
             </div>
 
@@ -176,7 +193,7 @@ function Cadastro() {
                     onChange={handleChange}
                     placeholder="Seu RA"
                     required
-                    className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                    className="w-full bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
                   />
                 </div>
 
@@ -189,7 +206,7 @@ function Cadastro() {
                     onChange={handleChange}
                     placeholder="Código fornecido pelo professor"
                     required
-                    className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
+                    className="w-full bg-slate-700 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500"
                   />
                 </div>
               </>
@@ -202,13 +219,13 @@ function Cadastro() {
             <button
               type="submit"
               disabled={carregando}
-              className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold rounded-lg py-3 text-sm transition-colors"
+              className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors mt-1"
             >
               {carregando ? 'Criando conta...' : 'Criar conta'}
             </button>
           </form>
 
-          <p className="text-slate-400 text-sm text-center mt-6">
+          <p className="text-slate-400 text-sm text-center mt-4">
             Já tem conta?{' '}
             <Link to="/login" className="text-blue-400 hover:underline">
               Entrar
