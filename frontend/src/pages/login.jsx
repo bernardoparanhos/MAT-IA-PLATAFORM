@@ -20,8 +20,8 @@ function Login() {
 
     try {
       const url = perfil === 'aluno'
-        ? 'http://localhost:3000/auth/login/aluno'
-        : 'http://localhost:3000/auth/login/professor'
+  ? `${import.meta.env.VITE_API_URL}/auth/login/aluno`
+  : `${import.meta.env.VITE_API_URL}/auth/login/professor`
 
       const body = perfil === 'aluno'
         ? { ra: form.ra, codigoTurma: form.codigoTurma }

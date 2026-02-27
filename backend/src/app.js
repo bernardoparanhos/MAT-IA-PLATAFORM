@@ -12,8 +12,8 @@ app.use(helmet());
 // 2. CORS — só aceita o frontend autorizado
 app.use(cors({
   origin: function(origin, callback) {
-    // Permite requisições sem origin (Postman) e o frontend autorizado
-    if (!origin || origin === process.env.ALLOWED_ORIGIN) {
+    const allowed = process.env.ALLOWED_ORIGIN.split(',')
+    if (!origin || allowed.includes(origin)) {
       callback(null, true)
     } else {
       callback(new Error('Bloqueado pelo CORS'))
