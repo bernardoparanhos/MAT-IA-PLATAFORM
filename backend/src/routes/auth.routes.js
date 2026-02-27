@@ -35,9 +35,9 @@ const registerAlunoValidation = [
     .isLength({ min: 5, max: 20 }).withMessage('RA inválido'),
 
   body('codigoTurma')
-    .trim()
-    .notEmpty().withMessage('Código de turma é obrigatório')
-    .isLength({ min: 4, max: 10 }),
+  .trim()
+  .notEmpty().withMessage('Código de turma é obrigatório')
+  .isLength({ min: 4, max: 20 }).withMessage('Código de turma inválido'),
 ];
 
 // ─── REGISTER PROFESSOR ───────────────────────────────────────────────────────

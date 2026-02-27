@@ -33,34 +33,40 @@ async function register(req, res, perfil) {
     }
 
     if (perfil === 'aluno') {
-      // Validar código de turma
-      const turma = db.prepare('SELECT id FROM turmas WHERE codigo_acesso = ?').get(codigoTurma);
-      if (!turma) {
-        return res.status(400).json({ message: 'Código de turma inválido ou inexistente.' });
-      }
+  // Validar RA autorizado
+  const rasAutorizados = (process.env.RAS_AUTORIZADOS || '').split(',').map(r => r.trim());
+  if (!rasAutorizados.includes(ra)) {
+    return res.status(403).json({ message: ERRO_GENERICO });
+  }
 
-      // RA único
-      const raExistente = db.prepare('SELECT id FROM usuarios WHERE ra = ?').get(ra);
-      if (raExistente) {
-        return res.status(409).json({ message: ERRO_GENERICO });
-      }
+  // Validar código de turma
+  const turma = db.prepare('SELECT id FROM turmas WHERE codigo_acesso = ?').get(codigoTurma);
+  if (!turma) {
+    return res.status(400).json({ message: 'Código de turma inválido ou inexistente.' });
+  }
 
-      const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
-      const resultado = db.prepare(`
-        INSERT INTO usuarios (nome, email, senha, ra, perfil)
-        VALUES (?, ?, ?, ?, 'aluno')
-      `).run(nome, email, senhaHash, ra);
+  // RA único
+  const raExistente = db.prepare('SELECT id FROM usuarios WHERE ra = ?').get(ra);
+  if (raExistente) {
+    return res.status(409).json({ message: ERRO_GENERICO });
+  }
 
-      const userId = resultado.lastInsertRowid;
-      db.prepare('INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)').run(turma.id, userId);
+  const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
+  const resultado = db.prepare(`
+    INSERT INTO usuarios (nome, email, senha, ra, perfil)
+    VALUES (?, ?, ?, ?, 'aluno')
+  `).run(nome, email, senhaHash, ra);
 
-      const token = gerarToken({ id: userId, perfil: 'aluno' });
-      return res.status(201).json({
-        message: 'Conta criada com sucesso!',
-        token,
-        usuario: { id: userId, nome, email, perfil: 'aluno' },
-      });
-    }
+  const userId = resultado.lastInsertRowid;
+  db.prepare('INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)').run(turma.id, userId);
+
+  const token = gerarToken({ id: userId, perfil: 'aluno' });
+  return res.status(201).json({
+    message: 'Conta criada com sucesso!',
+    token,
+    usuario: { id: userId, nome, email, perfil: 'aluno' },
+  });
+}
 
     if (perfil === 'professor') {
       // Validar SIAPE autorizado
