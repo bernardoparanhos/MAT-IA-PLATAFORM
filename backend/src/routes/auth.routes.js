@@ -1,6 +1,8 @@
 const express = require('express');
 const { body } = require('express-validator');
 const { register, loginAluno, loginProfessor } = require('../controllers/auth.controller');
+const { verifyToken } = require('../middlewares/auth.middleware');
+const db = require('../config/database');
 
 const router = express.Router();
 
@@ -34,10 +36,9 @@ const registerAlunoValidation = [
     .notEmpty().withMessage('RA é obrigatório')
     .isLength({ min: 5, max: 20 }).withMessage('RA inválido'),
 
-  body('codigoTurma')
-  .trim()
-  .notEmpty().withMessage('Código de turma é obrigatório')
-  .isLength({ min: 4, max: 20 }).withMessage('Código de turma inválido'),
+  body('turmaId')
+    .notEmpty().withMessage('Turma é obrigatória')
+    .isInt().withMessage('Turma inválida'),
 ];
 
 // ─── REGISTER PROFESSOR ───────────────────────────────────────────────────────
@@ -77,9 +78,9 @@ const loginAlunoValidation = [
     .trim()
     .notEmpty().withMessage('RA é obrigatório'),
 
-  body('codigoTurma')
-    .trim()
-    .notEmpty().withMessage('Código de turma é obrigatório'),
+  body('senha')
+    .notEmpty().withMessage('Senha é obrigatória')
+    .isLength({ max: 128 }),
 ];
 
 // ─── LOGIN PROFESSOR ──────────────────────────────────────────────────────────
@@ -93,6 +94,38 @@ const loginProfessorValidation = [
     .notEmpty().withMessage('Senha é obrigatória')
     .isLength({ max: 128 }),
 ];
+
+// ─── TURMAS ───────────────────────────────────────────────────────────────────
+router.get('/turmas/minhas', verifyToken, (req, res) => {
+  const turmas = db.prepare(`
+    SELECT t.id, t.nome, t.codigo_acesso,
+      COUNT(ta.aluno_id) as total_alunos
+    FROM turmas t
+    LEFT JOIN turma_alunos ta ON ta.turma_id = t.id
+    WHERE t.professor_id = ?
+    GROUP BY t.id
+  `).all(req.usuario.id);
+  return res.json({ turmas });
+});
+
+router.get('/turmas/disponiveis', verifyToken, (req, res) => {
+  const turmas = db.prepare(`
+    SELECT id, nome, codigo_acesso FROM turmas
+    WHERE professor_id IS NULL
+  `).all();
+  return res.json({ turmas });
+});
+
+router.post('/turmas/associar', verifyToken, (req, res) => {
+  const { turmaId } = req.body;
+  if (!turmaId) return res.status(400).json({ message: 'turmaId é obrigatório' });
+
+  const turma = db.prepare('SELECT id FROM turmas WHERE id = ?').get(turmaId);
+  if (!turma) return res.status(404).json({ message: 'Turma não encontrada' });
+
+  db.prepare('UPDATE turmas SET professor_id = ? WHERE id = ?').run(req.usuario.id, turmaId);
+  return res.json({ message: 'Turma associada com sucesso!' });
+});
 
 router.post('/register/aluno', registerAlunoValidation, (req, res) => register(req, res, 'aluno'));
 router.post('/register/professor', registerProfessorValidation, (req, res) => register(req, res, 'professor'));
