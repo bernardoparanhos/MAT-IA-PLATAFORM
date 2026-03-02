@@ -155,10 +155,11 @@ function DashboardProfessor() {
 
       {/* ─── Sidebar mobile (overlay) ────────────────────────── */}
       <aside className={`
-        fixed top-0 left-0 h-full w-64 bg-[#1e2d3d] z-40 flex flex-col
-        transform transition-transform duration-300 ease-in-out lg:hidden
-        ${sidebarAberta ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+  fixed top-0 left-0 h-full w-64 bg-[#1e2d3d] z-40 flex flex-col
+  overflow-y-auto
+  transform transition-transform duration-300 ease-in-out lg:hidden
+  ${sidebarAberta ? 'translate-x-0' : '-translate-x-full'}
+`}>
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
@@ -177,14 +178,14 @@ function DashboardProfessor() {
       <div className="flex-1 flex flex-col lg:ml-56">
 
         {/* Header mobile */}
-        <header className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-[#0f172a] border-b border-white/5 px-4 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
-          <button onClick={() => setSidebarAberta(true)} className="text-slate-400 hover:text-white transition-colors p-1">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-              <path d="M3 12h18M3 6h18M3 18h18"/>
-            </svg>
-          </button>
-        </header>
+        <header className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-[#0f172a] border-b border-white/5 px-4 py-3 flex items-center gap-3">
+  <button onClick={() => setSidebarAberta(true)} className="text-slate-400 hover:text-white transition-colors p-1">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+      <path d="M3 12h18M3 6h18M3 18h18"/>
+    </svg>
+  </button>
+  <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
+</header>
 
         <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0 overflow-y-auto">
 
