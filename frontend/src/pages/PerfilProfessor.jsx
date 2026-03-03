@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getPerfil, alterarSenha } from '../services/professorService'
+import { getPerfil, alterarSenha, desassociarTurma } from '../services/professorService'
 
 function PerfilProfessor() {
   const { usuario, logout } = useAuth()
@@ -16,6 +16,12 @@ function PerfilProfessor() {
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState({ tipo: '', texto: '' })
+
+  // Modal desassociar
+  const [modalDesassociar, setModalDesassociar] = useState(false)
+  const [senhaDesassociar, setSenhaDesassociar] = useState('')
+  const [desassociando, setDesassociando] = useState(false)
+  const [erroDesassociar, setErroDesassociar] = useState('')
 
   useEffect(() => {
     async function carregar() {
@@ -41,14 +47,12 @@ function PerfilProfessor() {
 
   async function handleAlterarSenha() {
     setMensagem({ tipo: '', texto: '' })
-
     if (!senhaAtual || !novaSenha || !confirmarSenha) {
       return setMensagem({ tipo: 'erro', texto: 'Preencha todos os campos.' })
     }
     if (novaSenha !== confirmarSenha) {
       return setMensagem({ tipo: 'erro', texto: 'A nova senha e a confirmação não coincidem.' })
     }
-
     setSalvando(true)
     try {
       const data = await alterarSenha(senhaAtual, novaSenha)
@@ -65,6 +69,34 @@ function PerfilProfessor() {
     } finally {
       setSalvando(false)
     }
+  }
+
+  async function handleDesassociar() {
+    setErroDesassociar('')
+    if (!senhaDesassociar) {
+      return setErroDesassociar('Digite sua senha para confirmar.')
+    }
+    setDesassociando(true)
+    try {
+      const data = await desassociarTurma(senhaDesassociar)
+      if (data.message === 'Turma desassociada com sucesso.') {
+        setModalDesassociar(false)
+        setSenhaDesassociar('')
+        navigate('/dashboard-professor')
+      } else {
+        setErroDesassociar(data.message || 'Erro ao desassociar.')
+      }
+    } catch {
+      setErroDesassociar('Erro de conexão.')
+    } finally {
+      setDesassociando(false)
+    }
+  }
+
+  function fecharModal() {
+    setModalDesassociar(false)
+    setSenhaDesassociar('')
+    setErroDesassociar('')
   }
 
   const NavItems = ({ onClick }) => (
@@ -219,6 +251,18 @@ function PerfilProfessor() {
                         : <span className="text-slate-500">Nenhuma turma</span>
                       }
                     </div>
+                    {/* Botão discreto — só aparece se tiver turma */}
+                    {perfil?.turma && (
+                      <button
+                        onClick={() => setModalDesassociar(true)}
+                        className="mt-2 text-slate-500 hover:text-slate-300 text-xs font-light transition-colors flex items-center gap-1"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
+                          <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                        </svg>
+                        Trocar turma
+                      </button>
+                    )}
                   </div>
                   <div className="sm:col-span-2">
                     <label className={labelClass}>Membro desde</label>
@@ -248,35 +292,16 @@ function PerfilProfessor() {
                 <div className="space-y-4">
                   <div>
                     <label className={labelClass}>Senha atual</label>
-                    <input
-                      type="password"
-                      value={senhaAtual}
-                      onChange={e => setSenhaAtual(e.target.value)}
-                      placeholder="••••••••"
-                      className={inputClass}
-                    />
+                    <input type="password" value={senhaAtual} onChange={e => setSenhaAtual(e.target.value)} placeholder="••••••••" className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Nova senha</label>
-                    <input
-                      type="password"
-                      value={novaSenha}
-                      onChange={e => setNovaSenha(e.target.value)}
-                      placeholder="Mín. 8 chars, 1 maiúscula, 1 número"
-                      className={inputClass}
-                    />
+                    <input type="password" value={novaSenha} onChange={e => setNovaSenha(e.target.value)} placeholder="Mín. 8 chars, 1 maiúscula, 1 número" className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}>Confirmar nova senha</label>
-                    <input
-                      type="password"
-                      value={confirmarSenha}
-                      onChange={e => setConfirmarSenha(e.target.value)}
-                      placeholder="••••••••"
-                      className={inputClass}
-                    />
+                    <input type="password" value={confirmarSenha} onChange={e => setConfirmarSenha(e.target.value)} placeholder="••••••••" className={inputClass} />
                   </div>
-
                   <button
                     onClick={handleAlterarSenha}
                     disabled={salvando}
@@ -291,6 +316,68 @@ function PerfilProfessor() {
           )}
         </main>
       </div>
+
+      {/* Modal — Desassociar turma */}
+      {modalDesassociar && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#1e2d3d] border border-white/10 rounded-2xl p-6 lg:p-8 w-full max-w-md shadow-2xl">
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-yellow-400">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                  <path d="M12 9v4m0 4h.01"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-white text-lg font-semibold">Trocar turma</h3>
+                <p className="text-slate-400 text-xs font-light">Esta ação requer confirmação</p>
+              </div>
+            </div>
+
+            <p className="text-slate-300 text-sm font-light mb-6 leading-relaxed">
+              Você está prestes a se desassociar da turma{' '}
+              <span className="text-orange-400 font-medium">{perfil?.turma?.nome}</span>.
+              Os alunos não serão afetados e você poderá associar uma nova turma em seguida.
+            </p>
+
+            {erroDesassociar && (
+              <div className="mb-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl px-4 py-3 text-sm font-light">
+                {erroDesassociar}
+              </div>
+            )}
+
+            <div className="mb-6">
+              <label className={labelClass}>Confirme sua senha</label>
+              <input
+                type="password"
+                value={senhaDesassociar}
+                onChange={e => setSenhaDesassociar(e.target.value)}
+                placeholder="••••••••"
+                className={inputClass}
+                onKeyDown={e => e.key === 'Enter' && handleDesassociar()}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={fecharModal}
+                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-medium px-4 py-2.5 rounded-xl text-sm transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDesassociar}
+                disabled={desassociando}
+                className="flex-1 bg-red-500/80 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium px-4 py-2.5 rounded-xl text-sm transition-colors"
+              >
+                {desassociando ? 'Confirmando...' : 'Confirmar desassociação'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

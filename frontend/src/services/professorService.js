@@ -22,3 +22,15 @@ export async function alterarSenha(senhaAtual, novaSenha) {
   })
   return res.json()
 }
+
+export async function desassociarTurma(senha) {
+  const res = await fetch(`${API}/professor/desassociar`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`
+    },
+    body: JSON.stringify({ senha })
+  })
+  return res.json()
+}
