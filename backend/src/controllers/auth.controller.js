@@ -23,69 +23,61 @@ async function register(req, res, perfil) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { nome, email, senha, ra, codigoTurma, siape } = req.body;
+  const { nome, email, senha, ra, turmaId, siape } = req.body;
 
   try {
-    // Email único
     const emailExistente = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
     if (emailExistente) {
       return res.status(409).json({ message: ERRO_GENERICO });
     }
 
     if (perfil === 'aluno') {
-  // Validar RA autorizado
-  const rasAutorizados = (process.env.RAS_AUTORIZADOS || '').split(',').map(r => r.trim());
-  if (!rasAutorizados.includes(ra)) {
-    return res.status(403).json({ message: ERRO_GENERICO });
-  }
-
-  // Validar código de turma
-  const turma = db.prepare('SELECT id FROM turmas WHERE codigo_acesso = ?').get(codigoTurma);
-  if (!turma) {
-    return res.status(400).json({ message: 'Código de turma inválido ou inexistente.' });
-  }
-
-  // RA único
-  const raExistente = db.prepare('SELECT id FROM usuarios WHERE ra = ?').get(ra);
-  if (raExistente) {
-    return res.status(409).json({ message: ERRO_GENERICO });
-  }
-
-  const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
-  const resultado = db.prepare(`
-  INSERT INTO usuarios (nome, email, senha, siape, perfil)
-  VALUES (?, ?, ?, ?, 'professor')
-`).run(nome, email, senhaHash, siape);
-
-  const userId = resultado.lastInsertRowid;
-  db.prepare('INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)').run(turma.id, userId);
-
-  const token = gerarToken({ id: userId, perfil: 'aluno' });
-  return res.status(201).json({
-    message: 'Conta criada com sucesso!',
-    token,
-    usuario: { id: userId, nome, email, perfil: 'aluno' },
-  });
-}
-
-    if (perfil === 'professor') {
-      // Validar SIAPE autorizado
-      const siapesAutorizados = (process.env.SIAPES_AUTORIZADOS || '').split(',').map(s => s.trim());
-      if (!siapesAutorizados.includes(siape)) {
-        // Mensagem genérica — não revela que o SIAPE não está na lista
+      const rasAutorizados = (process.env.RAS_AUTORIZADOS || '').split(',').map(r => r.trim());
+      if (!rasAutorizados.includes(ra)) {
         return res.status(403).json({ message: ERRO_GENERICO });
       }
 
-      // SIAPE único
-      const siapeExistente = db.prepare('SELECT id FROM usuarios WHERE ra = ?').get(siape);
+      const turma = db.prepare('SELECT id FROM turmas WHERE id = ?').get(turmaId);
+      if (!turma) {
+        return res.status(400).json({ message: 'Turma inválida.' });
+      }
+
+      const raExistente = db.prepare('SELECT id FROM usuarios WHERE ra = ?').get(ra);
+      if (raExistente) {
+        return res.status(409).json({ message: ERRO_GENERICO });
+      }
+
+      const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
+      const resultado = db.prepare(`
+        INSERT INTO usuarios (nome, email, senha, ra, perfil)
+        VALUES (?, ?, ?, ?, 'aluno')
+      `).run(nome, email, senhaHash, ra);
+
+      const userId = resultado.lastInsertRowid;
+      db.prepare('INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)').run(turma.id, userId);
+
+      const token = gerarToken({ id: userId, perfil: 'aluno' });
+      return res.status(201).json({
+        message: 'Conta criada com sucesso!',
+        token,
+        usuario: { id: userId, nome, email, perfil: 'aluno' },
+      });
+    }
+
+    if (perfil === 'professor') {
+      const siapesAutorizados = (process.env.SIAPES_AUTORIZADOS || '').split(',').map(s => s.trim());
+      if (!siapesAutorizados.includes(siape)) {
+        return res.status(403).json({ message: ERRO_GENERICO });
+      }
+
+      const siapeExistente = db.prepare('SELECT id FROM usuarios WHERE siape = ?').get(siape);
       if (siapeExistente) {
         return res.status(409).json({ message: ERRO_GENERICO });
       }
 
       const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
-      // Usamos o campo 'ra' para armazenar o SIAPE — ambos são identificadores únicos
       const resultado = db.prepare(`
-        INSERT INTO usuarios (nome, email, senha, ra, perfil)
+        INSERT INTO usuarios (nome, email, senha, siape, perfil)
         VALUES (?, ?, ?, ?, 'professor')
       `).run(nome, email, senhaHash, siape);
 
