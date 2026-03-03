@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function DashboardProfessor() {
   const { usuario, logout } = useAuth()
+  const navigate = useNavigate()
   const [turmas, setTurmas] = useState([])
   const [turmasDisponiveis, setTurmasDisponiveis] = useState([])
   const [modalAberto, setModalAberto] = useState(false)
@@ -117,7 +119,10 @@ function DashboardProfessor() {
       </nav>
 
       <div className="p-4 border-t border-white/10 space-y-1">
-        <button onClick={onClick} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
+         <button
+          onClick={() => { navigate('/perfil-professor'); onClick?.() }}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-slate-500"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           <span>Perfil</span>
         </button>

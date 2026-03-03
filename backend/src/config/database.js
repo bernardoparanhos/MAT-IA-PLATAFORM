@@ -9,6 +9,7 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 // Criação das tabelas
+// Criação das tabelas
 db.exec(`
   CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,6 +17,7 @@ db.exec(`
     email TEXT UNIQUE NOT NULL,
     senha TEXT NOT NULL,
     ra TEXT UNIQUE,
+    siape TEXT UNIQUE,
     perfil TEXT NOT NULL CHECK(perfil IN ('aluno', 'professor')),
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
   );

@@ -3,6 +3,7 @@ import Login from './pages/Login'
 import Cadastro from './pages/Cadastro'
 import Dashboard from './pages/Dashboard'
 import DashboardProfessor from './pages/DashboardProfessor'
+import PerfilProfessor from './pages/PerfilProfessor' // ← novo
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -12,22 +13,27 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/cadastro" element={<Cadastro />} />
 
-      {/* Protegidas */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute perfil="aluno">
-          <Dashboard />
-        </ProtectedRoute>
-      } />
+      {/* Protegidas — Professor */}
       <Route path="/dashboard-professor" element={
         <ProtectedRoute perfil="professor">
           <DashboardProfessor />
         </ProtectedRoute>
       } />
+      <Route path="/perfil-professor" element={
+        <ProtectedRoute perfil="professor">
+          <PerfilProfessor />
+        </ProtectedRoute>
+      } />
 
-      {/* Redireciona raiz para login */}
+      {/* Protegidas — Aluno */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute perfil="aluno">
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+
+      {/* Redirects */}
       <Route path="/" element={<Navigate to="/login" replace />} />
-
-      {/* Rota não encontrada */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

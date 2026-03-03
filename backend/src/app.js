@@ -5,11 +5,10 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
-// 1. Helmet — headers de segurança
+// 1. Helmet
 app.use(helmet());
 
-// 2. CORS — só aceita o frontend autorizado
-// 2. CORS — só aceita o frontend autorizado
+// 2. CORS
 app.use(cors({
   origin: function(origin, callback) {
     const allowed = process.env.ALLOWED_ORIGIN.split(',')
@@ -44,9 +43,12 @@ app.use('/auth/login', limiterLogin);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// ✅ 6. Rotas — AQUI, depois do body parser e antes das rotas de erro
+// 6. Rotas
 const authRoutes = require('./routes/auth.routes');
+const professorRoutes = require('./routes/professor.routes'); // ← novo
+
 app.use('/auth', authRoutes);
+app.use('/professor', professorRoutes); // ← novo
 
 // 7. Rota de teste
 app.get('/', (req, res) => {

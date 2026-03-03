@@ -53,9 +53,9 @@ async function register(req, res, perfil) {
 
   const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
   const resultado = db.prepare(`
-    INSERT INTO usuarios (nome, email, senha, ra, perfil)
-    VALUES (?, ?, ?, ?, 'aluno')
-  `).run(nome, email, senhaHash, ra);
+  INSERT INTO usuarios (nome, email, senha, siape, perfil)
+  VALUES (?, ?, ?, ?, 'professor')
+`).run(nome, email, senhaHash, siape);
 
   const userId = resultado.lastInsertRowid;
   db.prepare('INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)').run(turma.id, userId);
@@ -151,7 +151,7 @@ async function loginProfessor(req, res) {
   try {
     const usuario = db.prepare(`
       SELECT id, nome, email, senha, perfil
-      FROM usuarios WHERE ra = ? AND perfil = 'professor'
+FROM usuarios WHERE siape = ? AND perfil = 'professor'
     `).get(siape);
 
     // Timing attack mitigation
