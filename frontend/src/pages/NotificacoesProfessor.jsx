@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function tempoRelativo(dataStr) {
-  const diff = Math.floor((new Date() - new Date(dataStr)) / 1000)
+  // SQLite salva em UTC sem o 'Z' — adicionamos para o JS interpretar corretamente
+  const dataUtc = dataStr.endsWith('Z') ? dataStr : dataStr + 'Z'
+  const diff = Math.floor((new Date() - new Date(dataUtc)) / 1000)
   if (diff < 60) return 'agora mesmo'
   if (diff < 3600) return `há ${Math.floor(diff / 60)} min`
   if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`
-  return `há ${Math.floor(diff / 86400)}d`
+  if (diff < 172800) return 'há 1 dia'
+  return `há ${Math.floor(diff / 86400)} dias`
 }
 
 function NotificacoesProfessor() {
