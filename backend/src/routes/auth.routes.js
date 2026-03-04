@@ -129,4 +129,24 @@ router.post('/register/professor', registerProfessorValidation, (req, res) => re
 router.post('/login/aluno', loginAlunoValidation, loginAluno);
 router.post('/login/professor', loginProfessorValidation, loginProfessor);
 
+// ─── ALUNO PERFIL ─────────────────────────────────────────────────────────────
+router.get('/aluno/perfil', verifyToken, (req, res) => {
+  const turma = db.prepare(`
+    SELECT t.id, t.nome, t.codigo_acesso
+    FROM turmas t
+    INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+    WHERE ta.aluno_id = ?
+  `).get(req.usuario.id)
+
+  const colegas = turma ? db.prepare(`
+    SELECT u.nome
+    FROM usuarios u
+    INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+    WHERE ta.turma_id = ? AND u.id != ?
+    ORDER BY u.nome ASC
+  `).all(turma.id, req.usuario.id) : []
+
+  return res.json({ turma: turma || null, colegas })
+})
+
 module.exports = router;
