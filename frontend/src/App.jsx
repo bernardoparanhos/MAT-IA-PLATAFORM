@@ -3,7 +3,8 @@ import Login from './pages/Login'
 import Cadastro from './pages/Cadastro'
 import Dashboard from './pages/Dashboard'
 import DashboardProfessor from './pages/DashboardProfessor'
-import PerfilProfessor from './pages/PerfilProfessor' // ← novo
+import PerfilProfessor from './pages/PerfilProfessor'
+import NotificacoesProfessor from './pages/NotificacoesProfessor' // ← novo
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -22,6 +23,11 @@ function App() {
       <Route path="/perfil-professor" element={
         <ProtectedRoute perfil="professor">
           <PerfilProfessor />
+        </ProtectedRoute>
+      } />
+      <Route path="/notificacoes-professor" element={
+        <ProtectedRoute perfil="professor">
+          <NotificacoesProfessor />
         </ProtectedRoute>
       } />
 

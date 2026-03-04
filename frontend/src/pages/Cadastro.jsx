@@ -1,12 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 function Cadastro() {
   const navigate = useNavigate()
   const [perfil, setPerfil] = useState('')
-  const [form, setForm] = useState({ nome: '', email: '', senha: '', ra: '', codigoTurma: '', siape: '' })
+  const [form, setForm] = useState({ nome: '', email: '', senha: '', ra: '', turmaId: '', siape: '' })
+  const [turmas, setTurmas] = useState([])
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
+
+  const API = import.meta.env.VITE_API_URL
+
+  useEffect(() => {
+    if (perfil === 'aluno') {
+      fetch(`${API}/auth/turmas/publicas`)
+        .then(r => r.json())
+        .then(data => setTurmas(data.turmas || []))
+        .catch(() => {})
+    }
+  }, [perfil])
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -19,8 +31,8 @@ function Cadastro() {
 
     try {
       const url = perfil === 'aluno'
-        ? `${import.meta.env.VITE_API_URL}/auth/register/aluno`
-        : `${import.meta.env.VITE_API_URL}/auth/register/professor`
+        ? `${API}/auth/register/aluno`
+        : `${API}/auth/register/professor`
 
       const res = await fetch(url, {
         method: 'POST',
@@ -45,29 +57,23 @@ function Cadastro() {
   }
 
   const inputClass = "w-full bg-white/5 text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-400 placeholder-slate-500 border border-white/10 transition-all"
+  const selectClass = "w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-400 border border-white/10 transition-all"
   const labelClass = "text-slate-400 text-xs uppercase tracking-wider mb-1.5 block font-light"
 
   if (!perfil) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4" style={{fontFamily:'Outfit, sans-serif'}}>
         <div className="w-full max-w-md">
-
           <div className="text-center mb-10">
-            <h1 className="text-5xl font-bold text-orange-400 tracking-tight">
-              MAT<span className="text-white">-IA</span>
-            </h1>
+            <h1 className="text-5xl font-bold text-orange-400 tracking-tight">MAT<span className="text-white">-IA</span></h1>
             <p className="text-slate-400 text-sm mt-2 font-light">Crie sua conta</p>
           </div>
-
           <div className="bg-[#1e2d3d] rounded-2xl p-8 border border-white/5 shadow-2xl">
             <h2 className="text-white text-xl font-semibold mb-1">Você é...</h2>
             <p className="text-slate-400 text-sm mb-8 font-light">Selecione seu perfil para continuar</p>
-
             <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setPerfil('aluno')}
-                className="bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-500/40 text-white rounded-xl p-6 text-center transition-all group"
-              >
+              <button onClick={() => setPerfil('aluno')}
+                className="bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-500/40 text-white rounded-xl p-6 text-center transition-all group">
                 <div className="flex justify-center mb-4">
                   <svg viewBox="0 0 32 32" className="w-10 h-10" xmlns="http://www.w3.org/2000/svg">
                     <line style={{fill:'none',stroke:'#ffffff',strokeWidth:2,strokeMiterlimit:10}} x1="3" y1="13" x2="3" y2="24"/>
@@ -77,15 +83,10 @@ function Cadastro() {
                   </svg>
                 </div>
                 <div className="font-medium text-white">Aluno</div>
-                <div className="text-xs text-slate-400 group-hover:text-orange-200 mt-1 font-light transition-colors">
-                  Tenho um código de turma
-                </div>
+                <div className="text-xs text-slate-400 group-hover:text-orange-200 mt-1 font-light transition-colors">Quero estudar</div>
               </button>
-
-              <button
-                onClick={() => setPerfil('professor')}
-                className="bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-500/40 text-white rounded-xl p-6 text-center transition-all group"
-              >
+              <button onClick={() => setPerfil('professor')}
+                className="bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-500/40 text-white rounded-xl p-6 text-center transition-all group">
                 <div className="flex justify-center mb-4">
                   <svg viewBox="0 0 494.004 494.004" className="w-10 h-10" xmlns="http://www.w3.org/2000/svg">
                     <path style={{fill:'#ffffff'}} d="M291.266,85.984c23.74,0,42.984-19.252,42.984-42.992C334.25,19.243,315.006,0,291.266,0c-23.738,0-43,19.243-43,42.992C248.266,66.732,267.527,85.984,291.266,85.984z"/>
@@ -95,17 +96,12 @@ function Cadastro() {
                   </svg>
                 </div>
                 <div className="font-medium text-white">Professor</div>
-                <div className="text-xs text-slate-400 group-hover:text-orange-200 mt-1 font-light transition-colors">
-                  Quero criar turmas
-                </div>
+                <div className="text-xs text-slate-400 group-hover:text-orange-200 mt-1 font-light transition-colors">Quero criar turmas</div>
               </button>
             </div>
-
             <p className="text-slate-400 text-sm text-center mt-8 font-light">
               Já tem conta?{' '}
-              <Link to="/login" className="text-orange-400 hover:text-orange-300 transition-colors">
-                Entrar
-              </Link>
+              <Link to="/login" className="text-orange-400 hover:text-orange-300 transition-colors">Entrar</Link>
             </p>
           </div>
         </div>
@@ -116,29 +112,18 @@ function Cadastro() {
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4 py-8" style={{fontFamily:'Outfit, sans-serif'}}>
       <div className="w-full max-w-md">
-
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-orange-400 tracking-tight">
-            MAT<span className="text-white">-IA</span>
-          </h1>
-          <p className="text-slate-400 text-sm mt-2 font-light">
-            Cadastro de {perfil === 'professor' ? 'Professor' : 'Aluno'}
-          </p>
+          <h1 className="text-5xl font-bold text-orange-400 tracking-tight">MAT<span className="text-white">-IA</span></h1>
+          <p className="text-slate-400 text-sm mt-2 font-light">Cadastro de {perfil === 'professor' ? 'Professor' : 'Aluno'}</p>
         </div>
-
         <div className="bg-[#1e2d3d] rounded-2xl p-8 border border-white/5 shadow-2xl">
           <div className="flex items-center gap-3 mb-8">
-            <button
-              onClick={() => { setPerfil(''); setErro('') }}
-              className="text-slate-500 hover:text-white transition-colors"
-            >
+            <button onClick={() => { setPerfil(''); setErro('') }} className="text-slate-500 hover:text-white transition-colors">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
                 <path d="M19 12H5m7-7l-7 7 7 7"/>
               </svg>
             </button>
-            <h2 className="text-white text-xl font-semibold">
-              {perfil === 'aluno' ? 'Aluno' : 'Professor'}
-            </h2>
+            <h2 className="text-white text-xl font-semibold">{perfil === 'aluno' ? 'Aluno' : 'Professor'}</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -147,7 +132,6 @@ function Cadastro() {
               <input type="text" name="nome" value={form.nome} onChange={handleChange}
                 placeholder="Seu nome" required className={inputClass} />
             </div>
-
             <div>
               <label className={labelClass}>Email institucional</label>
               <input type="email" name="email" value={form.email} onChange={handleChange}
@@ -166,8 +150,7 @@ function Cadastro() {
             <div>
               <label className={labelClass}>Senha</label>
               <input type="password" name="senha" value={form.senha} onChange={handleChange}
-                placeholder="Mín. 8 caracteres, 1 maiúscula e 1 número"
-                required className={inputClass} />
+                placeholder="Mín. 8 caracteres, 1 maiúscula e 1 número" required className={inputClass} />
             </div>
 
             {perfil === 'aluno' && (
@@ -178,9 +161,14 @@ function Cadastro() {
                     placeholder="Seu RA" required className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Código da Turma</label>
-                  <input type="text" name="codigoTurma" value={form.codigoTurma} onChange={handleChange}
-                    placeholder="Ex: 20261EP1" required className={inputClass} />
+                  <label className={labelClass}>Turma</label>
+                  <select name="turmaId" value={form.turmaId} onChange={handleChange}
+                    required className={selectClass}>
+                    <option value="">Selecione sua turma</option>
+                    {turmas.map(t => (
+                      <option key={t.id} value={t.id}>{t.nome}</option>
+                    ))}
+                  </select>
                 </div>
               </>
             )}
@@ -197,9 +185,7 @@ function Cadastro() {
 
           <p className="text-slate-400 text-sm text-center mt-6 font-light">
             Já tem conta?{' '}
-            <Link to="/login" className="text-orange-400 hover:text-orange-300 transition-colors">
-              Entrar
-            </Link>
+            <Link to="/login" className="text-orange-400 hover:text-orange-300 transition-colors">Entrar</Link>
           </p>
         </div>
       </div>

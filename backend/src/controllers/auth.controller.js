@@ -37,7 +37,7 @@ async function register(req, res, perfil) {
         return res.status(403).json({ message: ERRO_GENERICO });
       }
 
-      const turma = db.prepare('SELECT id FROM turmas WHERE id = ?').get(turmaId);
+      const turma = db.prepare('SELECT id, nome, professor_id FROM turmas WHERE id = ?').get(turmaId);
       if (!turma) {
         return res.status(400).json({ message: 'Turma inválida.' });
       }
@@ -55,6 +55,14 @@ async function register(req, res, perfil) {
 
       const userId = resultado.lastInsertRowid;
       db.prepare('INSERT INTO turma_alunos (turma_id, aluno_id) VALUES (?, ?)').run(turma.id, userId);
+
+      // ─── Notificação para o professor da turma ────────────────────────────
+      if (turma.professor_id) {
+        db.prepare(`
+          INSERT INTO notificacoes (professor_id, tipo, mensagem)
+          VALUES (?, 'novo_aluno', ?)
+        `).run(turma.professor_id, `O aluno ${nome} se cadastrou na turma ${turma.nome}.`);
+      }
 
       const token = gerarToken({ id: userId, perfil: 'aluno' });
       return res.status(201).json({
@@ -103,20 +111,21 @@ async function loginAluno(req, res) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { ra, codigoTurma } = req.body;
+  const { ra, senha } = req.body;
 
   try {
-    // Busca aluno pelo RA
     const usuario = db.prepare(`
-      SELECT u.id, u.nome, u.email, u.perfil
-      FROM usuarios u
-      INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
-      INNER JOIN turmas t ON t.id = ta.turma_id
-      WHERE u.ra = ? AND t.codigo_acesso = ? AND u.perfil = 'aluno'
-    `).get(ra, codigoTurma);
+      SELECT id, nome, email, senha, perfil
+      FROM usuarios
+      WHERE ra = ? AND perfil = 'aluno'
+    `).get(ra);
 
-    if (!usuario) {
-      return res.status(401).json({ message: 'RA ou código de turma inválidos.' });
+    const hashFake = '$2b$12$invalido.hash.para.evitar.timing.xxxxxxxxxxxxxxxx';
+    const hashParaComparar = usuario ? usuario.senha : hashFake;
+    const senhaCorreta = await bcrypt.compare(senha, hashParaComparar);
+
+    if (!usuario || !senhaCorreta) {
+      return res.status(401).json({ message: 'RA ou senha inválidos.' });
     }
 
     const token = gerarToken({ id: usuario.id, perfil: 'aluno' });
@@ -143,10 +152,9 @@ async function loginProfessor(req, res) {
   try {
     const usuario = db.prepare(`
       SELECT id, nome, email, senha, perfil
-FROM usuarios WHERE siape = ? AND perfil = 'professor'
+      FROM usuarios WHERE siape = ? AND perfil = 'professor'
     `).get(siape);
 
-    // Timing attack mitigation
     const hashFake = '$2b$12$invalido.hash.para.evitar.timing.xxxxxxxxxxxxxxxx';
     const hashParaComparar = usuario ? usuario.senha : hashFake;
     const senhaCorreta = await bcrypt.compare(senha, hashParaComparar);

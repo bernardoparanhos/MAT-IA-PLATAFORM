@@ -4,12 +4,9 @@ const path = require('path');
 const dbPath = path.resolve(__dirname, '../../database.sqlite');
 const db = new Database(dbPath);
 
-// Ativa foreign keys
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-// Criação das tabelas
-// Criação das tabelas
 db.exec(`
   CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,6 +126,16 @@ db.exec(`
     pontuacao INTEGER NOT NULL,
     jogado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (aluno_id) REFERENCES usuarios(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS notificacoes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    professor_id INTEGER NOT NULL,
+    tipo TEXT NOT NULL,
+    mensagem TEXT NOT NULL,
+    lida INTEGER DEFAULT 0,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (professor_id) REFERENCES usuarios(id)
   );
 `);
 

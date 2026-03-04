@@ -8,65 +8,39 @@ const router = express.Router();
 
 // ─── REGISTER ALUNO ──────────────────────────────────────────────────────────
 const registerAlunoValidation = [
-  body('nome')
-    .trim()
-    .notEmpty().withMessage('Nome é obrigatório')
+  body('nome').trim().notEmpty().withMessage('Nome é obrigatório')
     .isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres')
     .matches(/^[a-zA-ZÀ-ÿ\s]+$/).withMessage('Nome deve conter apenas letras'),
-
-  body('email')
-    .trim()
-    .notEmpty().withMessage('Email é obrigatório')
+  body('email').trim().notEmpty().withMessage('Email é obrigatório')
     .isEmail().withMessage('Email inválido')
     .custom(val => {
-      if (!val.endsWith('@alunos.utfpr.edu.br')) {
-        throw new Error('Email deve ser do domínio @alunos.utfpr.edu.br')
-      }
+      if (!val.endsWith('@alunos.utfpr.edu.br')) throw new Error('Email deve ser do domínio @alunos.utfpr.edu.br')
       return true
     }),
-
-  body('senha')
-    .notEmpty().withMessage('Senha é obrigatória')
+  body('senha').notEmpty().withMessage('Senha é obrigatória')
     .isLength({ min: 8, max: 128 }).withMessage('Senha deve ter entre 8 e 128 caracteres')
     .matches(/[A-Z]/).withMessage('Senha deve conter ao menos uma letra maiúscula')
     .matches(/[0-9]/).withMessage('Senha deve conter ao menos um número'),
-
-  body('ra')
-    .trim()
-    .notEmpty().withMessage('RA é obrigatório')
+  body('ra').trim().notEmpty().withMessage('RA é obrigatório')
     .isLength({ min: 5, max: 20 }).withMessage('RA inválido'),
-
-  body('turmaId')
-    .notEmpty().withMessage('Turma é obrigatória')
+  body('turmaId').notEmpty().withMessage('Turma é obrigatória')
     .isInt().withMessage('Turma inválida'),
 ];
 
 // ─── REGISTER PROFESSOR ───────────────────────────────────────────────────────
 const registerProfessorValidation = [
-  body('nome')
-    .trim()
-    .notEmpty().withMessage('Nome é obrigatório')
+  body('nome').trim().notEmpty().withMessage('Nome é obrigatório')
     .isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres')
     .matches(/^[a-zA-ZÀ-ÿ\s]+$/).withMessage('Nome deve conter apenas letras'),
-
-  body('email')
-    .trim()
-    .notEmpty().withMessage('Email é obrigatório')
+  body('email').trim().notEmpty().withMessage('Email é obrigatório')
     .isEmail().withMessage('Email inválido')
     .custom(val => {
-      if (!val.endsWith('@utfpr.edu.br')) {
-        throw new Error('Email deve ser do domínio @utfpr.edu.br')
-      }
+      if (!val.endsWith('@utfpr.edu.br')) throw new Error('Email deve ser do domínio @utfpr.edu.br')
       return true
     }),
-
-  body('siape')
-    .trim()
-    .notEmpty().withMessage('SIAPE é obrigatório')
+  body('siape').trim().notEmpty().withMessage('SIAPE é obrigatório')
     .matches(/^\d{6,7}$/).withMessage('SIAPE deve ter 6 ou 7 dígitos numéricos'),
-
-  body('senha')
-    .notEmpty().withMessage('Senha é obrigatória')
+  body('senha').notEmpty().withMessage('Senha é obrigatória')
     .isLength({ min: 8, max: 128 }).withMessage('Senha deve ter entre 8 e 128 caracteres')
     .matches(/[A-Z]/).withMessage('Senha deve conter ao menos uma letra maiúscula')
     .matches(/[0-9]/).withMessage('Senha deve conter ao menos um número'),
@@ -74,25 +48,15 @@ const registerProfessorValidation = [
 
 // ─── LOGIN ALUNO ──────────────────────────────────────────────────────────────
 const loginAlunoValidation = [
-  body('ra')
-    .trim()
-    .notEmpty().withMessage('RA é obrigatório'),
-
-  body('senha')
-    .notEmpty().withMessage('Senha é obrigatória')
-    .isLength({ max: 128 }),
+  body('ra').trim().notEmpty().withMessage('RA é obrigatório'),
+  body('senha').notEmpty().withMessage('Senha é obrigatória').isLength({ max: 128 }),
 ];
 
 // ─── LOGIN PROFESSOR ──────────────────────────────────────────────────────────
 const loginProfessorValidation = [
-  body('siape')
-    .trim()
-    .notEmpty().withMessage('SIAPE é obrigatório')
+  body('siape').trim().notEmpty().withMessage('SIAPE é obrigatório')
     .matches(/^\d{6,7}$/).withMessage('SIAPE inválido'),
-
-  body('senha')
-    .notEmpty().withMessage('Senha é obrigatória')
-    .isLength({ max: 128 }),
+  body('senha').notEmpty().withMessage('Senha é obrigatória').isLength({ max: 128 }),
 ];
 
 // ─── TURMAS ───────────────────────────────────────────────────────────────────
@@ -119,14 +83,47 @@ router.get('/turmas/disponiveis', verifyToken, (req, res) => {
 router.post('/turmas/associar', verifyToken, (req, res) => {
   const { turmaId } = req.body;
   if (!turmaId) return res.status(400).json({ message: 'turmaId é obrigatório' });
-
   const turma = db.prepare('SELECT id FROM turmas WHERE id = ?').get(turmaId);
   if (!turma) return res.status(404).json({ message: 'Turma não encontrada' });
-
   db.prepare('UPDATE turmas SET professor_id = ? WHERE id = ?').run(req.usuario.id, turmaId);
   return res.json({ message: 'Turma associada com sucesso!' });
 });
 
+// ─── TURMAS PÚBLICAS (sem JWT) ────────────────────────────────────────────────
+router.get('/turmas/publicas', (req, res) => {
+  const turmas = db.prepare(`
+    SELECT id, nome FROM turmas WHERE professor_id IS NOT NULL
+  `).all();
+  return res.json({ turmas });
+});
+
+// ─── NOTIFICAÇÕES ─────────────────────────────────────────────────────────────
+router.get('/notificacoes', verifyToken, (req, res) => {
+  const notificacoes = db.prepare(`
+    SELECT * FROM notificacoes
+    WHERE professor_id = ?
+    ORDER BY criado_em DESC
+    LIMIT 50
+  `).all(req.usuario.id);
+  return res.json({ notificacoes });
+});
+
+router.post('/notificacoes/lida/:id', verifyToken, (req, res) => {
+  db.prepare(`
+    UPDATE notificacoes SET lida = 1
+    WHERE id = ? AND professor_id = ?
+  `).run(req.params.id, req.usuario.id);
+  return res.json({ ok: true });
+});
+
+router.post('/notificacoes/lida-todas', verifyToken, (req, res) => {
+  db.prepare(`
+    UPDATE notificacoes SET lida = 1 WHERE professor_id = ?
+  `).run(req.usuario.id);
+  return res.json({ ok: true });
+});
+
+// ─── REGISTER / LOGIN ─────────────────────────────────────────────────────────
 router.post('/register/aluno', registerAlunoValidation, (req, res) => register(req, res, 'aluno'));
 router.post('/register/professor', registerProfessorValidation, (req, res) => register(req, res, 'professor'));
 router.post('/login/aluno', loginAlunoValidation, loginAluno);

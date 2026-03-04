@@ -1,6 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+
+function tempoRelativo(dataStr) {
+  const agora = new Date()
+  const data = new Date(dataStr)
+  const diff = Math.floor((agora - data) / 1000)
+  if (diff < 60) return 'agora mesmo'
+  if (diff < 3600) return `há ${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`
+  return `há ${Math.floor(diff / 86400)}d`
+}
 
 function DashboardProfessor() {
   const { usuario, logout } = useAuth()
@@ -12,15 +22,22 @@ function DashboardProfessor() {
   const [associando, setAssociando] = useState(false)
   const [mensagem, setMensagem] = useState('')
   const [sidebarAberta, setSidebarAberta] = useState(false)
+  const [notificacoes, setNotificacoes] = useState([])
+  const [painelNotif, setPainelNotif] = useState(false)
+  const painelRef = useRef(null)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
+  const naoLidas = notificacoes.filter(n => !n.lida).length
+
   useEffect(() => {
     buscarMinhasTurmas()
+    buscarNotificacoes()
+    const intervalo = setInterval(buscarNotificacoes, 30000)
+    return () => clearInterval(intervalo)
   }, [])
 
-  // Fecha sidebar ao redimensionar para desktop
   useEffect(() => {
     function handleResize() {
       if (window.innerWidth >= 1024) setSidebarAberta(false)
@@ -28,6 +45,17 @@ function DashboardProfessor() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Fecha painel ao clicar fora
+  useEffect(() => {
+    function handleClick(e) {
+      if (painelRef.current && !painelRef.current.contains(e.target)) {
+        setPainelNotif(false)
+      }
+    }
+    if (painelNotif) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [painelNotif])
 
   async function buscarMinhasTurmas() {
     try {
@@ -41,6 +69,32 @@ function DashboardProfessor() {
     } finally {
       setCarregando(false)
     }
+  }
+
+  async function buscarNotificacoes() {
+    try {
+      const res = await fetch(`${API}/auth/notificacoes`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      setNotificacoes(data.notificacoes || [])
+    } catch {}
+  }
+
+  async function marcarLida(id) {
+    await fetch(`${API}/auth/notificacoes/lida/${id}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: 1 } : n))
+  }
+
+  async function marcarTodasLidas() {
+    await fetch(`${API}/auth/notificacoes/lida-todas`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    setNotificacoes(prev => prev.map(n => ({ ...n, lida: 1 })))
   }
 
   async function abrirModal() {
@@ -61,10 +115,7 @@ function DashboardProfessor() {
     try {
       const res = await fetch(`${API}/auth/turmas/associar`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ turmaId })
       })
       const data = await res.json()
@@ -86,6 +137,65 @@ function DashboardProfessor() {
   const totalAlunos = turmas.reduce((acc, t) => acc + (t.total_alunos || 0), 0)
   const temTurma = turmas.length > 0
 
+  // ─── Botão sino ──────────────────────────────────────────────────────────────
+  const SinoBotao = () => (
+    <div className="relative" ref={painelRef}>
+      <button
+        onClick={() => setPainelNotif(v => !v)}
+        className="relative p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
+        </svg>
+        {naoLidas > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-orange-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+            {naoLidas > 9 ? '9+' : naoLidas}
+          </span>
+        )}
+      </button>
+
+      {/* Painel dropdown */}
+      {painelNotif && (
+        <div className="absolute right-0 top-10 w-80 bg-[#1e2d3d] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <span className="text-white text-sm font-medium">Notificações</span>
+            {naoLidas > 0 && (
+              <button
+                onClick={marcarTodasLidas}
+                className="text-orange-400 hover:text-orange-300 text-xs transition-colors"
+              >
+                Marcar todas como lidas
+              </button>
+            )}
+          </div>
+
+          <div className="max-h-80 overflow-y-auto">
+            {notificacoes.length === 0 ? (
+              <p className="text-slate-500 text-sm text-center py-8 font-light">
+                Nenhuma notificação
+              </p>
+            ) : (
+              notificacoes.map(n => (
+                <button
+                  key={n.id}
+                  onClick={() => marcarLida(n.id)}
+                  className={`w-full text-left px-4 py-3 border-b border-white/5 transition-colors hover:bg-white/5 ${
+                    !n.lida ? 'bg-orange-500/10 border-l-2 border-l-orange-500' : ''
+                  }`}
+                >
+                  <p className={`text-sm ${!n.lida ? 'text-white' : 'text-slate-400'} font-light leading-snug`}>
+                    {n.mensagem}
+                  </p>
+                  <p className="text-slate-600 text-xs mt-1">{tempoRelativo(n.criado_em)}</p>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
   const NavItems = ({ onClick }) => (
     <>
       <nav className="flex-1 p-4 space-y-1">
@@ -106,20 +216,40 @@ function DashboardProfessor() {
         <div className="border-t border-white/10 my-4" />
         <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 px-3">Gestão</p>
 
-        {[
+       {[
           { label: 'Turmas', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/></svg> },
           { label: 'Métricas', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
-          { label: 'Notificações', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/></svg> },
         ].map(item => (
           <button key={item.label} onClick={onClick} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
             <span className="text-slate-500">{item.icon}</span>
             <span>{item.label}</span>
           </button>
         ))}
+
+        {/* Notificações — navega para página dedicada */}
+        <button
+          onClick={() => { navigate('/notificacoes-professor'); onClick?.() }}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light"
+        >
+          <span className="text-slate-500 relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
+            </svg>
+            {naoLidas > 0 && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full" />
+            )}
+          </span>
+          <span>Notificações</span>
+          {naoLidas > 0 && (
+            <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              {naoLidas}
+            </span>
+          )}
+        </button>
       </nav>
 
       <div className="p-4 border-t border-white/10 space-y-1">
-         <button
+        <button
           onClick={() => { navigate('/perfil-professor'); onClick?.() }}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light"
         >
@@ -141,15 +271,11 @@ function DashboardProfessor() {
   return (
     <div className="min-h-screen bg-[#0f172a] flex" style={{fontFamily:'Outfit, sans-serif'}}>
 
-      {/* ─── Overlay mobile ──────────────────────────────────── */}
       {sidebarAberta && (
-        <div
-          className="fixed inset-0 bg-black/60 z-30 lg:hidden"
-          onClick={() => setSidebarAberta(false)}
-        />
+        <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={() => setSidebarAberta(false)} />
       )}
 
-      {/* ─── Sidebar desktop ─────────────────────────────────── */}
+      {/* Sidebar desktop */}
       <aside className="hidden lg:flex w-56 bg-[#1e2d3d] flex-col fixed h-full z-40">
         <div className="p-6 border-b border-white/10">
           <h1 className="text-2xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
@@ -158,50 +284,50 @@ function DashboardProfessor() {
         <NavItems />
       </aside>
 
-      {/* ─── Sidebar mobile (overlay) ────────────────────────── */}
-      <aside className={`
-  fixed top-0 left-0 h-full w-64 bg-[#1e2d3d] z-40 flex flex-col
-  overflow-y-auto
-  transform transition-transform duration-300 ease-in-out lg:hidden
-  ${sidebarAberta ? 'translate-x-0' : '-translate-x-full'}
-`}>
+      {/* Sidebar mobile */}
+      <aside className={`fixed top-0 left-0 h-full w-64 bg-[#1e2d3d] z-40 flex flex-col overflow-y-auto transform transition-transform duration-300 ease-in-out lg:hidden ${sidebarAberta ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
             <p className="text-slate-400 text-xs mt-1 font-light">Painel do Professor</p>
           </div>
           <button onClick={() => setSidebarAberta(false)} className="text-slate-400 hover:text-white transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
-              <path d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
         <NavItems onClick={() => setSidebarAberta(false)} />
       </aside>
 
-      {/* ─── Conteúdo principal ──────────────────────────────── */}
+      {/* Conteúdo principal */}
       <div className="flex-1 flex flex-col lg:ml-56">
 
         {/* Header mobile */}
-        <header className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-[#0f172a] border-b border-white/5 px-4 py-3 flex items-center gap-3">
-  <button onClick={() => setSidebarAberta(true)} className="text-slate-400 hover:text-white transition-colors p-1">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-      <path d="M3 12h18M3 6h18M3 18h18"/>
-    </svg>
-  </button>
-  <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
-</header>
+        <header className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-[#0f172a] border-b border-white/5 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarAberta(true)} className="text-slate-400 hover:text-white transition-colors p-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            </button>
+            <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
+          </div>
+          <SinoBotao />
+        </header>
 
         <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0 overflow-y-auto">
 
-          {/* Header */}
-          <div className="mb-8 lg:mb-10">
-            <h2 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight">
-              Olá, Prof. {usuario?.nome?.split(' ')[0]}
-            </h2>
-            <p className="text-slate-400 text-sm mt-1 font-light">
-              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
+          {/* Header desktop */}
+          <div className="mb-8 lg:mb-10 flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight">
+                Olá, Prof. {usuario?.nome?.split(' ')[0]}
+              </h2>
+              <p className="text-slate-400 text-sm mt-1 font-light">
+                {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+            </div>
+            {/* Sino desktop */}
+            <div className="hidden lg:block">
+              <SinoBotao />
+            </div>
           </div>
 
           {mensagem && (
@@ -230,7 +356,6 @@ function DashboardProfessor() {
           {/* Minhas Turmas */}
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">Minhas Turmas</p>
-
             {carregando ? (
               <p className="text-slate-400 text-sm font-light">Carregando...</p>
             ) : !temTurma ? (
@@ -266,19 +391,14 @@ function DashboardProfessor() {
         </main>
       </div>
 
-      {/* ─── Modal associar turma ────────────────────────────── */}
+      {/* Modal associar turma */}
       {modalAberto && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
           <div className="bg-[#1e2d3d] border border-white/10 rounded-2xl p-6 lg:p-8 w-full max-w-md shadow-2xl">
             <h3 className="text-white text-xl font-semibold mb-1">Selecione sua turma</h3>
-            <p className="text-slate-400 text-sm font-light mb-6">
-              Escolha a turma que você leciona este semestre
-            </p>
-
+            <p className="text-slate-400 text-sm font-light mb-6">Escolha a turma que você leciona este semestre</p>
             {turmasDisponiveis.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-4 font-light">
-                Nenhuma turma disponível no momento.
-              </p>
+              <p className="text-slate-400 text-sm text-center py-4 font-light">Nenhuma turma disponível no momento.</p>
             ) : (
               <div className="space-y-3">
                 {turmasDisponiveis.map(turma => (
@@ -294,14 +414,12 @@ function DashboardProfessor() {
                 ))}
               </div>
             )}
-
             <button onClick={() => setModalAberto(false)} className="w-full mt-6 text-slate-500 hover:text-slate-300 text-sm transition-colors font-light">
               Cancelar
             </button>
           </div>
         </div>
       )}
-
     </div>
   )
 }
