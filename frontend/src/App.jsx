@@ -4,7 +4,8 @@ import Cadastro from './pages/Cadastro'
 import Dashboard from './pages/Dashboard'
 import DashboardProfessor from './pages/DashboardProfessor'
 import PerfilProfessor from './pages/PerfilProfessor'
-import NotificacoesProfessor from './pages/NotificacoesProfessor' // ← novo
+import NotificacoesProfessor from './pages/NotificacoesProfessor'
+import PerfilAluno from './pages/PerfilAluno' // ← novo
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -35,6 +36,11 @@ function App() {
       <Route path="/dashboard" element={
         <ProtectedRoute perfil="aluno">
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/perfil-aluno" element={
+        <ProtectedRoute perfil="aluno">
+          <PerfilAluno />
         </ProtectedRoute>
       } />
 

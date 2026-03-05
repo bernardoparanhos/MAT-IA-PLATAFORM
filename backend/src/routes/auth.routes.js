@@ -149,4 +149,10 @@ router.get('/aluno/perfil', verifyToken, (req, res) => {
   return res.json({ turma: turma || null, colegas })
 })
 
+// ─── ALUNO PERFIL COMPLETO ────────────────────────────────────────────────────
+const alunoController = require('../controllers/aluno.controller');
+
+router.get('/aluno/perfil-completo', verifyToken, alunoController.getPerfil);
+router.post('/aluno/alterar-senha', verifyToken, alunoController.alterarSenha);
+
 module.exports = router;
