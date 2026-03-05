@@ -189,6 +189,13 @@ function Login() {
               className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-medium rounded-xl py-3 text-sm transition-colors mt-2">
               {carregando ? 'Entrando...' : 'Entrar'}
             </button>
+
+            <div className="text-center mt-1">
+              <Link to="/esqueci-senha"
+                className="text-slate-500 hover:text-slate-300 text-xs transition-colors font-light">
+                Esqueci minha senha
+              </Link>
+            </div>
           </form>
 
           <p className="text-slate-400 text-sm text-center mt-6 font-light">

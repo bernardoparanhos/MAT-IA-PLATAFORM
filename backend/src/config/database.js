@@ -137,6 +137,16 @@ db.exec(`
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (professor_id) REFERENCES usuarios(id)
   );
+
+  CREATE TABLE IF NOT EXISTS tokens_recuperacao (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    expira_em DATETIME NOT NULL,
+    usado INTEGER DEFAULT 0,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+  );
 `);
 
 console.log('✅ Banco de dados conectado e tabelas criadas!');

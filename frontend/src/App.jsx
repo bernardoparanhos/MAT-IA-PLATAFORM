@@ -5,7 +5,9 @@ import Dashboard from './pages/Dashboard'
 import DashboardProfessor from './pages/DashboardProfessor'
 import PerfilProfessor from './pages/PerfilProfessor'
 import NotificacoesProfessor from './pages/NotificacoesProfessor'
-import PerfilAluno from './pages/PerfilAluno' // ← novo
+import PerfilAluno from './pages/PerfilAluno'
+import EsqueciSenha from './pages/EsqueciSenha'
+import RedefinirSenha from './pages/RedefinirSenha'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -14,6 +16,8 @@ function App() {
       {/* Públicas */}
       <Route path="/login" element={<Login />} />
       <Route path="/cadastro" element={<Cadastro />} />
+      <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
       {/* Protegidas — Professor */}
       <Route path="/dashboard-professor" element={

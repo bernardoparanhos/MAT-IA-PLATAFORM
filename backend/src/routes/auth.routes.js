@@ -3,10 +3,21 @@ const { body } = require('express-validator');
 const { register, loginAluno, loginProfessor } = require('../controllers/auth.controller');
 const { verifyToken } = require('../middlewares/auth.middleware');
 const db = require('../config/database');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 const router = express.Router();
 
-// ─── REGISTER ALUNO ──────────────────────────────────────────────────────────
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  }
+});
+
+// ─── REGISTER ALUNO ───────────────────────────────────────────────────────────
 const registerAlunoValidation = [
   body('nome').trim().notEmpty().withMessage('Nome é obrigatório')
     .isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres')
@@ -89,7 +100,6 @@ router.post('/turmas/associar', verifyToken, (req, res) => {
   return res.json({ message: 'Turma associada com sucesso!' });
 });
 
-// ─── TURMAS PÚBLICAS (sem JWT) ────────────────────────────────────────────────
 router.get('/turmas/publicas', (req, res) => {
   const turmas = db.prepare(`
     SELECT id, nome FROM turmas WHERE professor_id IS NOT NULL
@@ -151,8 +161,172 @@ router.get('/aluno/perfil', verifyToken, (req, res) => {
 
 // ─── ALUNO PERFIL COMPLETO ────────────────────────────────────────────────────
 const alunoController = require('../controllers/aluno.controller');
-
 router.get('/aluno/perfil-completo', verifyToken, alunoController.getPerfil);
 router.post('/aluno/alterar-senha', verifyToken, alunoController.alterarSenha);
+
+// ─── ESQUECI SENHA — ALUNO ────────────────────────────────────────────────────
+router.post('/aluno/esqueci-senha', async (req, res) => {
+  const { email } = req.body;
+  const MENSAGEM_GENERICA = 'Se esse email estiver cadastrado, você receberá as instruções em breve.';
+  if (!email) return res.status(400).json({ message: 'Email é obrigatório.' });
+
+  try {
+    const usuario = db.prepare(
+      "SELECT id FROM usuarios WHERE email = ? AND perfil = 'aluno'"
+    ).get(email);
+
+    if (usuario) {
+      db.prepare("UPDATE tokens_recuperacao SET usado = 1 WHERE usuario_id = ?").run(usuario.id);
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiraEm = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+      db.prepare(`
+        INSERT INTO tokens_recuperacao (usuario_id, token, expira_em)
+        VALUES (?, ?, ?)
+      `).run(usuario.id, token, expiraEm);
+
+      const link = `${process.env.FRONTEND_URL}/redefinir-senha?token=${token}&perfil=aluno`;
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: email,
+        subject: 'MAT-IA — Redefinição de senha',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #0f172a; color: #fff; padding: 40px; border-radius: 12px;">
+            <h1 style="color: #f97316; margin-bottom: 4px;">MAT-IA</h1>
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 32px;">Suporte Inteligente ao Aprendizado de Matemática</p>
+            <h2 style="font-size: 20px; margin-bottom: 12px;">Redefinição de senha</h2>
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 24px;">
+              Recebemos uma solicitação para redefinir a senha da sua conta.
+              Clique no botão abaixo para continuar.
+              O link expira em <strong style="color: #fff;">1 hora</strong>.
+            </p>
+            <a href="${link}" style="display: inline-block; background: #f97316; color: #fff; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px;">
+              Redefinir minha senha
+            </a>
+            <p style="color: #475569; font-size: 12px; margin-top: 32px;">
+              Se você não solicitou isso, ignore este email. Sua senha permanece a mesma.
+            </p>
+          </div>
+        `
+      });
+    }
+
+    return res.json({ message: MENSAGEM_GENERICA });
+  } catch (error) {
+    console.error('[aluno/esqueci-senha] Erro:', error);
+    return res.status(500).json({ message: 'Erro interno. Tente novamente.' });
+  }
+});
+
+// ─── ESQUECI SENHA — PROFESSOR ────────────────────────────────────────────────
+router.post('/professor/esqueci-senha', async (req, res) => {
+  const { email } = req.body;
+  const MENSAGEM_GENERICA = 'Se esse email estiver cadastrado, você receberá as instruções em breve.';
+  if (!email) return res.status(400).json({ message: 'Email é obrigatório.' });
+
+  try {
+    const usuario = db.prepare(
+      "SELECT id FROM usuarios WHERE email = ? AND perfil = 'professor'"
+    ).get(email);
+
+    if (usuario) {
+      db.prepare("UPDATE tokens_recuperacao SET usado = 1 WHERE usuario_id = ?").run(usuario.id);
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiraEm = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+      db.prepare(`
+        INSERT INTO tokens_recuperacao (usuario_id, token, expira_em)
+        VALUES (?, ?, ?)
+      `).run(usuario.id, token, expiraEm);
+
+      const link = `${process.env.FRONTEND_URL}/redefinir-senha?token=${token}&perfil=professor`;
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: email,
+        subject: 'MAT-IA — Redefinição de senha',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #0f172a; color: #fff; padding: 40px; border-radius: 12px;">
+            <h1 style="color: #f97316; margin-bottom: 4px;">MAT-IA</h1>
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 32px;">Suporte Inteligente ao Aprendizado de Matemática</p>
+            <h2 style="font-size: 20px; margin-bottom: 12px;">Redefinição de senha</h2>
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 24px;">
+              Recebemos uma solicitação para redefinir a senha da sua conta.
+              Clique no botão abaixo para continuar.
+              O link expira em <strong style="color: #fff;">1 hora</strong>.
+            </p>
+            <a href="${link}" style="display: inline-block; background: #f97316; color: #fff; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 14px;">
+              Redefinir minha senha
+            </a>
+            <p style="color: #475569; font-size: 12px; margin-top: 32px;">
+              Se você não solicitou isso, ignore este email. Sua senha permanece a mesma.
+            </p>
+          </div>
+        `
+      });
+    }
+
+    return res.json({ message: MENSAGEM_GENERICA });
+  } catch (error) {
+    console.error('[professor/esqueci-senha] Erro:', error);
+    return res.status(500).json({ message: 'Erro interno. Tente novamente.' });
+  }
+});
+
+// ─── VALIDAR TOKEN ────────────────────────────────────────────────────────────
+router.get('/validar-token/:token', (req, res) => {
+  const { token } = req.params;
+  try {
+    const registro = db.prepare(`
+      SELECT * FROM tokens_recuperacao WHERE token = ? AND usado = 0
+    `).get(token);
+    if (!registro) return res.json({ valido: false });
+    const expirou = new Date(registro.expira_em) < new Date();
+    if (expirou) return res.json({ valido: false });
+    return res.json({ valido: true });
+  } catch {
+    return res.status(500).json({ valido: false });
+  }
+});
+
+// ─── REDEFINIR SENHA ──────────────────────────────────────────────────────────
+router.post('/redefinir-senha', async (req, res) => {
+  const { token, novaSenha, confirmarSenha } = req.body;
+
+  if (!token || !novaSenha || !confirmarSenha)
+    return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+
+  if (novaSenha !== confirmarSenha)
+    return res.status(400).json({ message: 'As senhas não coincidem.' });
+
+  const senhaForte = /^(?=.*[A-Z])(?=.*\d).{8,}$/.test(novaSenha);
+  if (!senhaForte)
+    return res.status(400).json({ message: 'Mín. 8 caracteres, 1 maiúscula e 1 número.' });
+
+  try {
+    const registro = db.prepare(`
+      SELECT * FROM tokens_recuperacao WHERE token = ? AND usado = 0
+    `).get(token);
+
+    if (!registro)
+      return res.status(400).json({ message: 'Token inválido ou já utilizado.' });
+
+    const expirou = new Date(registro.expira_em) < new Date();
+    if (expirou)
+      return res.status(400).json({ message: 'Token expirado. Solicite um novo link.' });
+
+    const novaSenhaHash = await bcrypt.hash(novaSenha, 12);
+    db.prepare('UPDATE usuarios SET senha = ? WHERE id = ?').run(novaSenhaHash, registro.usuario_id);
+    db.prepare('UPDATE tokens_recuperacao SET usado = 1 WHERE id = ?').run(registro.id);
+
+    return res.json({ message: 'Senha redefinida com sucesso!' });
+  } catch (error) {
+    console.error('[redefinir-senha] Erro:', error);
+    return res.status(500).json({ message: 'Erro interno. Tente novamente.' });
+  }
+});
 
 module.exports = router;
