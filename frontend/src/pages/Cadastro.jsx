@@ -28,27 +28,21 @@ function Cadastro() {
     e.preventDefault()
     setErro('')
     setCarregando(true)
-
     try {
       const url = perfil === 'aluno'
         ? `${API}/auth/register/aluno`
         : `${API}/auth/register/professor`
-
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, perfil }),
       })
-
       const data = await res.json()
-
       if (!res.ok) {
         setErro(data.errors?.[0]?.msg || data.message || 'Erro ao criar conta.')
         return
       }
-
       navigate('/login')
-
     } catch {
       setErro('Erro de conexão. Verifique se o servidor está rodando.')
     } finally {
@@ -138,7 +132,6 @@ function Cadastro() {
                 placeholder={perfil === 'aluno' ? 'seu@alunos.utfpr.edu.br' : 'seu@utfpr.edu.br'}
                 required className={inputClass} />
             </div>
-
             {perfil === 'professor' && (
               <div>
                 <label className={labelClass}>SIAPE</label>
@@ -146,13 +139,11 @@ function Cadastro() {
                   placeholder="6 ou 7 dígitos" required className={inputClass} />
               </div>
             )}
-
             <div>
               <label className={labelClass}>Senha</label>
               <input type="password" name="senha" value={form.senha} onChange={handleChange}
                 placeholder="Mín. 8 caracteres, 1 maiúscula e 1 número" required className={inputClass} />
             </div>
-
             {perfil === 'aluno' && (
               <>
                 <div>
@@ -172,11 +163,25 @@ function Cadastro() {
                 </div>
               </>
             )}
-
             {erro && (
               <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-light">{erro}</p>
             )}
-
+            <div className="pt-2">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  className="mt-0.5 accent-orange-500 w-4 h-4 flex-shrink-0"
+                />
+                <span className="text-slate-400 text-xs font-light leading-relaxed">
+                  Li e concordo com os{' '}
+                  <Link to="/termos?from=cadastro" target="_blank" className="text-orange-400 hover:text-orange-300 transition-colors">Termos de Serviço</Link>
+                  {' '}e a{' '}
+                  <Link to="/privacidade?from=cadastro" target="_blank" className="text-orange-400 hover:text-orange-300 transition-colors">Política de Privacidade</Link>
+                  {' '}da plataforma MAT-IA.
+                </span>
+              </label>
+            </div>
             <button type="submit" disabled={carregando}
               className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-medium rounded-xl py-3 text-sm transition-colors">
               {carregando ? 'Criando conta...' : 'Criar conta'}

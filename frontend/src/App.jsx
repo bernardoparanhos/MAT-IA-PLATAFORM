@@ -8,6 +8,8 @@ import NotificacoesProfessor from './pages/NotificacoesProfessor'
 import PerfilAluno from './pages/PerfilAluno'
 import EsqueciSenha from './pages/EsqueciSenha'
 import RedefinirSenha from './pages/RedefinirSenha'
+import Termos from './pages/Termos'
+import Privacidade from './pages/Privacidade'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -18,6 +20,8 @@ function App() {
       <Route path="/cadastro" element={<Cadastro />} />
       <Route path="/esqueci-senha" element={<EsqueciSenha />} />
       <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+      <Route path="/termos" element={<Termos />} />
+      <Route path="/privacidade" element={<Privacidade />} />
 
       {/* Protegidas — Professor */}
       <Route path="/dashboard-professor" element={

@@ -117,8 +117,13 @@ function Login() {
           </div>
 
           <p className="text-slate-600 text-xs text-center mt-6 font-light">
-            UTFPR Campus Medianeira — 2026
-          </p>
+          UTFPR Campus Medianeira — 2026
+        </p>
+        <p className="text-slate-600 text-xs text-center mt-2 font-light">
+          <Link to="/termos" className="hover:text-slate-400 transition-colors">Termos de Serviço</Link>
+          {' · '}
+          <Link to="/privacidade" className="hover:text-slate-400 transition-colors">Política de Privacidade</Link>
+        </p>
         </div>
       </div>
     )
@@ -206,8 +211,13 @@ function Login() {
           </p>
         </div>
 
-        <p className="text-slate-600 text-xs text-center mt-6 font-light">
+       <p className="text-slate-600 text-xs text-center mt-6 font-light">
           UTFPR Campus Medianeira — 2026
+        </p>
+        <p className="text-slate-600 text-xs text-center mt-2 font-light">
+          <Link to="/termos" className="hover:text-slate-400 transition-colors">Termos de Serviço</Link>
+          {' · '}
+          <Link to="/privacidade" className="hover:text-slate-400 transition-colors">Política de Privacidade</Link>
         </p>
       </div>
     </div>
