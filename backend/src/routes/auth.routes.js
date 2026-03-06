@@ -7,6 +7,17 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
+const rateLimit = require('express-rate-limit');
+
+// ─── RATE LIMIT — RECUPERAÇÃO DE SENHA ───────────────────────────────────────
+const limiterEsqueciSenha = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // máximo 5 tentativas por IP
+  message: { message: 'Muitas tentativas. Aguarde 15 minutos e tente novamente.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const router = express.Router();
 
 const transporter = nodemailer.createTransport({
@@ -165,15 +176,19 @@ router.get('/aluno/perfil-completo', verifyToken, alunoController.getPerfil);
 router.post('/aluno/alterar-senha', verifyToken, alunoController.alterarSenha);
 
 // ─── ESQUECI SENHA — ALUNO ────────────────────────────────────────────────────
-router.post('/aluno/esqueci-senha', async (req, res) => {
+router.post('/aluno/esqueci-senha', limiterEsqueciSenha, async (req, res) => {
   const { email } = req.body;
   const MENSAGEM_GENERICA = 'Se esse email estiver cadastrado, você receberá as instruções em breve.';
   if (!email) return res.status(400).json({ message: 'Email é obrigatório.' });
+
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido'
 
   try {
     const usuario = db.prepare(
       "SELECT id FROM usuarios WHERE email = ? AND perfil = 'aluno'"
     ).get(email);
+
+    db.prepare(`INSERT INTO log_recuperacao (ip, email, sucesso) VALUES (?, ?, ?)`).run(ip, email, usuario ? 1 : 0)
 
     if (usuario) {
       db.prepare("UPDATE tokens_recuperacao SET usado = 1 WHERE usuario_id = ?").run(usuario.id);
@@ -221,15 +236,19 @@ router.post('/aluno/esqueci-senha', async (req, res) => {
 });
 
 // ─── ESQUECI SENHA — PROFESSOR ────────────────────────────────────────────────
-router.post('/professor/esqueci-senha', async (req, res) => {
+router.post('/professor/esqueci-senha', limiterEsqueciSenha, async (req, res) => {
   const { email } = req.body;
   const MENSAGEM_GENERICA = 'Se esse email estiver cadastrado, você receberá as instruções em breve.';
   if (!email) return res.status(400).json({ message: 'Email é obrigatório.' });
+
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido'
 
   try {
     const usuario = db.prepare(
       "SELECT id FROM usuarios WHERE email = ? AND perfil = 'professor'"
     ).get(email);
+
+    db.prepare(`INSERT INTO log_recuperacao (ip, email, sucesso) VALUES (?, ?, ?)`).run(ip, email, usuario ? 1 : 0)
 
     if (usuario) {
       db.prepare("UPDATE tokens_recuperacao SET usado = 1 WHERE usuario_id = ?").run(usuario.id);
