@@ -3,10 +3,15 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 function Privacidade() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const fromCadastro = searchParams.get('from') === 'cadastro'
-  const voltarPara = fromCadastro ? '/cadastro' : '/login'
-  const voltarLabel = fromCadastro ? 'Voltar ao cadastro' : 'Voltar ao login'
-  const linkOutra = fromCadastro ? '/termos?from=cadastro' : '/termos'
+  const from = searchParams.get('from')
+const voltarPara = from === 'cadastro' ? '/cadastro'
+  : from === 'configuracoes-professor' ? '/configuracoes-professor'
+  : from === 'configuracoes-aluno' ? '/configuracoes-aluno'
+  : '/login'
+const voltarLabel = from === 'cadastro' ? 'Voltar ao cadastro'
+  : from?.startsWith('configuracoes') ? 'Voltar às configurações'
+  : 'Voltar ao login'
+const linkOutra = from ? `/termos?from=${from}` : '/termos'
 
   return (
     <div className="min-h-screen bg-[#0f172a] px-4 py-12" style={{fontFamily:'Outfit, sans-serif'}}>

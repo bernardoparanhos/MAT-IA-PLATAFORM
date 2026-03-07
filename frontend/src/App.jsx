@@ -10,6 +10,8 @@ import EsqueciSenha from './pages/EsqueciSenha'
 import RedefinirSenha from './pages/RedefinirSenha'
 import Termos from './pages/Termos'
 import Privacidade from './pages/Privacidade'
+import ConfiguracoesProfessor from './pages/ConfiguracoesProfessor'
+import ConfiguracoesAluno from './pages/ConfiguracoesAluno'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -39,6 +41,11 @@ function App() {
           <NotificacoesProfessor />
         </ProtectedRoute>
       } />
+      <Route path="/configuracoes-professor" element={
+        <ProtectedRoute perfil="professor">
+          <ConfiguracoesProfessor />
+        </ProtectedRoute>
+      } />
 
       {/* Protegidas — Aluno */}
       <Route path="/dashboard" element={
@@ -49,6 +56,11 @@ function App() {
       <Route path="/perfil-aluno" element={
         <ProtectedRoute perfil="aluno">
           <PerfilAluno />
+        </ProtectedRoute>
+      } />
+      <Route path="/configuracoes-aluno" element={
+        <ProtectedRoute perfil="aluno">
+          <ConfiguracoesAluno />
         </ProtectedRoute>
       } />
 
