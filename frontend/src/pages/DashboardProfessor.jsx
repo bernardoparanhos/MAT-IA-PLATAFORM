@@ -179,7 +179,7 @@ function DashboardProfessor() {
               notificacoes.map(n => (
                 <button
                   key={n.id}
-                  onClick={() => marcarLida(n.id)}
+                  onClick={() => { marcarLida(n.id); setPainelNotif(false); navigate(`/notificacoes-professor?id=${n.id}`) }}
                   className={`w-full text-left px-4 py-3 border-b border-white/5 transition-colors hover:bg-white/5 ${
                     !n.lida ? 'bg-orange-500/10 border-l-2 border-l-orange-500' : ''
                   }`}
