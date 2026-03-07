@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getPerfil, alterarSenha, desassociarTurma } from '../services/professorService'
 
 function PerfilProfessor() {
-  const { usuario, logout } = useAuth()
+  const { logout } = useAuth()
   const navigate = useNavigate()
   const [perfil, setPerfil] = useState(null)
   const [carregando, setCarregando] = useState(true)

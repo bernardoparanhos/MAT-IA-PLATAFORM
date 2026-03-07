@@ -34,10 +34,13 @@ useEffect(() => {
     if (el) {
       setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100)
     }
+    setTimeout(() => {
+      navigate('/notificacoes-professor', { replace: true })
+    }, 2000)
   }
 }, [idDestaque, notificacoes])
 
-  useEffect(() => { buscar() }, [])
+useEffect(() => { buscar() }, [])
 
   async function buscar() {
     try {

@@ -2,6 +2,62 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
+function Toggle({ ativo, onChange }) {
+  return (
+    <button
+      onClick={() => onChange(!ativo)}
+      className={`relative w-11 h-6 rounded-full transition-colors ${ativo ? 'bg-orange-500' : 'bg-white/10'}`}
+    >
+      <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${ativo ? 'translate-x-5' : 'translate-x-0'}`} />
+    </button>
+  )
+}
+
+const NavItems = ({ onClick, navigate, logout }) => (
+  <>
+    <nav className="p-4 space-y-1">
+      <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 px-3">Menu</p>
+      {[
+        { label: 'Início', path: '/dashboard', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg> },
+        { label: 'Matérias', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg> },
+        { label: 'Tutor IA', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg> },
+        { label: 'Jogos', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4m-2-2v4m7-2h.01M15 12h.01"/></svg> },
+        { label: 'Fórum', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> },
+      ].map(item => (
+        <button key={item.label}
+          onClick={() => { item.path && navigate(item.path); onClick?.() }}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
+          <span className="text-slate-500">{item.icon}</span>
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </nav>
+
+    <div className="p-4 border-t border-white/10 space-y-1">
+      <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-slate-500">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
+        </svg>
+        <span>Notificações</span>
+      </button>
+      <button onClick={() => { navigate('/perfil-aluno'); onClick?.() }}
+        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span>Perfil</span>
+      </button>
+      <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-light">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Configurações</span>
+      </button>
+      <button onClick={logout}
+        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-colors text-sm font-light">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4m7 14l5-5-5-5m5 5H9"/></svg>
+        <span>Sair</span>
+      </button>
+    </div>
+  </>
+)
+
 function ConfiguracoesAluno() {
   const { logout } = useAuth()
   const navigate = useNavigate()
@@ -19,62 +75,6 @@ function ConfiguracoesAluno() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  function Toggle({ ativo, onChange }) {
-    return (
-      <button
-        onClick={() => onChange(!ativo)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${ativo ? 'bg-orange-500' : 'bg-white/10'}`}
-      >
-        <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${ativo ? 'translate-x-5' : 'translate-x-0'}`} />
-      </button>
-    )
-  }
-
-  const NavItems = ({ onClick }) => (
-    <>
-      <nav className="p-4 space-y-1">
-        <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 px-3">Menu</p>
-        {[
-          { label: 'Início', path: '/dashboard', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg> },
-          { label: 'Matérias', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg> },
-          { label: 'Tutor IA', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg> },
-          { label: 'Jogos', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4m-2-2v4m7-2h.01M15 12h.01"/></svg> },
-          { label: 'Fórum', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> },
-        ].map(item => (
-          <button key={item.label}
-            onClick={() => { item.path && navigate(item.path); onClick?.() }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
-            <span className="text-slate-500">{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <div className="p-4 border-t border-white/10 space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-slate-500">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
-          </svg>
-          <span>Notificações</span>
-        </button>
-        <button onClick={() => { navigate('/perfil-aluno'); onClick?.() }}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          <span>Perfil</span>
-        </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-light">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-          <span>Configurações</span>
-        </button>
-        <button onClick={logout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-colors text-sm font-light">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4m7 14l5-5-5-5m5 5H9"/></svg>
-          <span>Sair</span>
-        </button>
-      </div>
-    </>
-  )
-
   return (
     <div className="min-h-screen bg-[#0f172a] flex" style={{ fontFamily: 'Outfit, sans-serif' }}>
 
@@ -82,14 +82,16 @@ function ConfiguracoesAluno() {
         <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={() => setSidebarAberta(false)} />
       )}
 
+      {/* Sidebar desktop */}
       <aside className="hidden lg:flex w-56 bg-[#1e2d3d] flex-col fixed h-full z-40">
         <div className="p-6 border-b border-white/10">
           <h1 className="text-2xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
           <p className="text-slate-400 text-xs mt-1 font-light">Painel do Aluno</p>
         </div>
-        <NavItems />
+        <NavItems navigate={navigate} logout={logout} />
       </aside>
 
+      {/* Sidebar mobile */}
       <aside className={`fixed top-0 left-0 h-full w-64 bg-[#1e2d3d] z-40 flex flex-col overflow-y-auto transform transition-transform duration-300 ease-in-out lg:hidden ${sidebarAberta ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div>
@@ -100,9 +102,10 @@ function ConfiguracoesAluno() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <NavItems onClick={() => setSidebarAberta(false)} />
+        <NavItems onClick={() => setSidebarAberta(false)} navigate={navigate} logout={logout} />
       </aside>
 
+      {/* Conteúdo principal */}
       <div className="flex-1 flex flex-col lg:ml-56">
         <header className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-[#0f172a] border-b border-white/5 px-4 py-3 flex items-center gap-3">
           <button onClick={() => setSidebarAberta(true)} className="text-slate-400 hover:text-white transition-colors p-1">
@@ -199,7 +202,7 @@ function ConfiguracoesAluno() {
                 </div>
                 <div className="border-t border-white/5 pt-2 flex gap-4">
                   <button onClick={() => navigate('/termos?from=configuracoes-aluno')} className="text-slate-500 hover:text-slate-300 text-xs font-light transition-colors">Termos de Serviço</button>
-<button onClick={() => navigate('/privacidade?from=configuracoes-aluno')} className="text-slate-500 hover:text-slate-300 text-xs font-light transition-colors">Política de Privacidade</button>
+                  <button onClick={() => navigate('/privacidade?from=configuracoes-aluno')} className="text-slate-500 hover:text-slate-300 text-xs font-light transition-colors">Política de Privacidade</button>
                 </div>
               </div>
             </div>
