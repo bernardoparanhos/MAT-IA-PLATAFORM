@@ -118,6 +118,67 @@ router.get('/turmas/publicas', (req, res) => {
   return res.json({ turmas });
 });
 
+// ─── TURMAS — DETALHE E ALUNOS ────────────────────────────────────────────────
+router.get('/turmas/:id', verifyToken, (req, res) => {
+  const turma = db.prepare(`
+    SELECT t.id, t.nome, t.codigo_acesso, t.criado_em,
+      COUNT(ta.aluno_id) as total_alunos
+    FROM turmas t
+    LEFT JOIN turma_alunos ta ON ta.turma_id = t.id
+    WHERE t.id = ? AND t.professor_id = ?
+    GROUP BY t.id
+  `).get(req.params.id, req.usuario.id)
+
+  if (!turma) return res.status(404).json({ message: 'Turma não encontrada.' })
+  return res.json({ turma })
+})
+
+router.get('/turmas/:id/alunos', verifyToken, (req, res) => {
+  const turma = db.prepare(
+    'SELECT id FROM turmas WHERE id = ? AND professor_id = ?'
+  ).get(req.params.id, req.usuario.id)
+
+  if (!turma) return res.status(404).json({ message: 'Turma não encontrada.' })
+
+  const alunos = db.prepare(`
+    SELECT u.id, u.nome, u.email, u.ra, u.criado_em as entrou_em
+    FROM usuarios u
+    INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+    WHERE ta.turma_id = ?
+    ORDER BY u.nome ASC
+  `).all(req.params.id)
+
+  return res.json({ alunos })
+})
+
+// ─── MINHA TURMA — ALUNO ──────────────────────────────────────────────────────
+router.get('/aluno/minha-turma', verifyToken, (req, res) => {
+  const turma = db.prepare(`
+    SELECT t.id, t.nome, t.codigo_acesso, t.criado_em
+    FROM turmas t
+    INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+    WHERE ta.aluno_id = ?
+  `).get(req.usuario.id)
+
+  if (!turma) return res.json({ turma: null, professor: null, colegas: [] })
+
+  const professor = db.prepare(`
+    SELECT nome, email FROM usuarios WHERE id = (
+      SELECT professor_id FROM turmas WHERE id = ?
+    )
+  `).get(turma.id)
+
+  const colegas = db.prepare(`
+    SELECT u.id, u.nome, u.email, u.ra, u.criado_em as entrou_em
+    FROM usuarios u
+    INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+    WHERE ta.turma_id = ? AND u.id != ?
+    ORDER BY u.nome ASC
+  `).all(turma.id, req.usuario.id)
+
+  return res.json({ turma, professor, colegas })
+})
+
 // ─── NOTIFICAÇÕES ─────────────────────────────────────────────────────────────
 router.get('/notificacoes', verifyToken, (req, res) => {
   const notificacoes = db.prepare(`

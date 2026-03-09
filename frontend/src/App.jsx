@@ -12,6 +12,8 @@ import Termos from './pages/Termos'
 import Privacidade from './pages/Privacidade'
 import ConfiguracoesProfessor from './pages/ConfiguracoesProfessor'
 import ConfiguracoesAluno from './pages/ConfiguracoesAluno'
+import TurmasProfessor from './pages/TurmasProfessor'
+import MinhaTurma from './pages/MinhaTurma'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -46,7 +48,11 @@ function App() {
           <ConfiguracoesProfessor />
         </ProtectedRoute>
       } />
-
+      <Route path="/turmas-professor" element={
+        <ProtectedRoute perfil="professor">
+          <TurmasProfessor />
+        </ProtectedRoute>
+      } />
       {/* Protegidas — Aluno */}
       <Route path="/dashboard" element={
         <ProtectedRoute perfil="aluno">
@@ -63,7 +69,12 @@ function App() {
           <ConfiguracoesAluno />
         </ProtectedRoute>
       } />
-
+<Route path="/minha-turma" element={
+        <ProtectedRoute perfil="aluno">
+          <MinhaTurma />
+        </ProtectedRoute>
+      } />
+      
       {/* Redirects */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
