@@ -1,0 +1,102 @@
+[
+  {
+    "id": 1, "bloco": "inteiros",
+    "enunciado": "(-2)(-2)(-2) =",
+    "alternativas": { "A": "-8", "B": "8", "C": "-6", "D": "6" },
+    "correta": "A",
+    "dicas": [
+      "Multiplicação de negativos: negativo × negativo = positivo. Analise quantos fatores negativos há.",
+      "Faça passo a passo: (-2)×(-2) primeiro, depois multiplique o resultado por (-2)."
+    ]
+  },
+  {
+    "id": 2, "bloco": "inteiros",
+    "enunciado": "(-2)(-2)(-2)(-2) =",
+    "alternativas": { "A": "16", "B": "-16", "C": "8", "D": "-8" },
+    "correta": "A",
+    "dicas": [
+      "A quantidade de fatores negativos determina o sinal final.",
+      "Agrupe dois a dois: [(-2)×(-2)] × [(-2)×(-2)]."
+    ]
+  },
+  {
+    "id": 3, "bloco": "inteiros",
+    "enunciado": "-9 + 4 =",
+    "alternativas": { "A": "-5", "B": "5", "C": "-13", "D": "13" },
+    "correta": "A",
+    "dicas": [
+      "Sinais diferentes: subtraia o menor do maior e use o sinal do número maior.",
+      "Na reta numérica: comece em -9 e ande 4 passos para a direita."
+    ]
+  },
+  {
+    "id": 4, "bloco": "fracoes",
+    "enunciado": "16/8 =",
+    "alternativas": { "A": "2", "B": "8", "C": "1/2", "D": "4" },
+    "correta": "A",
+    "dicas": [
+      "Divisão: quantas vezes o denominador cabe no numerador?",
+      "16 ÷ 8 — quantas vezes 8 cabe em 16?"
+    ]
+  },
+  {
+    "id": 5, "bloco": "raizes",
+    "enunciado": "√49 =",
+    "alternativas": { "A": "7", "B": "24,5", "C": "±7", "D": "6" },
+    "correta": "A",
+    "dicas": [
+      "Raiz quadrada: qual número multiplicado por ele mesmo resulta em 49?",
+      "Teste: 6×6=36, 7×7=?, 8×8=64."
+    ]
+  },
+  {
+    "id": 6, "bloco": "raizes",
+    "enunciado": "³√27 =",
+    "alternativas": { "A": "3", "B": "9", "C": "√27", "D": "6" },
+    "correta": "A",
+    "dicas": [
+      "Raiz cúbica: qual número elevado ao cubo dá 27?",
+      "Teste: 2³=8, 3³=?, 4³=64."
+    ]
+  },
+  {
+    "id": 7, "bloco": "fracoes",
+    "enunciado": "1/5 + 3/5 =",
+    "alternativas": { "A": "4/5", "B": "4/10", "C": "3/25", "D": "1/2" },
+    "correta": "A",
+    "dicas": [
+      "Mesmo denominador: some apenas os numeradores, o denominador não muda.",
+      "Pense em fatias: 1 fatia + 3 fatias de uma pizza cortada em 5 partes."
+    ]
+  },
+  {
+    "id": 8, "bloco": "fracoes",
+    "enunciado": "1/4 + 7/3 =",
+    "alternativas": { "A": "31/12", "B": "8/7", "C": "8/12", "D": "7/12" },
+    "correta": "A",
+    "dicas": [
+      "Denominadores diferentes: encontre o MMC entre 4 e 3.",
+      "MMC(4,3)=12. Converta: 1/4=3/12 e 7/3=28/12. Agora some."
+    ]
+  },
+  {
+    "id": 9, "bloco": "potencias",
+    "enunciado": "2³ =",
+    "alternativas": { "A": "8", "B": "6", "C": "9", "D": "16" },
+    "correta": "A",
+    "dicas": [
+      "Potência é multiplicação repetida: 2³ = 2 × 2 × 2.",
+      "Não é 2×3! Faça: 2×2=4, depois 4×2=?"
+    ]
+  },
+  {
+    "id": 10, "bloco": "potencias",
+    "enunciado": "3⁻³ =",
+    "alternativas": { "A": "1/27", "B": "-27", "C": "-9", "D": "1/9" },
+    "correta": "A",
+    "dicas": [
+      "Expoente negativo vira fração: a⁻ⁿ = 1/aⁿ.",
+      "3⁻³ = 1/3³. Calcule 3³ primeiro."
+    ]
+  }
+]

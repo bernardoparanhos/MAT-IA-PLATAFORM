@@ -8,6 +8,14 @@ db.pragma('journal_mode = WAL');
 db.pragma('busy_timeout = 5000');
 db.pragma('foreign_keys = ON');
 
+// ─── MIGRATIONS ───────────────────────────────────────────────────────────────
+try {
+  db.prepare("ALTER TABLE usuarios ADD COLUMN diagnostico_status TEXT DEFAULT 'pendente'").run()
+  console.log('✅ Migration: diagnostico_status adicionado')
+} catch (e) {
+  // coluna já existe — ignora
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

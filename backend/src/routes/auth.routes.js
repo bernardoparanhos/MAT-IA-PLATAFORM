@@ -409,4 +409,79 @@ router.post('/redefinir-senha', async (req, res) => {
   }
 });
 
+// ─── DIAGNÓSTICO ──────────────────────────────────────────────────────────────
+const questoes = require('../data/questoes.json')
+
+function calcularResultado(respostas) {
+  const blocos = { inteiros: { acertos: 0, total: 0 }, fracoes: { acertos: 0, total: 0 }, raizes: { acertos: 0, total: 0 }, potencias: { acertos: 0, total: 0 } }
+  let pontuacao = 0
+
+  questoes.forEach(q => {
+    const bloco = blocos[q.bloco]
+    bloco.total++
+    if (respostas[q.id] === q.correta) { bloco.acertos++; pontuacao++ }
+  })
+
+  Object.keys(blocos).forEach(b => {
+    const { acertos, total } = blocos[b]
+    const pct = acertos / total
+    blocos[b].nivel = pct === 0 ? 'fraco' : pct < 1 ? 'medio' : 'forte'
+  })
+
+  const nivel = pontuacao <= 3 ? 'basico' : pontuacao <= 6 ? 'intermediario' : 'avancado'
+  return { nivel, pontuacao, blocos }
+}
+
+router.get('/diagnostico/status', verifyToken, (req, res) => {
+  const usuario = db.prepare('SELECT diagnostico_status FROM usuarios WHERE id = ?').get(req.usuario.id)
+  return res.json({ status: usuario?.diagnostico_status || 'pendente' })
+})
+
+router.post('/diagnostico/pular', verifyToken, (req, res) => {
+  db.prepare("UPDATE usuarios SET diagnostico_status = 'pulado' WHERE id = ?").run(req.usuario.id)
+  return res.json({ ok: true })
+})
+
+router.post('/diagnostico/responder', verifyToken, (req, res) => {
+  const { respostas, usou_dicas, pulou } = req.body
+  // respostas: { "1": "A", "2": "B", ... }
+
+  if (!respostas || typeof respostas !== 'object')
+    return res.status(400).json({ message: 'Respostas inválidas.' })
+
+  const { nivel, pontuacao, blocos } = calcularResultado(respostas)
+
+  const resultado_json = JSON.stringify({
+    nivel, pontuacao, blocos,
+    usou_dicas: usou_dicas || [],
+    pulou: pulou || [],
+    respostas
+  })
+
+  // upsert — se já tem diagnóstico, atualiza
+  const existente = db.prepare('SELECT id FROM diagnosticos WHERE aluno_id = ?').get(req.usuario.id)
+  if (existente) {
+    db.prepare('UPDATE diagnosticos SET resultado_json = ?, feito_em = CURRENT_TIMESTAMP WHERE aluno_id = ?')
+      .run(resultado_json, req.usuario.id)
+  } else {
+    db.prepare('INSERT INTO diagnosticos (aluno_id, resultado_json) VALUES (?, ?)').run(req.usuario.id, resultado_json)
+  }
+
+  db.prepare("UPDATE usuarios SET diagnostico_status = 'concluido' WHERE id = ?").run(req.usuario.id)
+
+  return res.json({ nivel, pontuacao, blocos })
+})
+
+router.get('/diagnostico/resultado', verifyToken, (req, res) => {
+  const diagnostico = db.prepare('SELECT resultado_json, feito_em FROM diagnosticos WHERE aluno_id = ?').get(req.usuario.id)
+  if (!diagnostico) return res.status(404).json({ message: 'Diagnóstico não encontrado.' })
+  return res.json({ resultado: JSON.parse(diagnostico.resultado_json), feito_em: diagnostico.feito_em })
+})
+
+router.get('/diagnostico/questoes', verifyToken, (req, res) => {
+  // envia as questões SEM o campo "correta"
+  const semGabarito = questoes.map(({ correta, ...q }) => q)
+  return res.json({ questoes: semGabarito })
+})
+
 module.exports = router;
