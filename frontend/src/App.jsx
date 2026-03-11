@@ -14,6 +14,7 @@ import ConfiguracoesProfessor from './pages/ConfiguracoesProfessor'
 import ConfiguracoesAluno from './pages/ConfiguracoesAluno'
 import TurmasProfessor from './pages/TurmasProfessor'
 import MinhaTurma from './pages/MinhaTurma'
+import Nivelamento from './pages/Nivelamento'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -69,6 +70,11 @@ function App() {
           <ConfiguracoesAluno />
         </ProtectedRoute>
       } />
+      <Route path="/nivelamento" element={
+  <ProtectedRoute perfil="aluno">
+    <Nivelamento />
+  </ProtectedRoute>
+} />
 <Route path="/minha-turma" element={
         <ProtectedRoute perfil="aluno">
           <MinhaTurma />

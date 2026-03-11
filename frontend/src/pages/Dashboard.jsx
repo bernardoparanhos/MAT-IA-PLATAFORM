@@ -67,12 +67,13 @@ function Dashboard() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
   const [sidebarAberta, setSidebarAberta] = useState(false)
+  const [naoLidas, setNaoLidas] = useState(0)
+  const [diagnosticoStatus, setDiagnosticoStatus] = useState(null)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
-  const [naoLidas, setNaoLidas] = useState(0)
 
- useEffect(() => {
+  useEffect(() => {
     async function buscarNotifAluno() {
       try {
         const res = await fetch(`${API}/auth/notificacoes/aluno`, {
@@ -91,7 +92,22 @@ function Dashboard() {
   }, [])
 
   useEffect(() => {
+    async function verificarDiagnostico() {
+      try {
+        const res = await fetch(`${API}/auth/diagnostico/status`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const data = await res.json()
+        if (data.status === 'pendente') navigate('/nivelamento')
+        setDiagnosticoStatus(data.status)
+      } catch (e) {
+        console.error('Erro ao verificar diagnóstico', e)
+      }
+    }
+    verificarDiagnostico()
+  }, [])
 
+  useEffect(() => {
     function handleResize() {
       if (window.innerWidth >= 1024) setSidebarAberta(false)
     }
@@ -140,7 +156,7 @@ function Dashboard() {
             </button>
             <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
           </div>
-         <button onClick={() => navigate('/notificacoes-aluno')} className="relative p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+          <button onClick={() => navigate('/notificacoes-aluno')} className="relative p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
               <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
             </svg>
@@ -181,6 +197,24 @@ function Dashboard() {
           {/* Grid principal */}
           <div className="space-y-6">
 
+            {/* Banner diagnóstico pulado */}
+            {diagnosticoStatus === 'pulado' && (
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🎯</span>
+                  <div>
+                    <p className="text-white text-sm font-medium">Você ainda não fez seu diagnóstico</p>
+                    <p className="text-slate-400 text-xs font-light mt-0.5">Leva menos de 5 minutos e personaliza toda a sua trilha</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/nivelamento')}
+                  className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0">
+                  Fazer agora
+                </button>
+              </div>
+            )}
+
             {/* Ranking de Turmas */}
             <div>
               <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">🏆 Ranking de Turmas</p>
@@ -202,7 +236,7 @@ function Dashboard() {
                   <div className="border-t border-white/10 pt-3 mt-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                       <span className="text-orange-400 text-sm font-medium">—</span>
+                        <span className="text-orange-400 text-sm font-medium">—</span>
                         <span className="text-xs text-slate-500 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">você</span>
                       </div>
                       <span className="text-slate-500 text-sm">— pts</span>
@@ -213,7 +247,7 @@ function Dashboard() {
             </div>
 
             {/* Progresso + Continue */}
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"> 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
               {/* Progresso Geral */}
               <div>
