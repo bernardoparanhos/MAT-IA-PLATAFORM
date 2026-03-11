@@ -479,8 +479,29 @@ router.get('/diagnostico/resultado', verifyToken, (req, res) => {
 })
 
 router.get('/diagnostico/questoes', verifyToken, (req, res) => {
-  // envia as questões SEM o campo "correta"
-  const semGabarito = questoes.map(({ correta, ...q }) => q)
+  const questoesEmbaralhadas = questoes.map(({ correta, ...q }) => {
+    const letras = ['A', 'B', 'C', 'D']
+    // embaralha as letras
+    for (let i = letras.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [letras[i], letras[j]] = [letras[j], letras[i]]
+    }
+    // remonta alternativas na nova ordem
+    const alternativasOriginais = q.alternativas
+    const novasAlternativas = {}
+    letras.forEach((letraNova, idx) => {
+      const letraOriginal = ['A', 'B', 'C', 'D'][idx]
+      novasAlternativas[letraNova] = alternativasOriginais[letraOriginal]
+    })
+    // descobre qual nova letra corresponde à correta original
+    const idxCorreta = ['A', 'B', 'C', 'D'].indexOf(correta)
+    const novaCorreta = letras[idxCorreta]
+
+    return { ...q, alternativas: novasAlternativas, correta: novaCorreta }
+  })
+
+  // remove o campo correta antes de enviar
+  const semGabarito = questoesEmbaralhadas.map(({ correta, ...q }) => q)
   return res.json({ questoes: semGabarito })
 })
 
