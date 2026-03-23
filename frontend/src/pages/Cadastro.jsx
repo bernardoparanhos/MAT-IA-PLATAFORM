@@ -1,6 +1,94 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+// ─── FAQ PANEL ────────────────────────────────────────────────────────────────
+const faqs = [
+  {
+    pergunta: 'Como faço login?',
+    resposta: 'Selecione seu perfil — Aluno ou Professor. Alunos entram com RA + Senha. Professores entram com SIAPE + Senha. Se for seu primeiro acesso, crie uma conta primeiro.',
+  },
+  {
+    pergunta: 'Como me cadastro?',
+    resposta: 'Escolha seu perfil, preencha seus dados institucionais e selecione sua turma (alunos) ou informe seu SIAPE (professores). Após o cadastro, você será redirecionado para o login.',
+  },
+  {
+    pergunta: 'O que é RA / SIAPE?',
+    resposta: 'RA (Registro Acadêmico) é o número de matrícula do aluno na UTFPR — você encontra no seu histórico ou comprovante de matrícula. SIAPE é o número funcional do professor servidor federal.',
+  },
+  {
+    pergunta: 'Como entro em uma turma?',
+    resposta: 'No cadastro, selecione sua turma no campo "Turma". As turmas disponíveis são criadas pelo professor. Caso sua turma não apareça, entre em contato com seu professor.',
+  },
+  {
+    pergunta: 'Dicas rápidas',
+    resposta: '• Use sempre seu email institucional (@alunos.utfpr.edu.br ou @utfpr.edu.br)\n• A senha precisa ter no mínimo 8 caracteres, 1 letra maiúscula e 1 número\n• Se esqueceu a senha, use a opção "Esqueci minha senha" na tela de login',
+  },
+]
+
+function FAQPanel({ aberto, onFechar }) {
+  const [abertaIdx, setAbertaIdx] = useState(null)
+
+  return (
+    <>
+      {aberto && (
+        <div className="fixed inset-0 bg-black/50 z-40" onClick={onFechar} />
+      )}
+      <div className={`fixed top-0 right-0 h-full w-full max-w-sm bg-[#1e2d3d] border-l border-white/10 z-50 flex flex-col transform transition-transform duration-300 ease-in-out ${aberto ? 'translate-x-0' : 'translate-x-full'}`}
+        style={{ fontFamily: 'Outfit, sans-serif' }}>
+
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-orange-400">
+                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Ajuda</p>
+              <p className="text-slate-500 text-xs font-light">Acesso à sua conta</p>
+            </div>
+          </div>
+          <button onClick={onFechar} className="text-slate-400 hover:text-white transition-colors p-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+              <path d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+          {faqs.map((faq, idx) => (
+            <div key={idx} className="bg-white/5 border border-white/5 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setAbertaIdx(abertaIdx === idx ? null : idx)}
+                className="w-full flex items-center justify-between px-4 py-3.5 text-left gap-3">
+                <span className="text-slate-200 text-sm font-light">{faq.pergunta}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                  className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform duration-200 ${abertaIdx === idx ? 'rotate-180' : ''}`}>
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+              {abertaIdx === idx && (
+                <div className="px-4 pb-4 border-t border-white/5 pt-3">
+                  <p className="text-slate-400 text-xs font-light leading-relaxed whitespace-pre-line">
+                    {faq.resposta}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="px-6 py-4 border-t border-white/10">
+          <p className="text-slate-600 text-xs font-light text-center">
+            UTFPR Campus Medianeira — MAT-IA 2026
+          </p>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── CADASTRO ─────────────────────────────────────────────────────────────────
 function Cadastro() {
   const navigate = useNavigate()
   const [perfil, setPerfil] = useState('')
@@ -8,6 +96,7 @@ function Cadastro() {
   const [turmas, setTurmas] = useState([])
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
+  const [faqAberto, setFaqAberto] = useState(false)
 
   const API = import.meta.env.VITE_API_URL
 
@@ -57,6 +146,16 @@ function Cadastro() {
   if (!perfil) {
     return (
       <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4" style={{fontFamily:'Outfit, sans-serif'}}>
+        <FAQPanel aberto={faqAberto} onFechar={() => setFaqAberto(false)} />
+
+        <button
+          onClick={() => setFaqAberto(true)}
+          className="fixed bottom-6 right-6 z-30 w-11 h-11 bg-[#1e2d3d] border border-white/10 hover:border-orange-500/40 rounded-full flex items-center justify-center text-slate-400 hover:text-orange-400 transition-all shadow-lg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01"/>
+          </svg>
+        </button>
+
         <div className="w-full max-w-md">
           <div className="text-center mb-10">
             <h1 className="text-5xl font-bold text-orange-400 tracking-tight">MAT<span className="text-white">-IA</span></h1>
@@ -105,6 +204,16 @@ function Cadastro() {
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4 py-8" style={{fontFamily:'Outfit, sans-serif'}}>
+      <FAQPanel aberto={faqAberto} onFechar={() => setFaqAberto(false)} />
+
+      <button
+        onClick={() => setFaqAberto(true)}
+        className="fixed bottom-6 right-6 z-30 w-11 h-11 bg-[#1e2d3d] border border-white/10 hover:border-orange-500/40 rounded-full flex items-center justify-center text-slate-400 hover:text-orange-400 transition-all shadow-lg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01"/>
+        </svg>
+      </button>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-orange-400 tracking-tight">MAT<span className="text-white">-IA</span></h1>
@@ -168,11 +277,7 @@ function Cadastro() {
             )}
             <div className="pt-2">
               <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  required
-                  className="mt-0.5 accent-orange-500 w-4 h-4 flex-shrink-0"
-                />
+                <input type="checkbox" required className="mt-0.5 accent-orange-500 w-4 h-4 flex-shrink-0" />
                 <span className="text-slate-400 text-xs font-light leading-relaxed">
                   Li e concordo com os{' '}
                   <Link to="/termos?from=cadastro" target="_blank" className="text-orange-400 hover:text-orange-300 transition-colors">Termos de Serviço</Link>
