@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     pergunta: 'O que é RA / SIAPE?',
-    resposta: 'RA (Registro Acadêmico) é o número de matrícula do aluno na UTFPR — você encontra no seu histórico ou comprovante de matrícula. SIAPE é o número funcional do professor servidor federal.',
+    resposta: 'RA (Registro Acadêmico) é o número de matrícula do aluno na UTFPR. Digite com a letra "a" minúscula na frente, sem zeros — ex: a2867320. Você encontra no Moodle ou comprovante de matrícula. SIAPE é o número funcional do professor servidor federal.',
   },
   {
     pergunta: 'Como entro em uma turma?',
@@ -39,9 +39,9 @@ function FAQPanel({ aberto, onFechar }) {
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-orange-400">
-                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01"/>
-              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-orange-400">
+  <path d="M12 17V16.9929M12 14.8571C12 11.6429 15 12.3571 15 9.85714C15 8.27919 13.6568 7 12 7C10.6567 7 9.51961 7.84083 9.13733 9"/>
+</svg>
             </div>
             <div>
               <p className="text-white text-sm font-medium">Ajuda</p>
@@ -151,8 +151,8 @@ function Cadastro() {
         <button
           onClick={() => setFaqAberto(true)}
           className="fixed bottom-6 right-6 z-30 w-11 h-11 bg-[#1e2d3d] border border-white/10 hover:border-orange-500/40 rounded-full flex items-center justify-center text-slate-400 hover:text-orange-400 transition-all shadow-lg">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
-            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <path d="M12 17V16.9929M12 14.8571C12 11.6429 15 12.3571 15 9.85714C15 8.27919 13.6568 7 12 7C10.6567 7 9.51961 7.84083 9.13733 9"/>
           </svg>
         </button>
 
@@ -209,9 +209,9 @@ function Cadastro() {
       <button
         onClick={() => setFaqAberto(true)}
         className="fixed bottom-6 right-6 z-30 w-11 h-11 bg-[#1e2d3d] border border-white/10 hover:border-orange-500/40 rounded-full flex items-center justify-center text-slate-400 hover:text-orange-400 transition-all shadow-lg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
-          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01"/>
-        </svg>
+       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+  <path d="M12 17V16.9929M12 14.8571C12 11.6429 15 12.3571 15 9.85714C15 8.27919 13.6568 7 12 7C10.6567 7 9.51961 7.84083 9.13733 9"/>
+</svg>
       </button>
 
       <div className="w-full max-w-md">
@@ -258,7 +258,7 @@ function Cadastro() {
                 <div>
                   <label className={labelClass}>RA</label>
                   <input type="text" name="ra" value={form.ra} onChange={handleChange}
-                    placeholder="Seu RA" required className={inputClass} />
+                    placeholder="ex: a2867320" required className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Turma</label>
@@ -275,18 +275,6 @@ function Cadastro() {
             {erro && (
               <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 font-light">{erro}</p>
             )}
-            <div className="pt-2">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input type="checkbox" required className="mt-0.5 accent-orange-500 w-4 h-4 flex-shrink-0" />
-                <span className="text-slate-400 text-xs font-light leading-relaxed">
-                  Li e concordo com os{' '}
-                  <Link to="/termos?from=cadastro" target="_blank" className="text-orange-400 hover:text-orange-300 transition-colors">Termos de Serviço</Link>
-                  {' '}e a{' '}
-                  <Link to="/privacidade?from=cadastro" target="_blank" className="text-orange-400 hover:text-orange-300 transition-colors">Política de Privacidade</Link>
-                  {' '}da plataforma MAT-IA.
-                </span>
-              </label>
-            </div>
             <button type="submit" disabled={carregando}
               className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-medium rounded-xl py-3 text-sm transition-colors">
               {carregando ? 'Criando conta...' : 'Criar conta'}

@@ -69,6 +69,7 @@ function Dashboard() {
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [naoLidas, setNaoLidas] = useState(0)
   const [diagnosticoStatus, setDiagnosticoStatus] = useState(null)
+const [verificando, setVerificando] = useState(true)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
@@ -98,10 +99,13 @@ function Dashboard() {
           headers: { Authorization: `Bearer ${token}` }
         })
         const data = await res.json()
-        if (data.status === 'pendente') navigate('/nivelamento')
+        if (data.status === 'pendente') { navigate('/nivelamento'); return }
+        if (data.status === 'concluido') { navigate('/nivelamento/resultado'); return }
         setDiagnosticoStatus(data.status)
+        setVerificando(false)
       } catch (e) {
         console.error('Erro ao verificar diagnóstico', e)
+        setVerificando(false)
       }
     }
     verificarDiagnostico()
@@ -114,6 +118,12 @@ function Dashboard() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  if (verificando) return (
+    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center" style={{ fontFamily: 'Outfit, sans-serif' }}>
+      <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex" style={{ fontFamily: 'Outfit, sans-serif' }}>

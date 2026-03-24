@@ -75,7 +75,7 @@ const linkOutra = from ? `/termos?from=${from}` : '/termos'
               <li>Solicitar a exclusão da sua conta e dados</li>
               <li>Revogar o consentimento a qualquer momento</li>
             </ul>
-            <p className="mt-2">Para exercer esses direitos, entre em contato: <span className="text-white">beparanhosborges@gmail.com</span></p>
+            <p className="mt-2">Para exercer esses direitos, entre em contato com o responsável pela plataforma através dos canais institucionais da UTFPR Campus Medianeira.</p>
           </div>
           <div>
             <h3 className="text-orange-400 font-medium mb-2">6. Retenção de dados</h3>
