@@ -5,7 +5,7 @@
     "alternativas": { "A": "-8", "B": "8", "C": "-6", "D": "6" },
     "correta": "A",
     "dicas": [
-      "Multiplicação de negativos: negativo × negativo = positivo. Analise quantos fatores negativos há.",
+      "Negativo × Negativo = Positivo ( - )( - ) = ( + ), Negativo × Positivo = Negativo ( - )( + ) = ( - ) e Positivo × Negativo = Negativo ( + )( - ) = ( - )",
       "Faça passo a passo: (-2)×(-2) primeiro, depois multiplique o resultado por (-2)."
     ]
   },
@@ -16,7 +16,7 @@
     "correta": "A",
     "dicas": [
       "A quantidade de fatores negativos determina o sinal final.",
-      "Agrupe dois a dois: [(-2)×(-2)] × [(-2)×(-2)]."
+      "Negativo × Negativo = Positivo ( - )( - ) = ( + ), Negativo × Positivo = Negativo ( - )( + ) = ( - ) e Positivo × Negativo = Negativo ( + )( - ) = ( - )"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "alternativas": { "A": "-5", "B": "5", "C": "-13", "D": "13" },
     "correta": "A",
     "dicas": [
-      "Sinais diferentes: subtraia o menor do maior e use o sinal do número maior.",
-      "Na reta numérica: comece em -9 e ande 4 passos para a direita."
+      "Se você deve 9 reais a uma pessoa e tem 4 reais para pagar, quanto ainda vai ficar devendo?",
+      "Nove ovelhas morreram e ganhei 4 novas ovelhas. Quantas ovelhas representam meu prejuízo?"
     ]
   },
   {
@@ -35,7 +35,7 @@
     "alternativas": { "A": "2", "B": "8", "C": "1/2", "D": "4" },
     "correta": "A",
     "dicas": [
-      "Divisão: quantas vezes o denominador cabe no numerador?",
+      "Na tabuada do 8, onde aparece o número 16?",
       "16 ÷ 8 — quantas vezes 8 cabe em 16?"
     ]
   },
@@ -56,7 +56,7 @@
     "correta": "A",
     "dicas": [
       "Raiz cúbica: qual número elevado ao cubo dá 27?",
-      "Teste: 2³=8, 3³=?, 4³=64."
+      "Teste: 2³ = 8, 3³ = ?, 4³ = 64."
     ]
   },
   {
@@ -65,7 +65,7 @@
     "alternativas": { "A": "4/5", "B": "4/10", "C": "3/25", "D": "1/2" },
     "correta": "A",
     "dicas": [
-      "Mesmo denominador: some apenas os numeradores, o denominador não muda.",
+      "Quando as frações têm o mesmo denominador, somamos apenas os numeradores e mantemos o denominador.",
       "Pense em fatias: 1 fatia + 3 fatias de uma pizza cortada em 5 partes."
     ]
   },
@@ -76,7 +76,7 @@
     "correta": "A",
     "dicas": [
       "Denominadores diferentes: encontre o MMC entre 4 e 3.",
-      "MMC(4,3)=12. Converta: 1/4=3/12 e 7/3=28/12. Agora some."
+      "Converta: 1/4 = 3/12 (fazendo 4 × x = 12, temos x = 3; multiplique o numerador e o denominador por 3, e o mesmo procedimento serve para a próxima fração) e 7/3 = 28/12. Agora some."
     ]
   },
   {
@@ -85,8 +85,8 @@
     "alternativas": { "A": "8", "B": "6", "C": "9", "D": "16" },
     "correta": "A",
     "dicas": [
-      "Potência é multiplicação repetida: 2³ = 2 × 2 × 2.",
-      "Não é 2×3! Faça: 2×2=4, depois 4×2=?"
+      "Potência é multiplicação repetida: 2 × 2 × 2.....",
+      "Não é 2×3! Faça: 2×2=4, depois 4×2 ....."
     ]
   },
   {
@@ -94,9 +94,114 @@
     "enunciado": "3⁻³ =",
     "alternativas": { "A": "1/27", "B": "-27", "C": "-9", "D": "1/9" },
     "correta": "A",
+   "dicas": [
+      "a⁻ⁿ = 1/aⁿ",
+      "se n = 3 então 3⁻³ = 1/3³"
+    ]
+  },
+  {
+    "id": 11, "bloco": "raizes",
+    "enunciado": "³√56 =",
+    "alternativas": { "A": "2·³√7", "B": "14", "C": "2·²√2·²√7", "D": "³√2·³√7" },
+    "correta": "A",
     "dicas": [
-      "Expoente negativo vira fração: a⁻ⁿ = 1/aⁿ.",
-      "3⁻³ = 1/3³. Calcule 3³ primeiro."
+      "ⁿ√(a·b) = ⁿ√a · ⁿ√b — separe 56 em dois fatores onde um seja cubo perfeito.",
+      "56 = 8 × 7, e ³√8 = 2. Então ³√56 = ³√8 · ³√7 = 2·³√7"
     ]
   }
+  ,
+{
+  "id": 12, "bloco": "potencias",
+  "latex": true,
+  "enunciado": "\\frac{a^3 \\cdot b^2 \\cdot x^5 \\cdot y^2}{y^3 \\cdot x^4 \\cdot a \\cdot b^4} =",
+  "alternativas": {
+    "A": "\\frac{a^2 \\cdot b^2 \\cdot x}{y \\cdot b^2}",
+    "B": "\\frac{a^3 \\cdot b^2 \\cdot x^5 \\cdot y^2}{y^3 \\cdot x^4}",
+    "C": "\\frac{a \\cdot b^2 \\cdot x^3 \\cdot y^2}{y^3 \\cdot x^4 \\cdot a \\cdot b^4}",
+    "D": "\\frac{a^2 \\cdot b^2 \\cdot x}{y \\cdot b^2 \\cdot x^2}"
+  },
+  "correta": "A",
+  "dicas": [
+    "aⁿ · a⁻ᵐ = aⁿ⁻ᵐ — subtraia os expoentes de cada variável separadamente.",
+    "Calcule variável por variável: a³/a¹ = a², b²/b⁴ = b⁻², x⁵/x⁴ = x, y²/y³ = y⁻¹"
+  ]
+},
+{
+  "id": 13, "bloco": "potencias",
+  "latex": true,
+  "enunciado": "-6^2 =",
+  "alternativas": {
+    "A": "-36",
+    "B": "36",
+    "C": "\\frac{1}{36}",
+    "D": "-\\frac{1}{36}"
+  },
+  "correta": "A",
+  "dicas": [
+    "-x = -1 · x, ou seja, o sinal negativo está fora da potência.",
+    "Calcule 6² primeiro, depois aplique o sinal: -1 · 36 = ?"
+  ]
+},
+{
+  "id": 14, "bloco": "potencias",
+  "latex": true,
+  "enunciado": "\\left(\\frac{27}{8}\\right)^{-1} =",
+  "alternativas": {
+    "A": "\\left(\\frac{8}{27}\\right)^3",
+    "B": "\\frac{3^{-3}}{2^{-3}}",
+    "C": "\\frac{9^{-3}}{3^{-3}}",
+    "D": "\\frac{2}{3}"
+  },
+  "correta": "B",
+  "dicas": [
+    "a⁻ᵐ = 1/aᵐ — expoente negativo inverte a base.",
+    "(27/8)⁻¹ = 8/27. Agora escreva 8 e 27 como potências de 2 e 3."
+  ]
+},
+{
+  "id": 15, "bloco": "potencias",
+  "latex": true,
+  "enunciado": "A = 16^{0{,}5} + 8^{\\frac{1}{3}} + \\left(\\frac{1}{32}\\right)^{-0{,}2}",
+  "alternativas": {
+    "A": "8",
+    "B": "\\frac{1}{4}",
+    "C": "2^4",
+    "D": "-8"
+  },
+  "correta": "A",
+  "dicas": [
+    "1/aᵐ = a⁻ᵐ — expoente negativo inverte a base.",
+    "ⁿ√aᵏ = a^(k/n) — expoente fracionário é raiz: 16^0,5 = √16, 8^(1/3) = ³√8"
+  ]
+},
+{
+  "id": 16, "bloco": "geometria",
+  "enunciado": "Determine o valor de x: triângulo retângulo com catetos 6 cm e 8 cm, sendo x a hipotenusa.",
+  "alternativas": {
+    "A": "10 cm",
+    "B": "9 cm",
+    "C": "7 cm",
+    "D": "3 cm"
+  },
+  "correta": "A",
+  "dicas": [
+    "Teorema de Pitágoras: hipotenusa² = cateto² + cateto²",
+    "x² = 6² + 8² = 36 + 64 = 100. Agora calcule √100."
+  ]
+},
+{
+  "id": 17, "bloco": "geometria",
+  "enunciado": "Determine o valor de x: triângulo retângulo com cateto 3 m e hipotenusa 5 cm, sendo x o cateto desconhecido.",
+  "alternativas": {
+    "A": "4 cm",
+    "B": "9 cm",
+    "C": "7 cm",
+    "D": "10 cm"
+  },
+  "correta": "A",
+  "dicas": [
+    "Teorema de Pitágoras: hipotenusa² = cateto² + cateto²",
+    "5² = 3² + x² → 25 = 9 + x² → x² = 16. Agora calcule √16."
+  ]
+}
 ]

@@ -413,7 +413,7 @@ router.post('/redefinir-senha', async (req, res) => {
 const questoes = require('../data/questoes.json')
 
 function calcularResultado(respostas) {
-  const blocos = { inteiros: { acertos: 0, total: 0 }, fracoes: { acertos: 0, total: 0 }, raizes: { acertos: 0, total: 0 }, potencias: { acertos: 0, total: 0 } }
+  const blocos = { inteiros: { acertos: 0, total: 0 }, fracoes: { acertos: 0, total: 0 }, raizes: { acertos: 0, total: 0 }, potencias: { acertos: 0, total: 0 }, geometria: { acertos: 0, total: 0 } }
   let pontuacao = 0
 
   questoes.forEach(q => {
@@ -428,7 +428,7 @@ function calcularResultado(respostas) {
     blocos[b].nivel = pct === 0 ? 'fraco' : pct < 1 ? 'medio' : 'forte'
   })
 
-  const nivel = pontuacao <= 3 ? 'basico' : pontuacao <= 6 ? 'intermediario' : 'avancado'
+  const nivel = pontuacao <= 5 ? 'basico' : pontuacao <= 11 ? 'intermediario' : 'avancado'
   return { nivel, pontuacao, blocos }
 }
 
@@ -442,8 +442,10 @@ router.post('/diagnostico/pular', verifyToken, (req, res) => {
   return res.json({ ok: true })
 })
 
-router.post('/diagnostico/responder', verifyToken, (req, res) => {
-  const { respostas, usou_dicas, pulou } = req.body
+const { registrarDiagnostico } = require('../services/sheets.service')
+
+router.post('/diagnostico/responder', verifyToken, async (req, res) => {
+  const { respostas, usou_dicas, pulou, iniciado_em } = req.body
   // respostas: { "1": "A", "2": "B", ... }
 
   if (!respostas || typeof respostas !== 'object')
@@ -468,6 +470,27 @@ router.post('/diagnostico/responder', verifyToken, (req, res) => {
   }
 
   db.prepare("UPDATE usuarios SET diagnostico_status = 'concluido' WHERE id = ?").run(req.usuario.id)
+
+  // Envia para o Google Sheets
+  const usuario = db.prepare('SELECT u.nome, u.ra, t.nome as turma FROM usuarios u LEFT JOIN turma_alunos ta ON ta.aluno_id = u.id LEFT JOIN turmas t ON t.id = ta.turma_id WHERE u.id = ?').get(req.usuario.id)
+  await registrarDiagnostico({
+    nome: usuario?.nome || '-',
+    ra: usuario?.ra || '-',
+    turma: usuario?.turma || '-',
+    nivel,
+    pontuacao,
+    blocos,
+    dicas_usadas: (usou_dicas || []).length,
+    questoes_puladas: (pulou || []).length,
+    feito_em: new Date().toLocaleString('pt-BR'),
+    tempo_segundos: iniciado_em ? Math.round((Date.now() - iniciado_em) / 1000) : null,
+    ...[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].reduce((acc, id) => {
+
+      const q = questoes.find(q => q.id === id)
+      acc[`q${id}`] = q ? (respostas[id] ? (respostas[id] === q.correta ? '✅' : '❌') : '—') : '—'
+      return acc
+    }, {}),
+  })
 
   return res.json({ nivel, pontuacao, blocos })
 })

@@ -24,6 +24,7 @@
 **/*.pem
 **/*.key
 **/*.cert
+**/src/services/sheets.service.js
 
 # ==========================================
 # LOGS

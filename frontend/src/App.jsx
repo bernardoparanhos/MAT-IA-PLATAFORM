@@ -15,6 +15,7 @@ import ConfiguracoesAluno from './pages/ConfiguracoesAluno'
 import TurmasProfessor from './pages/TurmasProfessor'
 import MinhaTurma from './pages/MinhaTurma'
 import Nivelamento from './pages/Nivelamento'
+import ResultadoNivelamento from './pages/ResultadoNivelamento'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -75,11 +76,16 @@ function App() {
     <Nivelamento />
   </ProtectedRoute>
 } />
+<Route path="/nivelamento/resultado" element={
+  <ProtectedRoute perfil="aluno">
+    <ResultadoNivelamento />
+  </ProtectedRoute>
+} />
 <Route path="/minha-turma" element={
-        <ProtectedRoute perfil="aluno">
-          <MinhaTurma />
-        </ProtectedRoute>
-      } />
+  <ProtectedRoute perfil="aluno">
+    <MinhaTurma />
+  </ProtectedRoute>
+} />
       
       {/* Redirects */}
       <Route path="/" element={<Navigate to="/login" replace />} />

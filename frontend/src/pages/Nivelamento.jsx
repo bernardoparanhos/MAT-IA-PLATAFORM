@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Formula from '../components/Formula'
 
 // ─── TELA: BOAS-VINDAS ────────────────────────────────────────────────────────
 function TelaBoasVindas({ onIniciar, onPular }) {
@@ -56,11 +57,6 @@ function TelaBoasVindas({ onIniciar, onPular }) {
             onClick={onIniciar}
             className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-xl text-sm transition-colors mb-3">
             🎯 Fazer diagnóstico agora
-          </button>
-          <button
-            onClick={onPular}
-            className="w-full text-slate-400 hover:text-white text-sm font-light py-2 transition-colors">
-            Pular e explorar por conta
           </button>
         </div>
       </div>
@@ -179,15 +175,15 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular }) {
               {questao.bloco === 'inteiros' && 'Números Inteiros'}
               {questao.bloco === 'fracoes' && 'Frações'}
               {questao.bloco === 'raizes' && 'Raízes'}
-              {questao.bloco === 'potencias' && 'Potências'}
+              {questao.bloco === 'geometria' && 'Geometria'}
             </span>
           </div>
 
           {/* Enunciado */}
           <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6 mb-4">
             <p className="text-white text-xl font-medium text-center tracking-wide">
-              {questao.enunciado}
-            </p>
+  {questao.latex ? <Formula tex={questao.enunciado} block={true} /> : questao.enunciado}
+</p>
           </div>
 
           {/* Alternativas */}
@@ -206,7 +202,9 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular }) {
                   ${selecionada === letra ? 'bg-orange-500 text-white' : 'bg-white/5 text-slate-400'}`}>
                   {letra}
                 </span>
-                <span className="text-sm font-light">{questao.alternativas[letra]}</span>
+                <span className="text-sm font-light">
+  {questao.latex ? <Formula tex={questao.alternativas[letra]} /> : questao.alternativas[letra]}
+</span>
               </button>
             ))}
           </div>
@@ -309,8 +307,11 @@ function Nivelamento() {
     }
   }
 
-  function handleIniciar() {
+  const [iniciadoEm, setIniciadoEm] = useState(null)
+
+function handleIniciar() {
     carregarQuestoes()
+    setIniciadoEm(Date.now())
     setTela('questao')
   }
 
@@ -351,10 +352,11 @@ function Nivelamento() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          respostas: respostasFinais,
-          usou_dicas: dicasUsadas,
-          pulou: puladasFinais
-        })
+        respostas: respostasFinais,
+        usou_dicas: dicasUsadas,
+        pulou: puladasFinais,
+        iniciado_em: iniciadoEm
+      })
       })
     } catch (e) {
       console.error('Erro ao enviar respostas', e)
