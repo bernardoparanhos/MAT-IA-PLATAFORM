@@ -32,7 +32,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
     codigo_acesso TEXT UNIQUE NOT NULL,
-    professor_id INTEGER NOT NULL,
+    professor_id INTEGER,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (professor_id) REFERENCES usuarios(id)
   );

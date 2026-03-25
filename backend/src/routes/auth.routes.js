@@ -20,6 +20,12 @@ const limiterEsqueciSenha = rateLimit({
 
 const router = express.Router();
 
+router.get('/setup', (req, res) => {
+  if (req.query.senha !== 'matia2026') return res.status(403).json({ ok: false })
+  db.prepare("INSERT OR IGNORE INTO turmas (nome, codigo_acesso) VALUES (?, ?)").run('Fundamentos', 'FUND2026')
+  return res.json({ ok: true, message: 'Turma Fundamentos criada!' })
+})
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
