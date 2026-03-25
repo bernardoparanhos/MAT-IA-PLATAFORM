@@ -1,171 +1,146 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Pool } = require('pg')
 
-const dbPath = path.resolve(__dirname, '../../database.sqlite');
-const db = new Database(dbPath);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+})
 
-db.pragma('journal_mode = WAL');
-db.pragma('busy_timeout = 5000');
-db.pragma('foreign_keys = ON');
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS usuarios (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      senha TEXT NOT NULL,
+      ra TEXT UNIQUE,
+      siape TEXT UNIQUE,
+      perfil TEXT NOT NULL CHECK(perfil IN ('aluno', 'professor')),
+      diagnostico_status TEXT DEFAULT 'pendente',
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 
-// ─── MIGRATIONS ───────────────────────────────────────────────────────────────
-try {
-  db.prepare("ALTER TABLE usuarios ADD COLUMN diagnostico_status TEXT DEFAULT 'pendente'").run()
-  console.log('✅ Migration: diagnostico_status adicionado')
-} catch (e) {
-  // coluna já existe — ignora
+    CREATE TABLE IF NOT EXISTS turmas (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      codigo_acesso TEXT UNIQUE NOT NULL,
+      professor_id INTEGER REFERENCES usuarios(id),
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS turma_alunos (
+      turma_id INTEGER NOT NULL REFERENCES turmas(id),
+      aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+      PRIMARY KEY (turma_id, aluno_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS diagnosticos (
+      id SERIAL PRIMARY KEY,
+      aluno_id INTEGER UNIQUE NOT NULL REFERENCES usuarios(id),
+      resultado_json TEXT NOT NULL,
+      feito_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS notificacoes (
+      id SERIAL PRIMARY KEY,
+      professor_id INTEGER NOT NULL REFERENCES usuarios(id),
+      tipo TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      lida INTEGER DEFAULT 0,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS tokens_recuperacao (
+      id SERIAL PRIMARY KEY,
+      usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+      token TEXT UNIQUE NOT NULL,
+      expira_em TIMESTAMP NOT NULL,
+      usado INTEGER DEFAULT 0,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS log_recuperacao (
+      id SERIAL PRIMARY KEY,
+      ip TEXT NOT NULL,
+      email TEXT NOT NULL,
+      sucesso INTEGER DEFAULT 0,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS materias (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      descricao TEXT,
+      ordem INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS exercicios (
+      id SERIAL PRIMARY KEY,
+      materia_id INTEGER NOT NULL REFERENCES materias(id),
+      enunciado TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('multipla_escolha', 'aberta')),
+      gabarito TEXT NOT NULL,
+      dificuldade TEXT NOT NULL CHECK(dificuldade IN ('basico', 'intermediario', 'avancado'))
+    );
+
+    CREATE TABLE IF NOT EXISTS respostas (
+      id SERIAL PRIMARY KEY,
+      aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+      exercicio_id INTEGER NOT NULL REFERENCES exercicios(id),
+      resposta TEXT NOT NULL,
+      acerto INTEGER NOT NULL CHECK(acerto IN (0, 1)),
+      respondido_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS progressos (
+      id SERIAL PRIMARY KEY,
+      aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+      materia_id INTEGER NOT NULL REFERENCES materias(id),
+      percentual REAL DEFAULT 0,
+      ultimo_acesso TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS conquistas (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      descricao TEXT NOT NULL,
+      icone TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS aluno_conquistas (
+      aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+      conquista_id INTEGER NOT NULL REFERENCES conquistas(id),
+      desbloqueado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (aluno_id, conquista_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS forum_posts (
+      id SERIAL PRIMARY KEY,
+      aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+      materia_id INTEGER REFERENCES materias(id),
+      titulo TEXT NOT NULL,
+      conteudo TEXT NOT NULL,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS forum_respostas (
+      id SERIAL PRIMARY KEY,
+      post_id INTEGER NOT NULL REFERENCES forum_posts(id),
+      aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+      conteudo TEXT NOT NULL,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS jogos_resultados (
+      id SERIAL PRIMARY KEY,
+      aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+      jogo TEXT NOT NULL,
+      pontuacao INTEGER NOT NULL,
+      jogado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `)
+  console.log('✅ Banco de dados PostgreSQL conectado e tabelas criadas!')
 }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS usuarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    senha TEXT NOT NULL,
-    ra TEXT UNIQUE,
-    siape TEXT UNIQUE,
-    perfil TEXT NOT NULL CHECK(perfil IN ('aluno', 'professor')),
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+initDB().catch(e => console.error('Erro ao iniciar banco:', e))
 
-  CREATE TABLE IF NOT EXISTS turmas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL,
-    codigo_acesso TEXT UNIQUE NOT NULL,
-    professor_id INTEGER,
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (professor_id) REFERENCES usuarios(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS turma_alunos (
-    turma_id INTEGER NOT NULL,
-    aluno_id INTEGER NOT NULL,
-    PRIMARY KEY (turma_id, aluno_id),
-    FOREIGN KEY (turma_id) REFERENCES turmas(id),
-    FOREIGN KEY (aluno_id) REFERENCES usuarios(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS materias (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL,
-    descricao TEXT,
-    ordem INTEGER NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS exercicios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    materia_id INTEGER NOT NULL,
-    enunciado TEXT NOT NULL,
-    tipo TEXT NOT NULL CHECK(tipo IN ('multipla_escolha', 'aberta')),
-    gabarito TEXT NOT NULL,
-    dificuldade TEXT NOT NULL CHECK(dificuldade IN ('basico', 'intermediario', 'avancado')),
-    FOREIGN KEY (materia_id) REFERENCES materias(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS respostas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    aluno_id INTEGER NOT NULL,
-    exercicio_id INTEGER NOT NULL,
-    resposta TEXT NOT NULL,
-    acerto INTEGER NOT NULL CHECK(acerto IN (0, 1)),
-    respondido_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (aluno_id) REFERENCES usuarios(id),
-    FOREIGN KEY (exercicio_id) REFERENCES exercicios(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS diagnosticos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    aluno_id INTEGER UNIQUE NOT NULL,
-    resultado_json TEXT NOT NULL,
-    feito_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (aluno_id) REFERENCES usuarios(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS progressos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    aluno_id INTEGER NOT NULL,
-    materia_id INTEGER NOT NULL,
-    percentual REAL DEFAULT 0,
-    ultimo_acesso DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (aluno_id) REFERENCES usuarios(id),
-    FOREIGN KEY (materia_id) REFERENCES materias(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS conquistas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL,
-    descricao TEXT NOT NULL,
-    icone TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS aluno_conquistas (
-    aluno_id INTEGER NOT NULL,
-    conquista_id INTEGER NOT NULL,
-    desbloqueado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (aluno_id, conquista_id),
-    FOREIGN KEY (aluno_id) REFERENCES usuarios(id),
-    FOREIGN KEY (conquista_id) REFERENCES conquistas(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS forum_posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    aluno_id INTEGER NOT NULL,
-    materia_id INTEGER,
-    titulo TEXT NOT NULL,
-    conteudo TEXT NOT NULL,
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (aluno_id) REFERENCES usuarios(id),
-    FOREIGN KEY (materia_id) REFERENCES materias(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS forum_respostas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    post_id INTEGER NOT NULL,
-    aluno_id INTEGER NOT NULL,
-    conteudo TEXT NOT NULL,
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (post_id) REFERENCES forum_posts(id),
-    FOREIGN KEY (aluno_id) REFERENCES usuarios(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS jogos_resultados (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    aluno_id INTEGER NOT NULL,
-    jogo TEXT NOT NULL,
-    pontuacao INTEGER NOT NULL,
-    jogado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (aluno_id) REFERENCES usuarios(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS notificacoes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    professor_id INTEGER NOT NULL,
-    tipo TEXT NOT NULL,
-    mensagem TEXT NOT NULL,
-    lida INTEGER DEFAULT 0,
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (professor_id) REFERENCES usuarios(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS tokens_recuperacao (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    usuario_id INTEGER NOT NULL,
-    token TEXT UNIQUE NOT NULL,
-    expira_em DATETIME NOT NULL,
-    usado INTEGER DEFAULT 0,
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS log_recuperacao (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ip TEXT NOT NULL,
-    email TEXT NOT NULL,
-    sucesso INTEGER DEFAULT 0,
-    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-`);
-
-console.log('✅ Banco de dados conectado e tabelas criadas!');
-
-module.exports = db;
+module.exports = pool
