@@ -14,7 +14,7 @@ const faqs = [
   },
   {
     pergunta: 'O que é RA / SIAPE?',
-    resposta: 'RA (Registro Acadêmico) é o número de matrícula do aluno na UTFPR. Digite com a letra "a" minúscula na frente, sem zeros — ex: a2867320. Você encontra no Moodle ou comprovante de matrícula. SIAPE é o número funcional do professor servidor federal.',
+    resposta: 'RA (Registro Acadêmico) é o número de matrícula do aluno na UTFPR. Digite com a letra "a" minúscula na frente, sem zeros — ex: a0000000. Você encontra no Moodle ou comprovante de matrícula. SIAPE é o número funcional do professor servidor federal.',
   },
   {
     pergunta: 'Como entro em uma turma?',
@@ -281,7 +281,7 @@ function Login() {
                 <div>
                   <label className={labelClass}>RA</label>
                   <input type="text" name="ra" value={form.ra} onChange={handleChange}
-                    placeholder="ex: a2867320" required className={inputClass} />
+                    placeholder="ex: a000000" required className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Senha</label>

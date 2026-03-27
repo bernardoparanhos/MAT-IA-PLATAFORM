@@ -148,7 +148,7 @@
   "enunciado": "\\left(\\frac{27}{8}\\right)^{-1} =",
   "alternativas": {
     "A": "\\left(\\frac{8}{27}\\right)^3",
-    "B": "\\frac{3^{-3}}{2^{-3}}",
+    "B": "\\frac{2^3}{3^3}",
     "C": "\\frac{9^{-3}}{3^{-3}}",
     "D": "\\frac{2}{3}"
   },

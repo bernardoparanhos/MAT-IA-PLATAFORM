@@ -22,33 +22,15 @@ function TelaBoasVindas({ onIniciar, onPular }) {
             </svg>
           </div>
 
-          <h2 className="text-xl font-semibold text-white text-center mb-2">Bem-vindo ao MAT-IA!</h2>
+          <h2 className="text-xl font-semibold text-white text-center mb-2">Diagnóstico MAT-IA</h2>
           <p className="text-slate-400 text-sm text-center font-light mb-6">
-            Antes de começar, que tal fazermos um diagnóstico rápido do seu nível?
+            Responda as questões abaixo. Seu professor receberá os resultados para acompanhar seu desempenho.
           </p>
-
-          {/* Benefícios */}
-          <div className="space-y-3 mb-6">
-            {[
-              'Trilha de estudos personalizada',
-              'Gráfico do seu perfil matemático',
-              'Sugestões de onde começar',
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center flex-shrink-0">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3 h-3 text-orange-400">
-                    <path d="M20 6L9 17l-5-5"/>
-                  </svg>
-                </div>
-                <span className="text-slate-300 text-sm font-light">{item}</span>
-              </div>
-            ))}
-          </div>
 
           {/* Aviso honestidade */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
             <p className="text-slate-400 text-xs font-light leading-relaxed italic">
-              "Para que o diagnóstico seja útil, responda por conta própria — sem calculadora ou consultas. Quanto mais honesto for, mais personalizada será sua trilha."
+              "Responda por conta própria — sem calculadora ou consultas. Seus resultados ajudam o professor a entender melhor o nível da turma."
             </p>
           </div>
 

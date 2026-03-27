@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     pergunta: 'O que é RA / SIAPE?',
-    resposta: 'RA (Registro Acadêmico) é o número de matrícula do aluno na UTFPR. Digite com a letra "a" minúscula na frente, sem zeros — ex: a2867320. Você encontra no Moodle ou comprovante de matrícula. SIAPE é o número funcional do professor servidor federal.',
+    resposta: 'RA (Registro Acadêmico) é o número de matrícula do aluno na UTFPR. Digite com a letra "a" minúscula na frente, sem zeros — ex: a0000000. Você encontra no Moodle ou comprovante de matrícula. SIAPE é o número funcional do professor servidor federal.',
   },
   {
     pergunta: 'Como entro em uma turma?',
@@ -140,7 +140,7 @@ function Cadastro() {
   }
 
   const inputClass = "w-full bg-white/5 text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-400 placeholder-slate-500 border border-white/10 transition-all"
-  const selectClass = "w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-400 border border-white/10 transition-all"
+  const selectClass = "w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-orange-400 border border-white/10 transition-all appearance-none"
   const labelClass = "text-slate-400 text-xs uppercase tracking-wider mb-1.5 block font-light"
 
   if (!perfil) {
@@ -258,17 +258,24 @@ function Cadastro() {
                 <div>
                   <label className={labelClass}>RA</label>
                   <input type="text" name="ra" value={form.ra} onChange={handleChange}
-                    placeholder="ex: a2867320" required className={inputClass} />
+                    placeholder="ex: a0000000" required className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Turma</label>
-                  <select name="turmaId" value={form.turmaId} onChange={handleChange}
+                 <div className="relative">
+  <select name="turmaId" value={form.turmaId} onChange={handleChange}
                     required className={selectClass}>
                     <option value="">Selecione sua turma</option>
                     {turmas.map(t => (
                       <option key={t.id} value={t.id}>{t.nome}</option>
                     ))}
                   </select>
+            <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-slate-400">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </div>
+            </div>
                 </div>
               </>
             )}

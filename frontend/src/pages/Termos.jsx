@@ -57,10 +57,6 @@ const linkOutra = from ? `/privacidade?from=${from}` : '/privacidade'
             <h3 className="text-orange-400 font-medium mb-2">5. Alterações</h3>
             <p>Estes termos podem ser atualizados a qualquer momento. O uso continuado da plataforma após alterações implica aceitação das novas condições.</p>
           </div>
-          <div>
-            <h3 className="text-orange-400 font-medium mb-2">6. Contato</h3>
-            <p>Dúvidas ou solicitações podem ser enviadas para <span className="text-white">beparanhosborges@gmail.com</span>.</p>
-          </div>
         </div>
 
         <p className="text-slate-600 text-xs text-center mt-6 font-light">
