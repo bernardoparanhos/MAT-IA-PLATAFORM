@@ -325,7 +325,8 @@ function calcularResultado(respostas) {
   questoes.forEach(q => {
     const bloco = blocos[q.bloco]
     bloco.total++
-    if (respostas[q.id] === q.correta) { bloco.acertos++; pontuacao++ }
+    const corretaReal = global.gabaritoAtual?.[q.id] || q.correta
+if (respostas[q.id] === corretaReal) { bloco.acertos++; pontuacao++ }
   })
   Object.keys(blocos).forEach(b => {
     const { acertos, total } = blocos[b]
@@ -400,20 +401,27 @@ router.get('/diagnostico/resultado', verifyToken, async (req, res) => {
 
 router.get('/diagnostico/questoes', verifyToken, (req, res) => {
   const questoesEmbaralhadas = questoes.map(({ correta, ...q }) => {
-    const letras = ['A', 'B', 'C', 'D']
-    for (let i = letras.length - 1; i > 0; i--) {
+    const letrasOriginais = ['A', 'B', 'C', 'D']
+    const letrasEmbaralhadas = [...letrasOriginais]
+    for (let i = letrasEmbaralhadas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [letras[i], letras[j]] = [letras[j], letras[i]]
+      [letrasEmbaralhadas[i], letrasEmbaralhadas[j]] = [letrasEmbaralhadas[j], letrasEmbaralhadas[i]]
     }
-    const alternativasOriginais = q.alternativas
+    // Cada posição i: letraEmbaralhada[i] recebe conteúdo de letrasOriginais[i]
     const novasAlternativas = {}
-    letras.forEach((letraNova, idx) => {
-      novasAlternativas[letraNova] = alternativasOriginais[['A','B','C','D'][idx]]
+    letrasEmbaralhadas.forEach((letraNova, idx) => {
+      novasAlternativas[letraNova] = q.alternativas[letrasOriginais[idx]]
     })
-    const idxCorreta = ['A','B','C','D'].indexOf(correta)
-    return { ...q, alternativas: novasAlternativas, correta: letras[idxCorreta] }
+    // A nova letra correta é aquela que ficou na posição original da correta
+    const idxCorreta = letrasOriginais.indexOf(correta)
+const novaCorreta = letrasEmbaralhadas[idxCorreta]
+return { ...q, alternativas: novasAlternativas, correta: novaCorreta }
   })
-  return res.json({ questoes: questoesEmbaralhadas.map(({ correta, ...q }) => q) })
+  // Salva gabarito embaralhado em memória temporária por sessão
+global.gabaritoAtual = {}
+questoesEmbaralhadas.forEach(q => { global.gabaritoAtual[q.id] = q.correta })
+
+return res.json({ questoes: questoesEmbaralhadas.map(({ correta, ...q }) => q) })
 })
 
 module.exports = router;

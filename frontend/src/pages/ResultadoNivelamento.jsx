@@ -12,7 +12,7 @@ const BLOCO_CONFIG = {
   inteiros: { label: 'Inteiros', total: 3 },
   fracoes: { label: 'Frações', total: 3 },
   raizes: { label: 'Raízes', total: 3 },
-  potencias: { label: 'Potências', total: 4 },
+  potencias: { label: 'Potências', total: 6 },
   geometria: { label: 'Geometria', total: 2 },
 }
 

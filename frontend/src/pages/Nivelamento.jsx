@@ -140,7 +140,7 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular }) {
     }, 300)
   }
 
-  const letras = ['A', 'B', 'C', 'D']
+  const letras = Object.keys(questao.alternativas)
   const progresso = ((atual - 1) / total) * 100
 
   return (
