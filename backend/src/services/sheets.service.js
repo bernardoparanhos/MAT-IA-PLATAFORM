@@ -21,7 +21,7 @@ async function garantirCabecalho(sheets) {
       valueInputOption: 'RAW',
       requestBody: {
         values: [[
-          'Nome', 'RA', 'Turma', 'Nível Geral', 'Pontuação (0-10)',
+          'Nome', 'RA', 'Turma', 'Nível Geral', 'Pontuação (0-17)',
           'Inteiros (acertos/3)', 'Frações (acertos/3)', 'Raízes (acertos/3)', 'Potências (acertos/4)', 'Geometria (acertos/2)',
           'Dicas Usadas', 'Questões Puladas', 'Data e Hora', 'Tempo de Resposta',
 'Q1 (-2)(-2)(-2)', 'Q2 (-2)(-2)(-2)(-2)', 'Q3 -9+4',

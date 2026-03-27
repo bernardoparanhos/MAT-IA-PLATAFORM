@@ -400,6 +400,12 @@ router.get('/diagnostico/resultado', verifyToken, async (req, res) => {
 })
 
 router.get('/diagnostico/questoes', verifyToken, (req, res) => {
+  const semGabarito = questoes.map(({ correta, ...q }) => q)
+  return res.json({ questoes: semGabarito })
+})
+
+// TEMPORÁRIO — embaralhamento desativado até próxima versão
+router.get('/diagnostico/questoes-OLD', verifyToken, (req, res) => {
   const questoesEmbaralhadas = questoes.map(({ correta, ...q }) => {
     const letrasOriginais = ['A', 'B', 'C', 'D']
     const letrasEmbaralhadas = [...letrasOriginais]
