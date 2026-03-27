@@ -191,7 +191,7 @@
 },
 {
   "id": 17, "bloco": "geometria",
-  "enunciado": "Determine o valor de x: triângulo retângulo com cateto 3 m e hipotenusa 5 cm, sendo x o cateto desconhecido.",
+  "enunciado": "Determine o valor de x: triângulo retângulo com cateto 3cm e hipotenusa 5 cm, sendo x o cateto desconhecido.",
   "alternativas": {
     "A": "4 cm",
     "B": "9 cm",
