@@ -87,7 +87,6 @@ function NotificacoesProfessor() {
   const navigate = useNavigate()
   const { logout } = useAuth()
   const { notificacoes, naoLidas, marcarLida, marcarTodasLidas, apagarUma, apagarTodas } = useNotificacoes()
-  const [carregando, setCarregando] = useState(false)
   const [apagados, setApagados] = useState({})
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [searchParams] = useSearchParams()
@@ -177,9 +176,7 @@ useEffect(() => {
           </div>
 
           {/* Lista */}
-          {carregando ? (
-            <p className="text-slate-400 text-sm font-light">Carregando...</p>
-          ) : notificacoes.length === 0 ? (
+          {notificacoes.length === 0 ? (
             <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-10 text-center">
               <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7 text-slate-500">

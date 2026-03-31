@@ -18,7 +18,7 @@ export function NotificacoesProvider({ children }) {
     } catch (e) {
       console.error('Erro ao buscar notificações', e)
     }
-  }, [token])
+  }, [token, API])
 
   useEffect(() => {
     buscar()

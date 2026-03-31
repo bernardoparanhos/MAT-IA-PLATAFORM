@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Formula from '../components/Formula'
 
 // ─── TELA: BOAS-VINDAS ────────────────────────────────────────────────────────
-function TelaBoasVindas({ onIniciar, onPular }) {
+function TelaBoasVindas({ onIniciar }) {
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
       <div className="w-full max-w-md">
@@ -314,14 +314,12 @@ function handleIniciar() {
     setTela('questao')
   }
 
-  function handleResponder(questaoId, resposta, dicasUsadasNaQuestao) {
+  function handleResponder(questaoId, resposta) {
     const novasRespostas = { ...respostas, [questaoId]: resposta }
     setRespostas(novasRespostas)
 
     const novasDicas = [...dicasUsadas]
-    dicasUsadasNaQuestao.forEach(idx => {
-      if (!novasDicas.includes(questaoId)) novasDicas.push(questaoId)
-    })
+    if (!novasDicas.includes(questaoId)) novasDicas.push(questaoId)
     setDicasUsadas(novasDicas)
 
     avancar(novasRespostas)
