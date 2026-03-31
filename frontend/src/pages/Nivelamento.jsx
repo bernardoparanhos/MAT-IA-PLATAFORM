@@ -118,7 +118,8 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular }) {
     if (!selecionada) return
     setConfirmando(true)
     setTimeout(() => {
-      onResponder(questao.id, selecionada, dicasUsadas)
+      const respostaOriginal = questao._mapa ? questao._mapa[selecionada] : selecionada
+      onResponder(questao.id, respostaOriginal, dicasUsadas)
     }, 300)
   }
 
@@ -251,6 +252,22 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular }) {
   )
 }
 
+function embaralharQuestao(q) {
+  const letras = ['A', 'B', 'C', 'D']
+  const embaralhadas = [...letras]
+  for (let i = embaralhadas.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [embaralhadas[i], embaralhadas[j]] = [embaralhadas[j], embaralhadas[i]]
+  }
+  const alternativasVisuais = {}
+  const mapa = {} // visual → original
+  letras.forEach((letraVisual, i) => {
+    alternativasVisuais[letraVisual] = q.alternativas[embaralhadas[i]]
+    mapa[letraVisual] = embaralhadas[i]
+  })
+  return { ...q, alternativas: alternativasVisuais, _mapa: mapa }
+}
+
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 function Nivelamento() {
   const navigate = useNavigate()
@@ -270,7 +287,7 @@ function Nivelamento() {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
-      setQuestoes(data.questoes || [])
+      setQuestoes((data.questoes || []).map(embaralharQuestao))
     } catch (e) {
       console.error('Erro ao carregar questões', e)
     }
