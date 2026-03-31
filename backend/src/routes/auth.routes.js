@@ -3,7 +3,6 @@ const { body } = require('express-validator');
 const { register, loginAluno, loginProfessor } = require('../controllers/auth.controller');
 const { verifyToken } = require('../middlewares/auth.middleware');
 const db = require('../config/database');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
@@ -18,18 +17,28 @@ const limiterEsqueciSenha = rateLimit({
 
 const router = express.Router();
 
+async function enviarEmail({ to, subject, html }) {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': process.env.BREVO_API_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      sender: { name: 'MAT-IA', email: 'beparanhosborges@gmail.com' },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html
+    })
+  })
+  if (!res.ok) throw new Error(`Brevo error: ${res.status}`)
+}
+
 router.get('/setup', async (req, res) => {
   if (req.query.senha !== 'matia2026') return res.status(403).json({ ok: false })
   await db.query("INSERT INTO turmas (nome, codigo_acesso) VALUES ($1, $2) ON CONFLICT (codigo_acesso) DO NOTHING", ['Fundamentos', 'FUND2026'])
   return res.json({ ok: true, message: 'Turma Fundamentos criada!' })
 })
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-});
 
 const registerAlunoValidation = [
   body('nome').trim().notEmpty().withMessage('Nome é obrigatório')
@@ -240,8 +249,8 @@ router.post('/aluno/esqueci-senha', limiterEsqueciSenha, async (req, res) => {
       const expiraEm = new Date(Date.now() + 60 * 60 * 1000).toISOString();
       await db.query(`INSERT INTO tokens_recuperacao (usuario_id, token, expira_em) VALUES ($1, $2, $3)`, [usuario.id, token, expiraEm]);
       const link = `${process.env.FRONTEND_URL}/redefinir-senha?token=${token}&perfil=aluno`;
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM, to: email,
+      await enviarEmail({
+        to: email,
         subject: 'MAT-IA — Redefinição de senha',
         html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#0f172a;color:#fff;padding:40px;border-radius:12px;"><h1 style="color:#f97316;">MAT-IA</h1><p style="color:#94a3b8;font-size:14px;margin-bottom:32px;">Suporte Inteligente ao Aprendizado de Matemática</p><h2>Redefinição de senha</h2><p style="color:#94a3b8;font-size:14px;margin-bottom:24px;">Clique no botão abaixo para redefinir sua senha. O link expira em <strong style="color:#fff;">1 hora</strong>.</p><a href="${link}" style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;">Redefinir minha senha</a></div>`
       });
