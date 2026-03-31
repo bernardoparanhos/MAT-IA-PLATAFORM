@@ -64,7 +64,7 @@ async function alterarSenha(req, res) {
 }
 
 async function desassociarTurma(req, res) {
-  const { senha } = req.body;
+  const { senha, turmaId } = req.body;
 
   if (!senha)
     return res.status(400).json({ message: 'Senha obrigatória para confirmar a desassociação.' });
@@ -82,7 +82,11 @@ async function desassociarTurma(req, res) {
     if (turmaResult.rows.length === 0)
       return res.status(400).json({ message: 'Nenhuma turma associada.' });
 
-    await db.query('UPDATE turmas SET professor_id = NULL WHERE professor_id = $1', [req.usuario.id]);
+    if (turmaId) {
+      await db.query('UPDATE turmas SET professor_id = NULL WHERE id = $1 AND professor_id = $2', [turmaId, req.usuario.id])
+    } else {
+      await db.query('UPDATE turmas SET professor_id = NULL WHERE professor_id = $1', [req.usuario.id])
+    }
 
     return res.json({ message: 'Turma desassociada com sucesso.' });
   } catch (error) {

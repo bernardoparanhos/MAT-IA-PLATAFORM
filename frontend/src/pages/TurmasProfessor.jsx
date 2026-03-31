@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useNotificacoes } from '../context/NotificacoesContext'
 
 function tempoRelativo(dataStr) {
   const dataUtc = dataStr.endsWith('Z') ? dataStr : dataStr + 'Z'
@@ -88,17 +89,14 @@ function TurmasProfessor() {
   const [turmas, setTurmas] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [sidebarAberta, setSidebarAberta] = useState(false)
-  const [notificacoes, setNotificacoes] = useState([])
   const [painelNotif, setPainelNotif] = useState(false)
   const painelRef = useRef(null)
-
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
-  const naoLidas = notificacoes.filter(n => !n.lida).length
+  const { notificacoes, naoLidas, marcarTodasLidas } = useNotificacoes()
 
   useEffect(() => {
     buscarTurmas()
-    buscarNotificacoes()
   }, [])
 
   useEffect(() => {
@@ -129,26 +127,6 @@ function TurmasProfessor() {
     } finally {
       setCarregando(false)
     }
-  }
-
- async function buscarNotificacoes() {
-    try {
-      const res = await fetch(`${API}/auth/notificacoes`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setNotificacoes(data.notificacoes || [])
-    } catch (e) {
-      console.error('Erro ao buscar notificações', e)
-    }
-  }
-
-  async function marcarTodasLidas() {
-    await fetch(`${API}/auth/notificacoes/lida-todas`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    setNotificacoes(prev => prev.map(n => ({ ...n, lida: 1 })))
   }
 
   const SinoBotao = () => (
@@ -197,12 +175,53 @@ function TurmasProfessor() {
 
   const [alunosPorTurma, setAlunosPorTurma] = useState({})
   const [carregandoAlunos, setCarregandoAlunos] = useState({})
+  const [turmasDisponiveis, setTurmasDisponiveis] = useState([])
+  const [modalAberto, setModalAberto] = useState(false)
+  const [associando, setAssociando] = useState(false)
+  const [mensagem, setMensagem] = useState('')
 
   useEffect(() => {
     if (turmas.length > 0) {
       turmas.forEach(t => buscarAlunos(t.id))
     }
   }, [turmas])
+
+  async function abrirModal() {
+    try {
+      const res = await fetch(`${API}/auth/turmas/disponiveis`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      setTurmasDisponiveis(data.turmas || [])
+      setModalAberto(true)
+    } catch {
+      console.error('Erro ao buscar turmas disponíveis')
+    }
+  }
+
+  async function associarTurma(turmaId) {
+    setAssociando(true)
+    try {
+      const res = await fetch(`${API}/auth/turmas/associar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ turmaId })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setMensagem('Turma associada com sucesso!')
+        setModalAberto(false)
+        buscarTurmas()
+        setTimeout(() => setMensagem(''), 3000)
+      } else {
+        setMensagem(data.message || 'Erro ao associar turma.')
+      }
+    } catch {
+      setMensagem('Erro de conexão.')
+    } finally {
+      setAssociando(false)
+    }
+  }
 
   async function buscarAlunos(turmaId) {
     setCarregandoAlunos(prev => ({ ...prev, [turmaId]: true }))
@@ -278,6 +297,12 @@ function TurmasProfessor() {
             </div>
           </div>
 
+          {mensagem && (
+            <div className="mb-6 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl px-4 py-3 text-sm font-light">
+              {mensagem}
+            </div>
+          )}
+
           {/* Cards de turmas */}
           {carregando ? (
             <div className="space-y-3">
@@ -297,10 +322,10 @@ function TurmasProfessor() {
                 </svg>
               </div>
               <p className="text-white font-medium mb-1">Nenhuma turma associada</p>
-              <p className="text-slate-400 text-sm font-light mb-6">Associe sua turma no painel principal para começar</p>
-              <button onClick={() => navigate('/dashboard-professor')}
+              <p className="text-slate-400 text-sm font-light mb-6">Associe uma turma para começar a acompanhar seus alunos</p>
+              <button onClick={abrirModal}
                 className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition-colors">
-                Ir para o painel
+                Associar turma
               </button>
             </div>
           ) : (
@@ -369,10 +394,45 @@ function TurmasProfessor() {
 
                 </div>
               ))}
+                     <button
+                  onClick={abrirModal}
+                  className="w-full bg-white/5 hover:bg-orange-500/10 border border-white/10 hover:border-orange-500/30 rounded-2xl p-5 text-left transition-all flex items-center gap-3 mt-4">
+                  <div className="w-8 h-8 bg-orange-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-orange-400">
+                      <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                  </div>
+                  <span className="text-slate-400 text-sm font-light">Associar nova turma</span>
+                </button>
             </div>
           )}
         </main>
       </div>
+
+      {modalAberto && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#1e2d3d] border border-white/10 rounded-2xl p-6 lg:p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-white text-xl font-semibold mb-1">Associar turma</h3>
+            <p className="text-slate-400 text-sm font-light mb-6">Escolha a turma que deseja associar</p>
+            {turmasDisponiveis.length === 0 ? (
+              <p className="text-slate-400 text-sm text-center py-4 font-light">Nenhuma turma disponível no momento.</p>
+            ) : (
+              <div className="space-y-3">
+                {turmasDisponiveis.map(turma => (
+                  <button key={turma.id} onClick={() => associarTurma(turma.id)} disabled={associando}
+                    className="w-full bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-500/40 rounded-xl p-4 text-left transition-all group disabled:opacity-50">
+                    <p className="text-white font-medium group-hover:text-orange-300 transition-colors">{turma.nome}</p>
+                    <p className="text-slate-500 font-mono text-sm mt-0.5">{turma.codigo_acesso}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button onClick={() => setModalAberto(false)} className="w-full mt-6 text-slate-500 hover:text-slate-300 text-sm transition-colors font-light">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useNotificacoes } from '../context/NotificacoesContext'
 
 function tempoRelativo(dataStr) {
   // SQLite salva em UTC sem o 'Z' — adicionamos para o JS interpretar corretamente
@@ -85,14 +86,10 @@ const NavItems = ({ onClick, navigate, logout, naoLidas }) => (
 function NotificacoesProfessor() {
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const [notificacoes, setNotificacoes] = useState([])
-  const [carregando, setCarregando] = useState(true)
+  const { notificacoes, naoLidas, marcarLida, marcarTodasLidas, apagarUma, apagarTodas } = useNotificacoes()
+  const [carregando, setCarregando] = useState(false)
+  const [apagados, setApagados] = useState({})
   const [sidebarAberta, setSidebarAberta] = useState(false)
-
-  const token = localStorage.getItem('token')
-  const API = import.meta.env.VITE_API_URL
-  const naoLidas = notificacoes.filter(n => !n.lida).length
-
   const [searchParams] = useSearchParams()
 const idDestaque = searchParams.get('id')
 const itemRefs = useRef({})
@@ -108,36 +105,6 @@ useEffect(() => {
     }, 2000)
   }
 }, [idDestaque, notificacoes])
-
-useEffect(() => { buscar() }, [])
-
- async function buscar() {
-    try {
-      const res = await fetch(`${API}/auth/notificacoes`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setNotificacoes(data.notificacoes || [])
-    } catch (e) {
-      console.error('Erro ao buscar notificações', e)
-    } finally {
-      setCarregando(false)
-    }
-  }
-
-  async function marcarLida(id) {
-    await fetch(`${API}/auth/notificacoes/lida/${id}`, {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
-    })
-    setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: 1 } : n))
-  }
-
-  async function marcarTodasLidas() {
-    await fetch(`${API}/auth/notificacoes/lida-todas`, {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
-    })
-    setNotificacoes(prev => prev.map(n => ({ ...n, lida: 1 })))
-  }
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex" style={{ fontFamily: 'Outfit, sans-serif' }}>
@@ -193,12 +160,20 @@ useEffect(() => { buscar() }, [])
                 {naoLidas > 0 ? `${naoLidas} não lida${naoLidas > 1 ? 's' : ''}` : 'Tudo em dia'}
               </p>
             </div>
-            {naoLidas > 0 && (
-              <button onClick={marcarTodasLidas}
-                className="ml-auto text-orange-400 hover:text-orange-300 text-sm transition-colors font-light">
-                Marcar todas como lidas
-              </button>
-            )}
+            <div className="ml-auto flex items-center gap-4">
+              {naoLidas > 0 && (
+                <button onClick={marcarTodasLidas}
+                  className="text-orange-400 hover:text-orange-300 text-sm transition-colors font-light">
+                  Marcar todas como lidas
+                </button>
+              )}
+              {notificacoes.length > 0 && (
+                <button onClick={apagarTodas}
+                  className="text-red-400/70 hover:text-red-400 text-sm transition-colors font-light">
+                  Apagar tudo
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Lista */}
@@ -237,9 +212,23 @@ useEffect(() => { buscar() }, [])
                         <p className="text-slate-600 text-xs mt-1">{tempoRelativo(n.criado_em)}</p>
                       </div>
                     </div>
-                    {!n.lida && (
-                      <span className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-1.5" />
-                    )}
+                      <div className="flex flex-col items-end gap-2">
+                      {!n.lida && (
+                        <span className="w-2 h-2 bg-orange-500 rounded-full" />
+                      )}
+                     <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          setApagados(prev => ({ ...prev, [n.id]: 'ok' }))
+                          setTimeout(() => apagarUma(n.id), 300)
+                        }}
+                        className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-400/10">
+                        {apagados[n.id] === 'ok'
+                          ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-green-400"><path d="M20 6L9 17l-5-5"/></svg>
+                          : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                        }
+                      </button>
+                    </div>
                   </div>
                 </button>
               ))}

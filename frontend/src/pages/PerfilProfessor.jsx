@@ -74,16 +74,26 @@ function PerfilProfessor() {
   const [mensagem, setMensagem] = useState({ tipo: '', texto: '' })
 
   // Modal desassociar
-  const [modalDesassociar, setModalDesassociar] = useState(false)
+ const [modalDesassociar, setModalDesassociar] = useState(false)
+  const [turmaParaDesassociar, setTurmaParaDesassociar] = useState(null)
   const [senhaDesassociar, setSenhaDesassociar] = useState('')
   const [desassociando, setDesassociando] = useState(false)
   const [erroDesassociar, setErroDesassociar] = useState('')
+
+  const [turmas, setTurmas] = useState([])
+  const token = localStorage.getItem('token')
+  const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
     async function carregar() {
       try {
         const data = await getPerfil()
         setPerfil(data.professor)
+        const res = await fetch(`${API}/auth/turmas/minhas`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const d = await res.json()
+        setTurmas(d.turmas || [])
       } catch {
         setMensagem({ tipo: 'erro', texto: 'Erro ao carregar perfil.' })
       } finally {
@@ -134,7 +144,7 @@ function PerfilProfessor() {
     }
     setDesassociando(true)
     try {
-      const data = await desassociarTurma(senhaDesassociar)
+      const data = await desassociarTurma(senhaDesassociar, turmaParaDesassociar?.id)
       if (data.message === 'Turma desassociada com sucesso.') {
         setModalDesassociar(false)
         setSenhaDesassociar('')
@@ -248,25 +258,28 @@ function PerfilProfessor() {
                       {perfil?.siape || '—'}
                     </div>
                   </div>
-                  <div>
-                    <label className={labelClass}>Turma associada</label>
-                    <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-light">
-                      {perfil?.turma
-                        ? <span className="text-orange-400">{perfil.turma.nome}</span>
-                        : <span className="text-slate-500">Nenhuma turma</span>
-                      }
-                    </div>
-                    {/* Botão discreto — só aparece se tiver turma */}
-                    {perfil?.turma && (
-                      <button
-                        onClick={() => setModalDesassociar(true)}
-                        className="mt-2 text-slate-500 hover:text-slate-300 text-xs font-light transition-colors flex items-center gap-1"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
-                          <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-                        </svg>
-                        Trocar turma
-                      </button>
+                 <div className="sm:col-span-2">
+                    <label className={labelClass}>Turmas associadas</label>
+                    {turmas.length === 0 ? (
+                      <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-slate-500 text-sm font-light">
+                        Nenhuma turma
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {turmas.map(t => (
+                          <div key={t.id} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5">
+                            <span className="text-orange-400 text-sm font-light">{t.nome}</span>
+                            <button
+                              onClick={() => { setTurmaParaDesassociar(t); setModalDesassociar(true) }}
+                              className="text-slate-600 hover:text-red-400 transition-colors ml-1"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
+                                <path d="M6 18L18 6M6 6l12 12"/>
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                   <div className="sm:col-span-2">
@@ -342,7 +355,7 @@ function PerfilProfessor() {
 
             <p className="text-slate-300 text-sm font-light mb-6 leading-relaxed">
               Você está prestes a se desassociar da turma{' '}
-              <span className="text-orange-400 font-medium">{perfil?.turma?.nome}</span>.
+              <span className="text-orange-400 font-medium">{turmaParaDesassociar?.nome}</span>.
               Os alunos não serão afetados e você poderá associar uma nova turma em seguida.
             </p>
 

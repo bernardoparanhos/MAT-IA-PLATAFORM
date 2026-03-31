@@ -181,6 +181,16 @@ router.post('/notificacoes/lida-todas', verifyToken, async (req, res) => {
   return res.json({ ok: true });
 });
 
+router.delete('/notificacoes/:id', verifyToken, async (req, res) => {
+  await db.query('DELETE FROM notificacoes WHERE id = $1 AND professor_id = $2', [req.params.id, req.usuario.id])
+  return res.json({ ok: true })
+})
+
+router.delete('/notificacoes', verifyToken, async (req, res) => {
+  await db.query('DELETE FROM notificacoes WHERE professor_id = $1', [req.usuario.id])
+  return res.json({ ok: true })
+})
+
 // ─── REGISTER / LOGIN ─────────────────────────────────────────────────────────
 router.post('/register/aluno', registerAlunoValidation, (req, res) => register(req, res, 'aluno'));
 router.post('/register/professor', registerProfessorValidation, (req, res) => register(req, res, 'professor'));

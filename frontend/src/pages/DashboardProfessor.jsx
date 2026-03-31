@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useNotificacoes } from '../context/NotificacoesContext'
 
 function tempoRelativo(dataStr) {
   // SQLite salva em UTC sem o 'Z' — adicionamos para o JS interpretar corretamente
@@ -67,26 +68,18 @@ function DashboardProfessor() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
   const [turmas, setTurmas] = useState([])
-  const [turmasDisponiveis, setTurmasDisponiveis] = useState([])
-  const [modalAberto, setModalAberto] = useState(false)
   const [carregando, setCarregando] = useState(true)
-  const [associando, setAssociando] = useState(false)
-  const [mensagem, setMensagem] = useState('')
   const [sidebarAberta, setSidebarAberta] = useState(false)
-  const [notificacoes, setNotificacoes] = useState([])
   const [painelNotif, setPainelNotif] = useState(false)
   const painelRef = useRef(null)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
+  const { notificacoes, naoLidas, marcarLida, marcarTodasLidas } = useNotificacoes()
 
-  const naoLidas = notificacoes.filter(n => !n.lida).length
 
   useEffect(() => {
     buscarMinhasTurmas()
-    buscarNotificacoes()
-    const intervalo = setInterval(buscarNotificacoes, 30000)
-    return () => clearInterval(intervalo)
   }, [])
 
   useEffect(() => {
@@ -122,71 +115,6 @@ function DashboardProfessor() {
     }
   }
 
-  async function buscarNotificacoes() {
-    try {
-      const res = await fetch(`${API}/auth/notificacoes`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setNotificacoes(data.notificacoes || [])
-   } catch (e) {
-      console.error('Erro ao buscar notificações', e)
-    }
-  }
-
-  async function marcarLida(id) {
-    await fetch(`${API}/auth/notificacoes/lida/${id}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: 1 } : n))
-  }
-
-  async function marcarTodasLidas() {
-    await fetch(`${API}/auth/notificacoes/lida-todas`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    setNotificacoes(prev => prev.map(n => ({ ...n, lida: 1 })))
-  }
-
-  async function abrirModal() {
-    try {
-      const res = await fetch(`${API}/auth/turmas/disponiveis`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setTurmasDisponiveis(data.turmas || [])
-      setModalAberto(true)
-    } catch {
-      console.error('Erro ao buscar turmas disponíveis')
-    }
-  }
-
-  async function associarTurma(turmaId) {
-    setAssociando(true)
-    try {
-      const res = await fetch(`${API}/auth/turmas/associar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ turmaId })
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setMensagem('Turma associada com sucesso!')
-        setModalAberto(false)
-        buscarMinhasTurmas()
-        setTimeout(() => setMensagem(''), 3000)
-      } else {
-        setMensagem(data.message || 'Erro ao associar turma.')
-      }
-    } catch {
-      setMensagem('Erro de conexão.')
-    } finally {
-      setAssociando(false)
-    }
-  }
-
   const totalAlunos = turmas.reduce((acc, t) => acc + (t.total_alunos || 0), 0)
   const temTurma = turmas.length > 0
 
@@ -212,14 +140,13 @@ function DashboardProfessor() {
         <div className="absolute right-0 top-10 w-80 bg-[#1e2d3d] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <span className="text-white text-sm font-medium">Notificações</span>
-            {naoLidas > 0 && (
-              <button
-                onClick={marcarTodasLidas}
-                className="text-orange-400 hover:text-orange-300 text-xs transition-colors"
-              >
-                Marcar todas como lidas
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {naoLidas > 0 && (
+                <button onClick={marcarTodasLidas} className="text-orange-400 hover:text-orange-300 text-xs transition-colors">
+                  Marcar lidas
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
@@ -239,7 +166,7 @@ function DashboardProfessor() {
                   <p className={`text-sm ${!n.lida ? 'text-white' : 'text-slate-400'} font-light leading-snug`}>
                     {n.mensagem}
                   </p>
-                  <p className="text-slate-600 text-xs mt-1">{tempoRelativo(n.criado_em)}</p>
+                 <p className="text-slate-600 text-xs mt-1">{tempoRelativo(n.criado_em)}</p>
                 </button>
               ))
             )}
@@ -311,12 +238,6 @@ function DashboardProfessor() {
             </div>
           </div>
 
-          {mensagem && (
-            <div className="mb-6 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl px-4 py-3 text-sm font-light">
-              {mensagem}
-            </div>
-          )}
-
           {/* Visão Geral */}
           <div className="mb-8 lg:mb-10">
             <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">Visão Geral</p>
@@ -345,7 +266,7 @@ function DashboardProfessor() {
                 <p className="text-slate-400 text-sm font-light mb-8">
                   Associe sua turma para começar a acompanhar seus alunos
                 </p>
-                <button onClick={abrirModal} className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-8 py-2.5 rounded-xl text-sm transition-colors">
+                <button onClick={() => navigate('/turmas-professor')} className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-8 py-2.5 rounded-xl text-sm transition-colors">
                   Associar minha turma
                 </button>
               </div>
@@ -368,42 +289,12 @@ function DashboardProfessor() {
   Ver detalhes →
 </button>
                   </div>
-                ))}
+               ))}
               </div>
             )}
           </div>
         </main>
       </div>
-
-      {/* Modal associar turma */}
-      {modalAberto && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
-          <div className="bg-[#1e2d3d] border border-white/10 rounded-2xl p-6 lg:p-8 w-full max-w-md shadow-2xl">
-            <h3 className="text-white text-xl font-semibold mb-1">Selecione sua turma</h3>
-            <p className="text-slate-400 text-sm font-light mb-6">Escolha a turma que você leciona este semestre</p>
-            {turmasDisponiveis.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-4 font-light">Nenhuma turma disponível no momento.</p>
-            ) : (
-              <div className="space-y-3">
-                {turmasDisponiveis.map(turma => (
-                  <button
-                    key={turma.id}
-                    onClick={() => associarTurma(turma.id)}
-                    disabled={associando}
-                    className="w-full bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-500/40 rounded-xl p-4 text-left transition-all group disabled:opacity-50"
-                  >
-                    <p className="text-white font-medium group-hover:text-orange-300 transition-colors">{turma.nome}</p>
-                    <p className="text-slate-500 font-mono text-sm mt-0.5">{turma.codigo_acesso}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-            <button onClick={() => setModalAberto(false)} className="w-full mt-6 text-slate-500 hover:text-slate-300 text-sm transition-colors font-light">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
