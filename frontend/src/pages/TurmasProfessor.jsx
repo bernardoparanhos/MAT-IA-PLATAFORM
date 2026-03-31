@@ -171,7 +171,7 @@ function TurmasProfessor() {
     </div>
   )
 
-  const totalAlunos = turmas.reduce((acc, t) => acc + (t.total_alunos || 0), 0)
+  const totalAlunos = turmas.reduce((acc, t) => acc + (parseInt(t.total_alunos) || 0), 0)
 
   const [alunosPorTurma, setAlunosPorTurma] = useState({})
   const [carregandoAlunos, setCarregandoAlunos] = useState({})

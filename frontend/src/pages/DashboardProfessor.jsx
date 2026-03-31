@@ -115,7 +115,7 @@ function DashboardProfessor() {
     }
   }
 
-  const totalAlunos = turmas.reduce((acc, t) => acc + (t.total_alunos || 0), 0)
+  const totalAlunos = turmas.reduce((acc, t) => acc + (parseInt(t.total_alunos) || 0), 0)
   const temTurma = turmas.length > 0
 
   // ─── Botão sino ──────────────────────────────────────────────────────────────
