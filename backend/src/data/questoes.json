@@ -115,10 +115,10 @@
   "latex": true,
   "enunciado": "\\frac{a^3 \\cdot b^2 \\cdot x^5 \\cdot y^2}{y^3 \\cdot x^4 \\cdot a \\cdot b^4} =",
   "alternativas": {
-    "A": "\\frac{a^2 \\cdot b^2 \\cdot x}{y \\cdot b^2}",
-    "B": "\\frac{a^3 \\cdot b^2 \\cdot x^5 \\cdot y^2}{y^3 \\cdot x^4}",
-    "C": "\\frac{a \\cdot b^2 \\cdot x^3 \\cdot y^2}{y^3 \\cdot x^4 \\cdot a \\cdot b^4}",
-    "D": "\\frac{a^2 \\cdot b^2 \\cdot x}{y \\cdot b^2 \\cdot x^2}"
+    "A": "\\frac{a^2 \\cdot x}{b^2 \\cdot y}",
+    "B": "\\frac{a^2 \\cdot x}{b^2 \\cdot y^2}",
+    "C": "\\frac{a \\cdot x}{b^2 \\cdot y}",
+    "D": "\\frac{a^2 \\cdot x^2}{b^2 \\cdot y}"
   },
   "correta": "A",
   "dicas": [
