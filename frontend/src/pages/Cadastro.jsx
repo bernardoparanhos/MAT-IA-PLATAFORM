@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     pergunta: 'Dicas rápidas',
-    resposta: '• Use sempre seu email institucional (@alunos.utfpr.edu.br ou @utfpr.edu.br)\n• A senha precisa ter no mínimo 8 caracteres, 1 letra maiúscula e 1 número\n• Se esqueceu a senha, use a opção "Esqueci minha senha" na tela de login',
+    resposta: '• Alunos podem usar qualquer email (Gmail, Hotmail, etc.) · Professores devem usar @utfpr.edu.br\n• A senha precisa ter no mínimo 8 caracteres, 1 letra maiúscula e 1 número\n• Se esqueceu a senha, use a opção "Esqueci minha senha" na tela de login',
   },
 ]
 
@@ -236,9 +236,9 @@ function Cadastro() {
                 placeholder="Seu nome" required className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Email institucional</label>
+              <label className={labelClass}>Email</label>
               <input type="email" name="email" value={form.email} onChange={handleChange}
-                placeholder={perfil === 'aluno' ? 'seu@alunos.utfpr.edu.br' : 'seu@utfpr.edu.br'}
+                placeholder={perfil === 'aluno' ? 'seu@email.com' : 'seu@utfpr.edu.br'}
                 required className={inputClass} />
             </div>
             {perfil === 'professor' && (

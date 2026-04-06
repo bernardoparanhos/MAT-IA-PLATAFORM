@@ -22,7 +22,7 @@ const faqs = [
   },
   {
     pergunta: 'Dicas rápidas',
-    resposta: '• Use sempre seu email institucional (@alunos.utfpr.edu.br ou @utfpr.edu.br)\n• A senha precisa ter no mínimo 8 caracteres, 1 letra maiúscula e 1 número\n• Se esqueceu a senha, use a opção "Esqueci minha senha" na tela de login',
+    resposta: '• Alunos podem usar qualquer email (Gmail, Hotmail, etc.) · Professores devem usar @utfpr.edu.br\n• A senha precisa ter no mínimo 8 caracteres, 1 letra maiúscula e 1 número\n• Se esqueceu a senha, use a opção "Esqueci minha senha" na tela de login',
   },
 ]
 

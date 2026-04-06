@@ -45,11 +45,7 @@ const registerAlunoValidation = [
     .isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres')
     .matches(/^[a-zA-ZÀ-ÿ\s]+$/).withMessage('Nome deve conter apenas letras'),
   body('email').trim().notEmpty().withMessage('Email é obrigatório')
-    .isEmail().withMessage('Email inválido')
-    .custom(val => {
-      if (!val.endsWith('@alunos.utfpr.edu.br')) throw new Error('Email deve ser do domínio @alunos.utfpr.edu.br')
-      return true
-    }),
+    .isEmail().withMessage('Email inválido'),
   body('senha').notEmpty().withMessage('Senha é obrigatória')
     .isLength({ min: 8, max: 128 }).withMessage('Senha deve ter entre 8 e 128 caracteres')
     .matches(/[A-Z]/).withMessage('Senha deve conter ao menos uma letra maiúscula')
