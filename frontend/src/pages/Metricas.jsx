@@ -300,7 +300,7 @@ function Metricas() {
                       <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">Distribuição por Nível</p>
                       <ResponsiveContainer width="100%" height={220}>
                         <PieChart>
-                          <Pie data={distribuicaoNivel} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+<Pie data={distribuicaoNivel} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
                             {distribuicaoNivel.map((entry, i) => (
                               <Cell key={i} fill={entry.cor} />
                             ))}
