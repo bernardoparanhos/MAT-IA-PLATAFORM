@@ -178,7 +178,9 @@ function Metricas() {
     }
   })
 
-  const blocoMaisFraco = [...mediasBlocos].sort((a, b) => a.media - b.media)[0]
+  const menorMedia = Math.min(...mediasBlocos.map(b => b.media))
+  const blocosMaisFracos = mediasBlocos.filter(b => b.media === menorMedia)
+  const blocoMaisFraco = blocosMaisFracos.length === 1 ? blocosMaisFracos[0] : null
 
   const mediaGeral = alunosFizeram.length > 0
     ? Math.round(alunosFizeram.reduce((s, a) => s + (a.resultado?.pontuacao || 0), 0) / alunosFizeram.length * 10) / 10
@@ -318,6 +320,11 @@ function Metricas() {
                         {blocoMaisFraco && (
                           <span className="text-xs text-red-400 font-light bg-red-500/10 px-2 py-0.5 rounded-lg">
                             ⚠ {blocoMaisFraco.bloco} mais fraco
+                          </span>
+                        )}
+                        {!blocoMaisFraco && blocosMaisFracos.length > 1 && (
+                          <span className="text-xs text-orange-400 font-light bg-orange-500/10 px-2 py-0.5 rounded-lg">
+                            ⚠ {blocosMaisFracos.map(b => b.bloco).join(' e ')} empatados
                           </span>
                         )}
                       </div>
