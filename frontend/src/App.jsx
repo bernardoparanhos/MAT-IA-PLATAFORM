@@ -16,6 +16,7 @@ import TurmasProfessor from './pages/TurmasProfessor'
 import MinhaTurma from './pages/MinhaTurma'
 import Nivelamento from './pages/Nivelamento'
 import ResultadoNivelamento from './pages/ResultadoNivelamento'
+import Metricas from './pages/Metricas'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -50,9 +51,14 @@ function App() {
           <ConfiguracoesProfessor />
         </ProtectedRoute>
       } />
-      <Route path="/turmas-professor" element={
+     <Route path="/turmas-professor" element={
         <ProtectedRoute perfil="professor">
           <TurmasProfessor />
+        </ProtectedRoute>
+      } />
+      <Route path="/metricas" element={
+        <ProtectedRoute perfil="professor">
+          <Metricas />
         </ProtectedRoute>
       } />
       {/* Protegidas — Aluno */}
