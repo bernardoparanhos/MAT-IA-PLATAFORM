@@ -504,4 +504,172 @@ router.delete('/diagnosticos/:alunoId', verifyToken, async (req, res) => {
   }
 })
 
+// ─── IA — ANÁLISE DE TURMA ───────────────────────────────────────────────────
+router.post('/ia/analisar-turma', verifyToken, async (req, res) => {
+  try {
+    const { turmaId } = req.body
+    if (!turmaId) return res.status(400).json({ message: 'turmaId é obrigatório.' })
+
+    const turma = await db.query(
+      'SELECT id, nome FROM turmas WHERE id = $1 AND professor_id = $2',
+      [turmaId, req.usuario.id]
+    )
+    if (turma.rows.length === 0)
+      return res.status(404).json({ message: 'Turma não encontrada.' })
+
+    const result = await db.query(`
+      SELECT u.nome, u.ra, d.resultado_json
+      FROM usuarios u
+      INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+      LEFT JOIN diagnosticos d ON d.aluno_id = u.id
+      WHERE ta.turma_id = $1 AND d.resultado_json IS NOT NULL
+      ORDER BY u.nome ASC
+    `, [turmaId])
+
+    if (result.rows.length === 0)
+      return res.status(400).json({ message: 'Nenhum diagnóstico realizado ainda.' })
+
+    const alunos = result.rows.map(r => ({
+      nome: r.nome,
+      ...JSON.parse(r.resultado_json)
+    }))
+
+    const totalAlunos = alunos.length
+    const niveis = { basico: 0, intermediario: 0, avancado: 0 }
+    alunos.forEach(a => { if (niveis[a.nivel] !== undefined) niveis[a.nivel]++ })
+
+    const mediasBlocos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria'].map(bloco => {
+      const vals = alunos.map(a => a.blocos?.[bloco] ? (a.blocos[bloco].acertos / a.blocos[bloco].total) * 100 : null).filter(v => v !== null)
+      return { bloco, media: vals.length > 0 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : 0 }
+    })
+
+    const mediaGeral = Math.round(alunos.reduce((s, a) => s + (a.pontuacao || 0), 0) / totalAlunos * 10) / 10
+
+    const contexto = `
+Você é um assistente pedagógico especializado em matemática para cursos de Engenharia.
+Analise os dados da turma "${turma.rows[0].nome}" e forneça um resumo pedagógico objetivo e útil para o professor.
+
+DADOS DA TURMA:
+- Total de alunos que fizeram o diagnóstico: ${totalAlunos}
+- Distribuição por nível: Básico: ${niveis.basico} | Intermediário: ${niveis.intermediario} | Avançado: ${niveis.avancado}
+- Média geral: ${mediaGeral}/17
+- Desempenho por bloco: ${mediasBlocos.map(b => `${b.bloco}: ${b.media}%`).join(' | ')}
+
+INSTRUÇÕES:
+- Escreva em português, tom profissional mas acessível
+- Máximo 4 frases
+- Destaque o ponto mais forte e o mais fraco da turma
+- Termine com UMA recomendação pedagógica concreta para o professor
+- NÃO invente dados além dos fornecidos
+- NÃO use bullet points, escreva em parágrafo corrido
+`
+
+    const iaRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: contexto }]
+      })
+    })
+
+    if (!iaRes.ok) {
+      const err = await iaRes.text()
+      console.error('[ia/analisar-turma] Erro API:', err)
+      return res.status(500).json({ message: 'Erro ao consultar IA.' })
+    }
+
+    const iaData = await iaRes.json()
+    const analise = iaData.choices?.[0]?.message?.content || 'Não foi possível gerar análise.'
+
+    return res.json({ analise })
+  } catch (e) {
+    console.error('[ia/analisar-turma] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── IA — ANÁLISE INDIVIDUAL ─────────────────────────────────────────────────
+router.post('/ia/analisar-aluno', verifyToken, async (req, res) => {
+  try {
+    const { alunoId } = req.body
+    if (!alunoId) return res.status(400).json({ message: 'alunoId é obrigatório.' })
+
+    const turma = await db.query(`
+      SELECT t.id FROM turmas t
+      INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+      WHERE ta.aluno_id = $1 AND t.professor_id = $2
+    `, [alunoId, req.usuario.id])
+    if (turma.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    const result = await db.query(`
+      SELECT u.nome, d.resultado_json
+      FROM usuarios u
+      INNER JOIN diagnosticos d ON d.aluno_id = u.id
+      WHERE u.id = $1
+    `, [alunoId])
+
+    if (result.rows.length === 0)
+      return res.status(400).json({ message: 'Diagnóstico não encontrado.' })
+
+    const { nome, resultado_json } = result.rows[0]
+    const { nivel, pontuacao, blocos, usou_dicas, pulou } = JSON.parse(resultado_json)
+
+    const blocoTexto = Object.entries(blocos).map(([b, d]) => `${b}: ${d.acertos}/${d.total}`).join(' | ')
+
+    const contexto = `
+Você é um assistente pedagógico especializado em matemática para cursos de Engenharia.
+Analise o desempenho individual do aluno e forneça um feedback objetivo e útil para o professor.
+
+DADOS DO ALUNO: ${nome}
+- Nível: ${nivel}
+- Pontuação: ${pontuacao}/17
+- Desempenho por bloco: ${blocoTexto}
+- Dicas utilizadas: ${(usou_dicas || []).length}
+- Questões puladas: ${(pulou || []).length}
+
+INSTRUÇÕES:
+- Escreva em português, tom profissional mas acessível
+- Máximo 3 frases
+- Destaque o ponto forte e o ponto fraco do aluno
+- Termine com UMA sugestão de reforço específica
+- NÃO invente dados além dos fornecidos
+- NÃO use bullet points, escreva em parágrafo corrido
+`
+
+    const iaRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: contexto }]
+      })
+    })
+
+    if (!iaRes.ok) {
+      const err = await iaRes.text()
+      console.error('[ia/analisar-aluno] Erro API:', err)
+      return res.status(500).json({ message: 'Erro ao consultar IA.' })
+    }
+
+    const iaData = await iaRes.json()
+    const analise = iaData.choices?.[0]?.message?.content || 'Não foi possível gerar análise.'
+
+    return res.json({ analise })
+  } catch (e) {
+    console.error('[ia/analisar-aluno] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 module.exports = router;

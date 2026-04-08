@@ -101,6 +101,10 @@ function Metricas() {
   const [alunoModal, setAlunoModal] = useState(null)
   const [filtroNivel, setFiltroNivel] = useState('todos')
   const [apagando, setApagando] = useState(null)
+  const [analiseTurma, setAnaliseTurma] = useState(null)
+  const [carregandoIA, setCarregandoIA] = useState(false)
+  const [analiseAluno, setAnaliseAluno] = useState({})
+  const [carregandoIAAluno, setCarregandoIAAluno] = useState(null)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
@@ -139,6 +143,42 @@ function Metricas() {
       console.error('Erro ao buscar dados', e)
     } finally {
       setCarregando(false)
+    }
+  }
+
+  async function analisarTurma() {
+    setCarregandoIA(true)
+    setAnaliseTurma(null)
+    try {
+      const res = await fetch(`${API}/auth/ia/analisar-turma`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ turmaId: turmaSelecionada })
+      })
+      const data = await res.json()
+      setAnaliseTurma(data.analise || 'Não foi possível gerar análise.')
+    } catch (e) {
+      console.error('Erro ao analisar turma', e)
+      setAnaliseTurma('Erro ao consultar IA. Tente novamente.')
+    } finally {
+      setCarregandoIA(false)
+    }
+  }
+
+  async function analisarAluno(alunoId) {
+    setCarregandoIAAluno(alunoId)
+    try {
+      const res = await fetch(`${API}/auth/ia/analisar-aluno`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alunoId })
+      })
+      const data = await res.json()
+      setAnaliseAluno(prev => ({ ...prev, [alunoId]: data.analise || 'Não foi possível gerar análise.' }))
+    } catch (e) {
+      console.error('Erro ao analisar aluno', e)
+    } finally {
+      setCarregandoIAAluno(null)
     }
   }
 
@@ -287,6 +327,32 @@ function Metricas() {
                 ))}
               </div>
 
+              {/* Bloco IA — Análise da turma */}
+              {alunosFizeram.length > 0 && (
+                <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-slate-500 text-xs uppercase tracking-widest">Análise com IA</p>
+                      <p className="text-slate-400 text-xs font-light mt-1">Interpretação pedagógica gerada pelo Claude</p>
+                    </div>
+                    <button
+                      onClick={analisarTurma}
+                      disabled={carregandoIA}
+                      className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl px-4 py-2 text-sm font-light transition-colors">
+                      {carregandoIA
+                        ? <><div className="w-3.5 h-3.5 border border-white border-t-transparent rounded-full animate-spin" /> Analisando...</>
+                        : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg> Analisar turma com IA</>
+                      }
+                    </button>
+                  </div>
+                  {analiseTurma && (
+                    <div className="bg-[#0f172a] border border-orange-500/20 rounded-xl p-4">
+                      <p className="text-slate-300 text-sm font-light leading-relaxed">{analiseTurma}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {alunosFizeram.length === 0 ? (
                 <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-10 text-center">
                   <p className="text-white font-medium mb-1">Nenhum diagnóstico realizado ainda</p>
@@ -399,16 +465,28 @@ function Metricas() {
                           </td>
                           <td className="px-4 py-3">
                             {aluno.resultado && (
-                              <button
-                                onClick={() => apagarDiagnostico(aluno.id)}
-                                disabled={apagando === aluno.id}
-                                className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-400/10 disabled:opacity-50"
-                                title="Resetar diagnóstico">
-                                {apagando === aluno.id
-                                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 animate-spin"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
-                                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
-                                }
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => analisarAluno(aluno.id)}
+                                  disabled={carregandoIAAluno === aluno.id}
+                                  className="text-slate-600 hover:text-orange-400 transition-colors p-1 rounded-lg hover:bg-orange-400/10 disabled:opacity-50"
+                                  title="Analisar com IA">
+                                  {carregandoIAAluno === aluno.id
+                                    ? <div className="w-3.5 h-3.5 border border-orange-400 border-t-transparent rounded-full animate-spin" />
+                                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg>
+                                  }
+                                </button>
+                                <button
+                                  onClick={() => apagarDiagnostico(aluno.id)}
+                                  disabled={apagando === aluno.id}
+                                  className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-400/10 disabled:opacity-50"
+                                  title="Resetar diagnóstico">
+                                  {apagando === aluno.id
+                                    ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 animate-spin"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+                                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                                  }
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -452,6 +530,12 @@ function Metricas() {
               <span className="text-slate-400 text-sm font-light">pontos</span>
             </div>
 
+            {analiseAluno[alunoModal.id] && (
+              <div className="bg-[#0f172a] border border-orange-500/20 rounded-xl p-4 mb-5">
+                <p className="text-slate-500 text-xs uppercase tracking-widest mb-2">Análise IA</p>
+                <p className="text-slate-300 text-sm font-light leading-relaxed">{analiseAluno[alunoModal.id]}</p>
+              </div>
+            )}
             <div className="space-y-2">
               <p className="text-slate-500 text-xs uppercase tracking-widest mb-3">Desempenho por bloco</p>
               {Object.entries(alunoModal.resultado.blocos).map(([bloco, dados]) => (
