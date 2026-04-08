@@ -103,6 +103,7 @@ function Metricas() {
   const [apagando, setApagando] = useState(null)
   const [analiseTurma, setAnaliseTurma] = useState(null)
   const [analiseTurmaData, setAnaliseTurmaData] = useState(null)
+  const [analiseAberta, setAnaliseAberta] = useState(false)
   const [carregandoIA, setCarregandoIA] = useState(false)
   const [analiseAluno, setAnaliseAluno] = useState({})
   const [carregandoIAAluno, setCarregandoIAAluno] = useState(null)
@@ -149,6 +150,7 @@ function Metricas() {
       if (data.analise_ia) {
         setAnaliseTurma(data.analise_ia)
         setAnaliseTurmaData(data.analise_ia_gerada_em)
+        setAnaliseAberta(false)
       } else {
         setAnaliseTurma(null)
         setAnaliseTurmaData(null)
@@ -176,6 +178,7 @@ function Metricas() {
       })
       const data = await res.json()
       setAnaliseTurma(data.analise || 'Não foi possível gerar análise.')
+      setAnaliseAberta(true)
     } catch (e) {
       console.error('Erro ao analisar turma', e)
       setAnaliseTurma('Erro ao consultar IA. Tente novamente.')
@@ -353,30 +356,39 @@ function Metricas() {
               {/* Bloco IA — Análise da turma */}
               {alunosFizeram.length > 0 && (
                 <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between">
                     <div>
                       <p className="text-slate-500 text-xs uppercase tracking-widest">Análise com IA</p>
                       <p className="text-slate-400 text-xs font-light mt-1">Interpretação pedagógica gerada por IA</p>
-{analiseTurma && alunosPendentes.length > 0 && (
-  <p className="text-orange-400 text-xs font-light mt-1">
-    ⚠ {alunosPendentes.length} aluno{alunosPendentes.length > 1 ? 's' : ''} ainda não fizeram o teste — considere atualizar a análise após a conclusão da turma.
-  </p>
-)}
-
-
+                      {analiseTurma && alunosPendentes.length > 0 && (
+                        <p className="text-orange-400 text-xs font-light mt-1">
+                          ⚠ {alunosPendentes.length} aluno{alunosPendentes.length > 1 ? 's ainda não fizeram' : ' ainda não fez'} o teste — atualize após a conclusão.
+                        </p>
+                      )}
                     </div>
-                    <button
-                      onClick={analisarTurma}
-                      disabled={carregandoIA}
-                      className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl px-4 py-2 text-sm font-light transition-colors">
-                      {carregandoIA
-                        ? <><div className="w-3.5 h-3.5 border border-white border-t-transparent rounded-full animate-spin" /> Analisando...</>
-                        : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> {analiseTurma ? 'Atualizar análise' : 'Analisar turma com IA'}</>
-                      }
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {analiseTurma && (
+                        <button
+                          onClick={() => setAnaliseAberta(v => !v)}
+                          className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={`w-4 h-4 transition-transform ${analiseAberta ? 'rotate-180' : ''}`}>
+                            <path d="M6 9l6 6 6-6"/>
+                          </svg>
+                        </button>
+                      )}
+                      <button
+                        onClick={analisarTurma}
+                        disabled={carregandoIA}
+                        className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl px-4 py-2 text-sm font-light transition-colors">
+                        {carregandoIA
+                          ? <><div className="w-3.5 h-3.5 border border-white border-t-transparent rounded-full animate-spin" /> Analisando...</>
+                          : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> {analiseTurma ? 'Atualizar' : 'Analisar turma com IA'}</>
+                        }
+                      </button>
+                    </div>
                   </div>
-                  {analiseTurma && (
-                    <div className="bg-[#0f172a] border border-orange-500/20 rounded-xl p-4">
+                  {analiseTurma && analiseAberta && (
+                    <div className="bg-[#0f172a] border border-orange-500/20 rounded-xl p-4 mt-4">
                       <p className="text-slate-300 text-sm font-light leading-relaxed">{analiseTurma}</p>
                       {analiseTurmaData && (
                         <p className="text-slate-600 text-xs mt-2 font-light">
