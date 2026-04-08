@@ -357,6 +357,11 @@ function Metricas() {
                     <div>
                       <p className="text-slate-500 text-xs uppercase tracking-widest">Análise com IA</p>
                       <p className="text-slate-400 text-xs font-light mt-1">Interpretação pedagógica gerada por IA</p>
+{analiseTurma && alunosPendentes.length > 0 && (
+  <p className="text-orange-400 text-xs font-light mt-1">
+    ⚠ {alunosPendentes.length} aluno{alunosPendentes.length > 1 ? 's' : ''} ainda não fizeram o teste — considere atualizar a análise após a conclusão da turma.
+  </p>
+)}
 
 
                     </div>
