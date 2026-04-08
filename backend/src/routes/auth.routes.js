@@ -34,12 +34,6 @@ async function enviarEmail({ to, subject, html }) {
   if (!res.ok) throw new Error(`Brevo error: ${res.status}`)
 }
 
-router.get('/setup', async (req, res) => {
-  if (req.query.senha !== 'matia2026') return res.status(403).json({ ok: false })
-  await db.query("INSERT INTO turmas (nome, codigo_acesso) VALUES ($1, $2) ON CONFLICT (codigo_acesso) DO NOTHING", ['Fundamentos', 'FUND2026'])
-  return res.json({ ok: true, message: 'Turma Fundamentos criada!' })
-})
-
 const registerAlunoValidation = [
   body('nome').trim().notEmpty().withMessage('Nome é obrigatório')
     .isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres')
