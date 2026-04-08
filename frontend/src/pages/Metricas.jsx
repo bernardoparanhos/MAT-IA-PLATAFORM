@@ -333,7 +333,9 @@ function Metricas() {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="text-slate-500 text-xs uppercase tracking-widest">Análise com IA</p>
-                      <p className="text-slate-400 text-xs font-light mt-1">Interpretação pedagógica gerada pelo Claude</p>
+                      <p className="text-slate-400 text-xs font-light mt-1">Interpretação pedagógica gerada por IA</p>
+
+
                     </div>
                     <button
                       onClick={analisarTurma}
