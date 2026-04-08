@@ -106,6 +106,7 @@ function Metricas() {
   const [carregandoIA, setCarregandoIA] = useState(false)
   const [analiseAluno, setAnaliseAluno] = useState({})
   const [carregandoIAAluno, setCarregandoIAAluno] = useState(null)
+  const [sucessoIAAluno, setSucessoIAAluno] = useState(null)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
@@ -193,8 +194,12 @@ function Metricas() {
       })
       const data = await res.json()
       setAnaliseAluno(prev => ({ ...prev, [alunoId]: data.analise || 'Não foi possível gerar análise.' }))
+      setSucessoIAAluno(alunoId)
+      setTimeout(() => setSucessoIAAluno(null), 3000)
     } catch (e) {
       console.error('Erro ao analisar aluno', e)
+      setSucessoIAAluno(`erro-${alunoId}`)
+      setTimeout(() => setSucessoIAAluno(null), 3000)
     } finally {
       setCarregandoIAAluno(null)
     }
@@ -361,7 +366,7 @@ function Metricas() {
                       className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl px-4 py-2 text-sm font-light transition-colors">
                       {carregandoIA
                         ? <><div className="w-3.5 h-3.5 border border-white border-t-transparent rounded-full animate-spin" /> Analisando...</>
-                        : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg> Analisar turma com IA</>
+                        : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> {analiseTurma ? 'Atualizar análise' : 'Analisar turma com IA'}</>
                       }
                     </button>
                   </div>
@@ -498,7 +503,11 @@ function Metricas() {
                                   title="Analisar com IA">
                                   {carregandoIAAluno === aluno.id
                                     ? <div className="w-3.5 h-3.5 border border-orange-400 border-t-transparent rounded-full animate-spin" />
-                                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg>
+                                    : sucessoIAAluno === aluno.id
+                                    ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-green-400"><path d="M20 6L9 17l-5-5"/></svg>
+                                    : sucessoIAAluno === `erro-${aluno.id}`
+                                    ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-red-400"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                                   }
                                 </button>
                                 <button
