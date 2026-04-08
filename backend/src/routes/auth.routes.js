@@ -458,7 +458,7 @@ router.get('/turmas/:id/diagnosticos', verifyToken, async (req, res) => {
     const result = await db.query(`
       SELECT
         u.id, u.nome, u.ra, u.diagnostico_status,
-        d.resultado_json, d.feito_em
+        d.resultado_json, d.feito_em, d.analise_ia, d.analise_ia_gerada_em
       FROM usuarios u
       INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
       LEFT JOIN diagnosticos d ON d.aluno_id = u.id
@@ -466,15 +466,24 @@ router.get('/turmas/:id/diagnosticos', verifyToken, async (req, res) => {
       ORDER BY u.nome ASC
     `, [req.params.id])
 
+    const analiseturma = await db.query(
+      'SELECT analise_ia, analise_ia_gerada_em FROM turmas WHERE id = $1',
+      [req.params.id]
+    )
+
     return res.json({
       turma: turma.rows[0],
+      analise_ia: analiseturma.rows[0]?.analise_ia || null,
+      analise_ia_gerada_em: analiseturma.rows[0]?.analise_ia_gerada_em || null,
       alunos: result.rows.map(r => ({
         id: r.id,
         nome: r.nome,
         ra: r.ra,
         status: r.diagnostico_status,
         feito_em: r.feito_em,
-        resultado: r.resultado_json ? JSON.parse(r.resultado_json) : null
+        resultado: r.resultado_json ? JSON.parse(r.resultado_json) : null,
+        analise_ia: r.analise_ia || null,
+        analise_ia_gerada_em: r.analise_ia_gerada_em || null
       }))
     })
   } catch (e) {
@@ -586,6 +595,10 @@ INSTRUÇÕES:
     const iaData = await iaRes.json()
     const analise = iaData.choices?.[0]?.message?.content || 'Não foi possível gerar análise.'
 
+    await db.query(
+      'UPDATE turmas SET analise_ia = $1, analise_ia_gerada_em = NOW() WHERE id = $2',
+      [analise, turmaId]
+    )
     return res.json({ analise })
   } catch (e) {
     console.error('[ia/analisar-turma] Erro:', e)
@@ -664,6 +677,10 @@ INSTRUÇÕES:
     const iaData = await iaRes.json()
     const analise = iaData.choices?.[0]?.message?.content || 'Não foi possível gerar análise.'
 
+    await db.query(
+      'UPDATE diagnosticos SET analise_ia = $1, analise_ia_gerada_em = NOW() WHERE aluno_id = $2',
+      [analise, alunoId]
+    )
     return res.json({ analise })
   } catch (e) {
     console.error('[ia/analisar-aluno] Erro:', e)

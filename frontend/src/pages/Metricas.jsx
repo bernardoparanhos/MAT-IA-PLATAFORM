@@ -102,6 +102,7 @@ function Metricas() {
   const [filtroNivel, setFiltroNivel] = useState('todos')
   const [apagando, setApagando] = useState(null)
   const [analiseTurma, setAnaliseTurma] = useState(null)
+  const [analiseTurmaData, setAnaliseTurmaData] = useState(null)
   const [carregandoIA, setCarregandoIA] = useState(false)
   const [analiseAluno, setAnaliseAluno] = useState({})
   const [carregandoIAAluno, setCarregandoIAAluno] = useState(null)
@@ -114,7 +115,12 @@ function Metricas() {
   }, [])
 
   useEffect(() => {
-    if (turmaSelecionada) buscarDados(turmaSelecionada)
+    if (turmaSelecionada) {
+      setAnaliseTurma(null)
+      setAnaliseTurmaData(null)
+      setAnaliseAluno({})
+      buscarDados(turmaSelecionada)
+    }
   }, [turmaSelecionada])
 
   async function buscarTurmas() {
@@ -139,6 +145,18 @@ function Metricas() {
       })
       const data = await res.json()
       setDados(data)
+      if (data.analise_ia) {
+        setAnaliseTurma(data.analise_ia)
+        setAnaliseTurmaData(data.analise_ia_gerada_em)
+      } else {
+        setAnaliseTurma(null)
+        setAnaliseTurmaData(null)
+      }
+      const analisesIndividuais = {}
+      data.alunos?.forEach(a => {
+        if (a.analise_ia) analisesIndividuais[a.id] = a.analise_ia
+      })
+      setAnaliseAluno(analisesIndividuais)
     } catch (e) {
       console.error('Erro ao buscar dados', e)
     } finally {
@@ -350,6 +368,11 @@ function Metricas() {
                   {analiseTurma && (
                     <div className="bg-[#0f172a] border border-orange-500/20 rounded-xl p-4">
                       <p className="text-slate-300 text-sm font-light leading-relaxed">{analiseTurma}</p>
+                      {analiseTurmaData && (
+                        <p className="text-slate-600 text-xs mt-2 font-light">
+                          Gerada em {new Date(analiseTurmaData).toLocaleString('pt-BR')}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
