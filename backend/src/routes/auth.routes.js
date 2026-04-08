@@ -369,7 +369,8 @@ router.post('/diagnostico/responder', verifyToken, async (req, res) => {
     return res.status(400).json({ message: 'Respostas inválidas.' })
 
   const { nivel, pontuacao, blocos } = calcularResultado(respostas)
-  const resultado_json = JSON.stringify({ nivel, pontuacao, blocos, usou_dicas: usou_dicas || [], pulou: pulou || [], respostas })
+  const tempo_segundos = iniciado_em ? Math.round((Date.now() - iniciado_em) / 1000) : null
+  const resultado_json = JSON.stringify({ nivel, pontuacao, blocos, usou_dicas: usou_dicas || [], pulou: pulou || [], respostas, tempo_segundos })
 
   const existente = await db.query('SELECT id FROM diagnosticos WHERE aluno_id = $1', [req.usuario.id])
   if (existente.rows.length > 0) {
@@ -569,6 +570,9 @@ INSTRUÇÕES:
 - Máximo 4 frases
 - Destaque o ponto mais forte e o mais fraco da turma
 - Termine com UMA recomendação pedagógica concreta para o professor
+- Sempre cite os valores percentuais ao justificar pontos fortes e fracos
+- Compare explicitamente o melhor e o pior bloco com seus valores
+- Evite termos vagos como "bom" ou "regular" sem justificar com números
 - NÃO invente dados além dos fornecidos
 - NÃO use bullet points, escreva em parágrafo corrido
 `
@@ -631,9 +635,12 @@ router.post('/ia/analisar-aluno', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Diagnóstico não encontrado.' })
 
     const { nome, resultado_json } = result.rows[0]
-    const { nivel, pontuacao, blocos, usou_dicas, pulou } = JSON.parse(resultado_json)
+    const { nivel, pontuacao, blocos, usou_dicas, pulou, tempo_segundos } = JSON.parse(resultado_json)
 
-    const blocoTexto = Object.entries(blocos).map(([b, d]) => `${b}: ${d.acertos}/${d.total}`).join(' | ')
+    const blocoTexto = Object.entries(blocos).map(([b, d]) => {
+      const perc = Math.round((d.acertos / d.total) * 100)
+      return `${b}: ${d.acertos}/${d.total} (${perc}%)`
+    }).join(' | ')
 
     const contexto = `
 Você é um assistente pedagógico especializado em matemática para cursos de Engenharia.
@@ -643,14 +650,19 @@ DADOS DO ALUNO: ${nome}
 - Nível: ${nivel}
 - Pontuação: ${pontuacao}/17
 - Desempenho por bloco: ${blocoTexto}
-- Dicas utilizadas: ${(usou_dicas || []).length}
-- Questões puladas: ${(pulou || []).length}
+- Dicas utilizadas: ${(usou_dicas || []).length} de 17 questões
+- Questões puladas: ${(pulou || []).length} de 17 questões
+- Tempo total de resposta: ${tempo_segundos ? `${Math.round(tempo_segundos / 60)} minutos (${tempo_segundos}s)` : 'não disponível'}
 
 INSTRUÇÕES:
 - Escreva em português, tom profissional mas acessível
 - Máximo 3 frases
-- Destaque o ponto forte e o ponto fraco do aluno
+- Identifique explicitamente o bloco com melhor desempenho e o com pior desempenho, comparando os valores percentuais entre si
 - Termine com UMA sugestão de reforço específica
+- Cite os valores numéricos (acertos/total e %) ao analisar cada bloco
+- Destaque comportamento: se usou muitas dicas ou pulou questões, interprete o que isso pode indicar sobre segurança, dificuldade ou estratégia do aluno
+- Se o tempo de resposta for muito curto (menos de 3 min) ou muito longo (mais de 20 min), mencione como possível sinal de pressa ou dificuldade
+- Evite termos vagos sem justificar com os dados fornecidos
 - NÃO invente dados além dos fornecidos
 - NÃO use bullet points, escreva em parágrafo corrido
 `
