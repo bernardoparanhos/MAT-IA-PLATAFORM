@@ -642,15 +642,14 @@ INSTRUÇÕES:
 - NÃO use bullet points, escreva em parágrafo corrido
 `
 
-    const iaRes = await fetch('https://api.anthropic.com/v1/messages', {
+    const iaRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key': process.env.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'gpt-4o-mini',
         max_tokens: 200,
         messages: [{ role: 'user', content: contexto }]
       })
