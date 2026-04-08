@@ -259,7 +259,7 @@ function Metricas() {
   })
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex" style={{ fontFamily: 'Outfit, sans-serif' }}>
+    <div className="min-h-screen bg-[#0f172a] flex overflow-x-hidden" style={{ fontFamily: 'Outfit, sans-serif' }}>
 
       {sidebarAberta && (
         <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={() => setSidebarAberta(false)} />
@@ -288,7 +288,7 @@ function Metricas() {
         <NavItems onClick={() => setSidebarAberta(false)} navigate={navigate} logout={logout} naoLidas={naoLidas} />
       </aside>
 
-      <div className="flex-1 flex flex-col lg:ml-56">
+      <div className="flex-1 flex flex-col lg:ml-56 min-w-0">
 
         {/* Header mobile */}
         <header className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-[#0f172a] border-b border-white/5 px-4 py-3 flex items-center gap-3">
@@ -298,15 +298,15 @@ function Metricas() {
           <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
         </header>
 
-        <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0">
+        <main className="flex-1 p-4 sm:p-6 lg:p-10 mt-14 lg:mt-0 overflow-x-hidden">
 
           {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <div>
-              <h2 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight">Métricas</h2>
-              <p className="text-slate-400 text-sm mt-1 font-light">Diagnóstico de Nivelamento</p>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-4 mb-6 lg:mb-8">
+  <div>
+    <h2 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight">Métricas</h2>
+    <p className="text-slate-400 text-sm mt-1 font-light">Diagnóstico de Nivelamento</p>
+  </div>
+  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {/* Seletor de turma */}
               <div className="relative">
                 <select
@@ -324,9 +324,18 @@ function Metricas() {
               </div>
               {/* Link Sheets */}
               <a href={SHEETS_URL} target="_blank" rel="noreferrer"
+                title="Abrir planilha de resultados no Google Sheets"
                 className="flex items-center gap-2 bg-[#1e2d3d] border border-white/10 hover:border-green-500/40 text-slate-400 hover:text-green-400 rounded-xl px-4 py-2 text-sm font-light transition-colors">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 17H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v10a2 2 0 01-2 2h-3"/><polyline points="17 21 12 16 7 21"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+                </svg>
                 Google Sheets
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3 opacity-60">
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
               </a>
             </div>
           </div>
@@ -339,34 +348,34 @@ function Metricas() {
             <div className="space-y-6">
 
               {/* Cards visão geral */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { label: 'Total de alunos', valor: dados.alunos?.length || 0, cor: 'text-white' },
-                  { label: 'Fizeram o teste', valor: alunosFizeram.length, cor: 'text-green-400' },
-                  { label: 'Pendentes', valor: alunosPendentes.length, cor: 'text-orange-400' },
-                  { label: 'Média geral', valor: mediaGeral !== null ? `${mediaGeral}/17` : '—', cor: 'text-blue-400' },
-                ].map(card => (
-                  <div key={card.label} className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-5">
-                    <div className={`text-2xl lg:text-3xl font-semibold mb-1 ${card.cor}`}>{card.valor}</div>
-                    <div className="text-slate-400 text-xs font-light">{card.label}</div>
-                  </div>
-                ))}
-              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+  {[
+    { label: 'Total de alunos', valor: dados.alunos?.length || 0, cor: 'text-white' },
+    { label: 'Fizeram o teste', valor: alunosFizeram.length, cor: 'text-green-400' },
+    { label: 'Pendentes', valor: alunosPendentes.length, cor: 'text-orange-400' },
+    { label: 'Média geral', valor: mediaGeral !== null ? `${mediaGeral}/17` : '—', cor: 'text-blue-400' },
+  ].map(card => (
+    <div key={card.label} className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-4 lg:p-5">
+      <div className={`text-xl sm:text-2xl lg:text-3xl font-semibold mb-1 ${card.cor}`}>{card.valor}</div>
+      <div className="text-slate-400 text-[11px] sm:text-xs font-light">{card.label}</div>
+    </div>
+  ))}
+</div>
 
               {/* Bloco IA — Análise da turma */}
               {alunosFizeram.length > 0 && (
-                <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-xs uppercase tracking-widest">Análise com IA</p>
-                      <p className="text-slate-400 text-xs font-light mt-1">Interpretação pedagógica gerada por IA</p>
-                      {analiseTurma && alunosPendentes.length > 0 && (
-                        <p className="text-orange-400 text-xs font-light mt-1">
-                          ⚠ {alunosPendentes.length} aluno{alunosPendentes.length > 1 ? 's ainda não fizeram' : ' ainda não fez'} o teste — atualize após a conclusão.
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
+                <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-4 lg:p-6">
+  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+    <div className="flex-1 min-w-0">
+      <p className="text-slate-500 text-xs uppercase tracking-widest">Análise com IA</p>
+      <p className="text-slate-400 text-xs font-light mt-1">Interpretação pedagógica gerada por IA</p>
+      {analiseTurma && alunosPendentes.length > 0 && (
+        <p className="text-orange-400 text-xs font-light mt-1">
+          ⚠ {alunosPendentes.length} aluno{alunosPendentes.length > 1 ? 's ainda não fizeram' : ' ainda não fez'} o teste — atualize após a conclusão.
+        </p>
+      )}
+    </div>
+    <div className="flex items-center gap-2 shrink-0">
                       {analiseTurma && (
                         <button
                           onClick={() => setAnaliseAberta(v => !v)}
@@ -408,67 +417,67 @@ function Metricas() {
               ) : (
                 <>
                   {/* Gráficos */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
 
-                    {/* Pizza — distribuição por nível */}
-                    <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6">
-                      <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">Distribuição por Nível</p>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <PieChart>
-<Pie data={distribuicaoNivel} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
-                            {distribuicaoNivel.map((entry, i) => (
-                              <Cell key={i} fill={entry.cor} />
-                            ))}
-                          </Pie>
-                          <Legend />
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
+  {/* Pizza — distribuição por nível */}
+  <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-4 lg:p-6 overflow-hidden">
+    <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">Distribuição por Nível</p>
+    <ResponsiveContainer width="100%" height={240}>
+      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <Pie data={distribuicaoNivel} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius="70%">
+          {distribuicaoNivel.map((entry, i) => (
+            <Cell key={i} fill={entry.cor} />
+          ))}
+        </Pie>
+        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} iconSize={10} />
+        <Tooltip contentStyle={{ background: '#1e2d3d', border: '1px solid #ffffff20', borderRadius: 8, fontSize: 12 }} />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
 
-                    {/* Barras — média por bloco */}
-                    <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <p className="text-slate-500 text-xs uppercase tracking-widest">Média por Bloco (%)</p>
-                        {blocoMaisFraco && (
-                          <span className="text-xs text-red-400 font-light bg-red-500/10 px-2 py-0.5 rounded-lg">
-                            ⚠ {blocoMaisFraco.bloco} mais fraco
-                          </span>
-                        )}
-                        {!blocoMaisFraco && blocosMaisFracos.length > 1 && (
-                          <span className="text-xs text-orange-400 font-light bg-orange-500/10 px-2 py-0.5 rounded-lg">
-                            ⚠ {blocosMaisFracos.map(b => b.bloco).join(' e ')} empatados
-                          </span>
-                        )}
-                      </div>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={mediasBlocos} layout="vertical" margin={{ left: 10 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                          <XAxis type="number" domain={[0, 100]} tick={{ fill: '#94a3b8', fontSize: 11 }} tickFormatter={v => `${v}%`} />
-                          <YAxis type="category" dataKey="bloco" tick={{ fill: '#94a3b8', fontSize: 11 }} width={70} />
-                          <Tooltip formatter={v => `${v}%`} contentStyle={{ background: '#1e2d3d', border: '1px solid #ffffff20', borderRadius: 8 }} />
-                          <Bar dataKey="media" fill="#f97316" radius={[0, 4, 4, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
+  {/* Barras — média por bloco */}
+  <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-4 lg:p-6 overflow-hidden">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      <p className="text-slate-500 text-xs uppercase tracking-widest">Média por Bloco (%)</p>
+      {blocoMaisFraco && (
+        <span className="text-xs text-red-400 font-light bg-red-500/10 px-2 py-0.5 rounded-lg self-start sm:self-auto">
+          ⚠ {blocoMaisFraco.bloco} mais fraco
+        </span>
+      )}
+      {!blocoMaisFraco && blocosMaisFracos.length > 1 && (
+        <span className="text-xs text-orange-400 font-light bg-orange-500/10 px-2 py-0.5 rounded-lg self-start sm:self-auto">
+          ⚠ {blocosMaisFracos.map(b => b.bloco).join(' e ')} empatados
+        </span>
+      )}
+    </div>
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={mediasBlocos} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+        <XAxis type="number" domain={[0, 100]} tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={v => `${v}%`} />
+        <YAxis type="category" dataKey="bloco" tick={{ fill: '#94a3b8', fontSize: 11 }} width={68} />
+        <Tooltip formatter={v => `${v}%`} contentStyle={{ background: '#1e2d3d', border: '1px solid #ffffff20', borderRadius: 8, fontSize: 12 }} />
+        <Bar dataKey="media" fill="#f97316" radius={[0, 4, 4, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+</div>
                 </>
               )}
 
               {/* Tabela de alunos */}
               <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                  <p className="text-slate-500 text-xs uppercase tracking-widest">Alunos</p>
-                  <div className="flex items-center gap-2">
-                    {['todos', 'basico', 'intermediario', 'avancado', 'pendente'].map(f => (
-                      <button key={f}
-                        onClick={() => setFiltroNivel(f)}
-                        className={`text-xs px-3 py-1 rounded-lg transition-colors font-light ${filtroNivel === f ? 'bg-orange-500 text-white' : 'bg-white/5 text-slate-400 hover:text-white'}`}>
-                        {f === 'todos' ? 'Todos' : f === 'pendente' ? 'Pendentes' : LABEL_NIVEL[f]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 lg:px-6 py-4 border-b border-white/5">
+  <p className="text-slate-500 text-xs uppercase tracking-widest">Alunos</p>
+  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+    {['todos', 'basico', 'intermediario', 'avancado', 'pendente'].map(f => (
+      <button key={f}
+        onClick={() => setFiltroNivel(f)}
+        className={`text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 rounded-lg transition-colors font-light whitespace-nowrap ${filtroNivel === f ? 'bg-orange-500 text-white' : 'bg-white/5 text-slate-400 hover:text-white'}`}>
+        {f === 'todos' ? 'Todos' : f === 'pendente' ? 'Pendentes' : LABEL_NIVEL[f]}
+      </button>
+    ))}
+  </div>
+</div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -556,58 +565,100 @@ function Metricas() {
       </div>
 
       {/* Modal aluno */}
-      {alunoModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setAlunoModal(null)}>
-          <div className="bg-[#1e2d3d] border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="text-white font-semibold text-lg">{alunoModal.nome}</h3>
-                <p className="text-slate-400 text-xs font-mono mt-0.5">{alunoModal.ra}</p>
-              </div>
-              <button onClick={() => setAlunoModal(null)} className="text-slate-400 hover:text-white transition-colors">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
-            </div>
+{alunoModal && (
+  <div
+    className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4 py-6 overflow-y-auto"
+    onClick={() => setAlunoModal(null)}
+    role="dialog"
+    aria-modal="true"
+  >
+    <div
+      className="bg-[#1e2d3d] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col my-auto"
+      onClick={e => e.stopPropagation()}
+    >
+      {/* Header fixo */}
+      <div className="flex items-start justify-between gap-3 p-5 lg:p-6 border-b border-white/5">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-white font-semibold text-lg truncate">{alunoModal.nome}</h3>
+          <p className="text-slate-400 text-xs font-mono mt-0.5">{alunoModal.ra}</p>
+          {alunoModal.feito_em && (
+            <p className="text-slate-500 text-xs font-light mt-1">
+              Realizado em {new Date(alunoModal.feito_em).toLocaleDateString('pt-BR')}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={() => setAlunoModal(null)}
+          className="text-slate-400 hover:text-white transition-colors shrink-0 p-1 -m-1 rounded-lg hover:bg-white/5"
+          aria-label="Fechar modal"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
 
-            <div className="flex items-center gap-3 mb-5">
-              <span className={`px-3 py-1 rounded-xl text-sm font-light ${
-                alunoModal.resultado.nivel === 'avancado' ? 'bg-green-500/10 text-green-400' :
-                alunoModal.resultado.nivel === 'intermediario' ? 'bg-orange-500/10 text-orange-400' :
-                'bg-red-500/10 text-red-400'
-              }`}>
-                {LABEL_NIVEL[alunoModal.resultado.nivel]}
-              </span>
-              <span className="text-white font-medium">{alunoModal.resultado.pontuacao}/17</span>
-              <span className="text-slate-400 text-sm font-light">pontos</span>
-            </div>
-
-            {analiseAluno[alunoModal.id] && (
-              <div className="bg-[#0f172a] border border-orange-500/20 rounded-xl p-4 mb-5">
-                <p className="text-slate-500 text-xs uppercase tracking-widest mb-2">Análise IA</p>
-                <p className="text-slate-300 text-sm font-light leading-relaxed">{analiseAluno[alunoModal.id]}</p>
-              </div>
-            )}
-            <div className="space-y-2">
-              <p className="text-slate-500 text-xs uppercase tracking-widest mb-3">Desempenho por bloco</p>
-              {Object.entries(alunoModal.resultado.blocos).map(([bloco, dados]) => (
-                <div key={bloco} className="flex items-center gap-3">
-                  <span className="text-slate-400 text-sm font-light w-24">{LABEL_BLOCO[bloco]}</span>
-                  <div className="flex-1 bg-white/5 rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full transition-all"
-                      style={{
-                        width: `${(dados.acertos / dados.total) * 100}%`,
-                        background: dados.acertos / dados.total === 0 ? '#ef4444' : dados.acertos / dados.total < 1 ? '#f97316' : '#22c55e'
-                      }}
-                    />
-                  </div>
-                  <span className="text-slate-300 text-sm font-light w-12 text-right">{dados.acertos}/{dados.total}</span>
-                </div>
-              ))}
-            </div>
+      {/* Corpo com scroll */}
+      <div className="overflow-y-auto p-5 lg:p-6">
+        <div className="flex items-center gap-3 flex-wrap mb-5">
+          <span className={`px-3 py-1 rounded-xl text-sm font-light ${
+            alunoModal.resultado.nivel === 'avancado' ? 'bg-green-500/10 text-green-400' :
+            alunoModal.resultado.nivel === 'intermediario' ? 'bg-orange-500/10 text-orange-400' :
+            'bg-red-500/10 text-red-400'
+          }`}>
+            {LABEL_NIVEL[alunoModal.resultado.nivel]}
+          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-white font-medium">{alunoModal.resultado.pontuacao}/17</span>
+            <span className="text-slate-400 text-sm font-light">pontos</span>
           </div>
         </div>
-      )}
+
+        {analiseAluno[alunoModal.id] ? (
+          <div className="bg-[#0f172a] border border-orange-500/20 rounded-xl p-4 mb-5">
+            <p className="text-slate-500 text-xs uppercase tracking-widest mb-2">Análise IA</p>
+            <p className="text-slate-300 text-sm font-light leading-relaxed whitespace-pre-wrap">{analiseAluno[alunoModal.id]}</p>
+          </div>
+        ) : (
+          <button
+            onClick={() => analisarAluno(alunoModal.id)}
+            disabled={carregandoIAAluno === alunoModal.id}
+            className="w-full flex items-center justify-center gap-2 bg-orange-500/10 hover:bg-orange-500/20 disabled:opacity-50 text-orange-400 rounded-xl px-4 py-2.5 text-sm font-light transition-colors mb-5 border border-orange-500/20"
+          >
+            {carregandoIAAluno === alunoModal.id ? (
+              <><div className="w-3.5 h-3.5 border border-orange-400 border-t-transparent rounded-full animate-spin" /> Analisando...</>
+            ) : (
+              <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Analisar com IA</>
+            )}
+          </button>
+        )}
+
+        <div className="space-y-2.5">
+          <p className="text-slate-500 text-xs uppercase tracking-widest mb-3">Desempenho por bloco</p>
+          {alunoModal.resultado.blocos && Object.entries(alunoModal.resultado.blocos).map(([bloco, dados]) => {
+            const pct = dados.total > 0 ? dados.acertos / dados.total : 0
+            return (
+              <div key={bloco} className="flex items-center gap-3">
+                <span className="text-slate-400 text-sm font-light w-20 sm:w-24 shrink-0">{LABEL_BLOCO[bloco] || bloco}</span>
+                <div className="flex-1 bg-white/5 rounded-full h-2 min-w-0">
+                  <div
+                    className="h-2 rounded-full transition-all"
+                    style={{
+                      width: `${pct * 100}%`,
+                      background: pct === 0 ? '#ef4444' : pct < 1 ? '#f97316' : '#22c55e'
+                    }}
+                  />
+                </div>
+                <span className="text-slate-300 text-sm font-light w-10 sm:w-12 text-right shrink-0 tabular-nums">{dados.acertos}/{dados.total}</span>
+              </div>
+            )
+          })}
+          {!alunoModal.resultado.blocos && (
+            <p className="text-slate-500 text-xs font-light italic">Dados por bloco indisponíveis.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   )
 }
