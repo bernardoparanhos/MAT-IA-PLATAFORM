@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useNotificacoes } from '../context/NotificacoesContext'
 import { getPerfil, alterarSenha, desassociarTurma } from '../services/professorService'
 
-const NavItems = ({ onClick, navigate, logout }) => (
+const NavItems = ({ onClick, navigate, logout, naoLidas }) => (
   <>
     <nav className="p-4 space-y-1">
       <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 px-3">Menu</p>
@@ -31,8 +32,16 @@ const NavItems = ({ onClick, navigate, logout }) => (
       ].map(item => (
         <button key={item.label} onClick={() => { navigate(item.path); onClick?.() }}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm font-light">
-          <span className="text-slate-500">{item.icon}</span>
+          <span className="text-slate-500 relative">
+            {item.icon}
+            {item.label === 'Notificações' && naoLidas > 0 && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full" />
+            )}
+          </span>
           <span>{item.label}</span>
+          {item.label === 'Notificações' && naoLidas > 0 && (
+            <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{naoLidas}</span>
+          )}
         </button>
       ))}
 
@@ -62,6 +71,7 @@ const NavItems = ({ onClick, navigate, logout }) => (
 function PerfilProfessor() {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const { naoLidas } = useNotificacoes()
   const [perfil, setPerfil] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [sidebarAberta, setSidebarAberta] = useState(false)
@@ -182,7 +192,7 @@ function PerfilProfessor() {
           <p className="text-slate-400 text-xs mt-1 font-light">Painel do Professor</p>
         </div>
         
-<NavItems navigate={navigate} logout={logout} />
+<NavItems navigate={navigate} logout={logout} naoLidas={naoLidas} />
       </aside>
 
       {/* Sidebar mobile */}
@@ -196,7 +206,7 @@ function PerfilProfessor() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-       <NavItems onClick={() => setSidebarAberta(false)} navigate={navigate} logout={logout} />
+       <NavItems onClick={() => setSidebarAberta(false)} navigate={navigate} logout={logout} naoLidas={naoLidas} />
 
       </aside>
 
