@@ -27,8 +27,6 @@ function ResultadoNivelamento() {
   const [notaSelecionada, setNotaSelecionada] = useState(null)
   const [comentario, setComentario] = useState('')
   const [enviandoFeedback, setEnviandoFeedback] = useState(false)
-  const [feedbackEnviado, setFeedbackEnviado] = useState(false)
-
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
@@ -79,16 +77,10 @@ function ResultadoNivelamento() {
         })
       })
 
-      if (res.ok) {
-  // Mostra tela de sucesso
-  setFeedbackEnviado(true)
-  
-  // Aguarda 2.5s antes de deslogar
-  setTimeout(() => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('usuario')
-  navigate('/login')
-}, 2000)
+    if (res.ok) {
+  // Marca como enviado e atualiza UI
+  setFeedbackJaEnviado(true)
+  setEnviandoFeedback(false)
 } else {
   const data = await res.json()
   alert(data.message || 'Erro ao enviar feedback')
@@ -279,42 +271,10 @@ function ResultadoNivelamento() {
   </button>
 )}
 
-{/* Overlay de sucesso */}
-{feedbackEnviado && (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
-    <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-10 text-center max-w-sm mx-4 shadow-2xl animate-scaleIn">
-      <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-green-400">
-          <path d="M20 6L9 17l-5-5"/>
-        </svg>
-      </div>
-      <h3 className="text-green-400 font-semibold text-lg mb-2">Feedback enviado!</h3>
-      <p className="text-slate-400 text-sm">Obrigado por contribuir. Redirecionando...</p>
-    </div>
-  </div>
-)}
-
         <p className="text-slate-600 text-xs text-center mt-6 font-light">UTFPR Campus Medianeira — 2026</p>
       </div>
     </div>
   )
 }
-
-<style>{`
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes scaleIn {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-  }
-  .animate-scaleIn {
-    animation: scaleIn 0.4s ease-out;
-  }
-`}</style>
 
 export default ResultadoNivelamento
