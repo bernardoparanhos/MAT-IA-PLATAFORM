@@ -88,7 +88,7 @@ function ResultadoNivelamento() {
   localStorage.removeItem('token')
   localStorage.removeItem('usuario')
   navigate('/login')
-}, 3500)
+}, 2000)
 } else {
   const data = await res.json()
   alert(data.message || 'Erro ao enviar feedback')
@@ -281,7 +281,7 @@ function ResultadoNivelamento() {
 
 {/* Overlay de sucesso */}
 {feedbackEnviado && (
-  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
     <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-10 text-center max-w-sm mx-4 shadow-2xl animate-scaleIn">
       <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-green-400">
