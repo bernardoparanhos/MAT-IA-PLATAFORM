@@ -49,9 +49,8 @@ async function garantirCabecalhoFeedbacks(sheets) {
         valueInputOption: 'RAW',
         requestBody: {
           values: [[
-            'Nome', 'RA', 'Turma', 'Nota (0-10)', 'Comentário',
-            'Data e Hora', 'Tempo no Diagnóstico', 'Nível Alcançado', 'Pontuação (X/17)'
-          ]]
+  'Nome', 'RA', 'Turma', 'Nota (0-10)', 'Comentário', 'Data e Hora'
+]]
         }
       })
     }
@@ -116,20 +115,17 @@ async function registrarFeedback(dados) {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_FEEDBACKS_ID,
-      range: 'Página1!A:I',
+      range: 'Página1!A:F',
       valueInputOption: 'RAW',
       requestBody: {
         values: [[
-          dados.nome,
-          dados.ra,
-          dados.turma,
-          dados.nota,
-          dados.comentario || '-',
-          dados.data,
-          dados.tempo_diagnostico ? `${Math.floor(dados.tempo_diagnostico/60)}min ${dados.tempo_diagnostico%60}s` : '-',
-          nivelLabel[dados.nivel] || dados.nivel || '-',
-          dados.pontuacao ? `${dados.pontuacao}/17` : '-'
-        ]]
+  dados.nome,
+  dados.ra,
+  dados.turma,
+  dados.nota,
+  dados.comentario || '-',
+  dados.data
+]]
       }
     })
     console.log('✅ Feedback enviado para o Google Sheets')
