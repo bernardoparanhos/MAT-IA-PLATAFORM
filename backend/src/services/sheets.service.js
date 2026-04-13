@@ -36,17 +36,28 @@ async function garantirCabecalho(sheets) {
 }
 
 async function garantirCabecalhoFeedbacks(sheets) {
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_FEEDBACKS_ID,
-    range: 'Página1!A1',
-    valueInputOption: 'RAW',
-    requestBody: {
-      values: [[
-        'Nome', 'RA', 'Turma', 'Nota (0-10)', 'Comentário',
-        'Data e Hora', 'Tempo no Diagnóstico', 'Nível Alcançado', 'Pontuação (X/17)'
-      ]]
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_FEEDBACKS_ID,
+      range: 'Página1!A1',
+    })
+    const temCabecalho = res.data.values && res.data.values[0]?.[0] === 'Nome'
+    if (!temCabecalho) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_FEEDBACKS_ID,
+        range: 'Página1!A1',
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[
+            'Nome', 'RA', 'Turma', 'Nota (0-10)', 'Comentário',
+            'Data e Hora', 'Tempo no Diagnóstico', 'Nível Alcançado', 'Pontuação (X/17)'
+          ]]
+        }
+      })
     }
-  })
+  } catch (e) {
+    console.error('Erro ao garantir cabeçalho feedbacks:', e)
+  }
 }
 
 async function registrarDiagnostico(dados) {
