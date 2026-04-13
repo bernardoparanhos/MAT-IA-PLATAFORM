@@ -409,6 +409,122 @@ router.get('/diagnostico/resultado', verifyToken, async (req, res) => {
   return res.json({ resultado: JSON.parse(result.rows[0].resultado_json), feito_em: result.rows[0].feito_em })
 })
 
+// ─── FEEDBACK DO DIAGNÓSTICO ─────────────────────────────────────────────────
+router.post('/diagnostico/feedback', verifyToken, async (req, res) => {
+  try {
+    const { nota, comentario } = req.body
+    
+    if (nota === undefined || nota === null)
+      return res.status(400).json({ message: 'Nota é obrigatória.' })
+    
+    if (nota < 0 || nota > 10)
+      return res.status(400).json({ message: 'Nota deve estar entre 0 e 10.' })
+
+    // Verifica se aluno já completou diagnóstico
+    const status = await db.query(
+      'SELECT diagnostico_status FROM usuarios WHERE id = $1',
+      [req.usuario.id]
+    )
+    
+    if (status.rows[0]?.diagnostico_status !== 'concluido')
+      return res.status(400).json({ message: 'Diagnóstico não foi concluído.' })
+
+    // Busca dados do aluno + diagnóstico pra enviar pro Sheets
+    const dadosAluno = await db.query(`
+      SELECT u.nome, u.ra, t.nome as turma
+      FROM usuarios u
+      LEFT JOIN turma_alunos ta ON ta.aluno_id = u.id
+      LEFT JOIN turmas t ON t.id = ta.turma_id
+      WHERE u.id = $1
+    `, [req.usuario.id])
+
+    const diagnostico = await db.query(
+      'SELECT resultado_json FROM diagnosticos WHERE aluno_id = $1',
+      [req.usuario.id]
+    )
+
+    const resultado = diagnostico.rows[0] ? JSON.parse(diagnostico.rows[0].resultado_json) : null
+
+    // Insere ou atualiza feedback no banco
+    const existente = await db.query(
+      'SELECT id FROM feedbacks_diagnostico WHERE aluno_id = $1',
+      [req.usuario.id]
+    )
+
+    if (existente.rows.length > 0) {
+      await db.query(
+        'UPDATE feedbacks_diagnostico SET nota = $1, comentario = $2, criado_em = NOW() WHERE aluno_id = $3',
+        [nota, comentario || null, req.usuario.id]
+      )
+    } else {
+      await db.query(
+        'INSERT INTO feedbacks_diagnostico (aluno_id, nota, comentario) VALUES ($1, $2, $3)',
+        [req.usuario.id, nota, comentario || null]
+      )
+    }
+
+    // Envia pro Google Sheets
+    const { registrarFeedback } = require('../services/sheets.service')
+    await registrarFeedback({
+      nome: dadosAluno.rows[0]?.nome || '-',
+      ra: dadosAluno.rows[0]?.ra || '-',
+      turma: dadosAluno.rows[0]?.turma || '-',
+      nota,
+      comentario,
+      data: new Date().toLocaleString('pt-BR'),
+      tempo_diagnostico: resultado?.tempo_segundos || null,
+      nivel: resultado?.nivel || null,
+      pontuacao: resultado?.pontuacao || null
+    })
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('[diagnostico/feedback] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.get('/turmas/:id/feedbacks', verifyToken, async (req, res) => {
+  try {
+    const turma = await db.query(
+      'SELECT id FROM turmas WHERE id = $1 AND professor_id = $2',
+      [req.params.id, req.usuario.id]
+    )
+    
+    if (turma.rows.length === 0)
+      return res.status(404).json({ message: 'Turma não encontrada.' })
+
+    const result = await db.query(`
+      SELECT 
+        u.nome, u.ra,
+        f.nota, f.comentario, f.criado_em
+      FROM feedbacks_diagnostico f
+      INNER JOIN usuarios u ON u.id = f.aluno_id
+      INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+      WHERE ta.turma_id = $1
+      ORDER BY f.criado_em DESC
+    `, [req.params.id])
+
+    return res.json({ feedbacks: result.rows })
+  } catch (e) {
+    console.error('[turmas/feedbacks] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.get('/diagnostico/feedback-enviado', verifyToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id FROM feedbacks_diagnostico WHERE aluno_id = $1',
+      [req.usuario.id]
+    )
+    return res.json({ enviado: result.rows.length > 0 })
+  } catch (e) {
+    console.error('[diagnostico/feedback-enviado] Erro:', e)
+    return res.status(500).json({ enviado: false })
+  }
+})
+
 router.get('/diagnostico/questoes', verifyToken, (req, res) => {
   const semGabarito = questoes.map(({ correta, ...q }) => q)
   return res.json({ questoes: semGabarito })

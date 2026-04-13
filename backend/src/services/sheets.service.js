@@ -13,6 +13,7 @@ const auth = new google.auth.GoogleAuth({
 })
 
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID
+const SPREADSHEET_FEEDBACKS_ID = process.env.GOOGLE_SPREADSHEET_FEEDBACKS_ID
 
 async function garantirCabecalho(sheets) {
   await sheets.spreadsheets.values.update({
@@ -32,6 +33,20 @@ async function garantirCabecalho(sheets) {
        ]]
       }
     })
+}
+
+async function garantirCabecalhoFeedbacks(sheets) {
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_FEEDBACKS_ID,
+    range: 'Página1!A1',
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[
+        'Nome', 'RA', 'Turma', 'Nota (0-10)', 'Comentário',
+        'Data e Hora', 'Tempo no Diagnóstico', 'Nível Alcançado', 'Pontuação (X/17)'
+      ]]
+    }
+  })
 }
 
 async function registrarDiagnostico(dados) {
@@ -77,4 +92,39 @@ dados.q11, dados.q12, dados.q13, dados.q14, dados.q15, dados.q16, dados.q17,
   }
 }
 
-module.exports = { registrarDiagnostico }
+async function registrarFeedback(dados) {
+  try {
+    const sheets = google.sheets({ version: 'v4', auth })
+    await garantirCabecalhoFeedbacks(sheets)
+
+    const nivelLabel = {
+      basico: '🔴 Básico',
+      intermediario: '🟡 Intermediário',
+      avancado: '🟢 Avançado'
+    }
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_FEEDBACKS_ID,
+      range: 'Página1!A:I',
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[
+          dados.nome,
+          dados.ra,
+          dados.turma,
+          dados.nota,
+          dados.comentario || '-',
+          dados.data,
+          dados.tempo_diagnostico ? `${Math.floor(dados.tempo_diagnostico/60)}min ${dados.tempo_diagnostico%60}s` : '-',
+          nivelLabel[dados.nivel] || dados.nivel || '-',
+          dados.pontuacao ? `${dados.pontuacao}/17` : '-'
+        ]]
+      }
+    })
+    console.log('✅ Feedback enviado para o Google Sheets')
+  } catch (e) {
+    console.error('Erro ao enviar feedback para o Sheets:', e)
+  }
+}
+
+module.exports = { registrarDiagnostico, registrarFeedback }
