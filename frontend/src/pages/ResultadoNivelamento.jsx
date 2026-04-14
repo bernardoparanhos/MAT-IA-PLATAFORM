@@ -12,7 +12,7 @@ const BLOCO_CONFIG = {
   inteiros: { label: 'Inteiros', total: 3 },
   fracoes: { label: 'Frações', total: 3 },
   raizes: { label: 'Raízes', total: 3 },
-  potencias: { label: 'Potências', total: 6 },
+  potencias: { label: 'Potências', total: 9 },
   geometria: { label: 'Geometria', total: 2 },
 }
 
@@ -135,7 +135,7 @@ function ResultadoNivelamento() {
                 <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
                   <p className="text-slate-400 text-xs uppercase tracking-widest mb-2">Pontuação</p>
                   <p className="text-4xl font-bold text-white leading-none">{resultado.pontuacao}</p>
-                  <p className="text-slate-500 text-sm font-light mt-1">de 17 pontos</p>
+                  <p className="text-slate-500 text-sm font-light mt-1">de 20 pontos</p>
                 </div>
               </div>
 

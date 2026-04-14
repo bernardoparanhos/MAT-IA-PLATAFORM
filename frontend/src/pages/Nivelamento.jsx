@@ -90,19 +90,29 @@ function TelaAnalisando() {
 }
 
 // ─── TELA: QUESTÃO ────────────────────────────────────────────────────────────
-function TelaQuestao({ questao, total, atual, onResponder, onPular }) {
+function TelaQuestao({ questao, total, atual, onResponder, onPular, onVoltar, podeVoltar, respostaSalva, dicasSalvas }) {
   const [selecionada, setSelecionada] = useState(null)
   const [dicaAberta, setDicaAberta] = useState(null) // 0 ou 1
   const [dicasUsadas, setDicasUsadas] = useState([])
   const [confirmando, setConfirmando] = useState(false)
 
-  // Reset ao trocar de questão
-  useEffect(() => {
-    setSelecionada(null)
-    setDicaAberta(null)
-    setDicasUsadas([])
-    setConfirmando(false)
-  }, [questao.id])
+ useEffect(() => {
+  // Converte resposta original de volta pra letra visual
+  let letraVisual = null
+  if (respostaSalva && questao._mapa) {
+    // Procura qual letra visual corresponde à letra original salva
+    letraVisual = Object.keys(questao._mapa).find(
+      letraV => questao._mapa[letraV] === respostaSalva
+    )
+  } else if (respostaSalva) {
+    letraVisual = respostaSalva
+  }
+  
+  setSelecionada(letraVisual)
+  setDicaAberta(null)
+  setDicasUsadas(dicasSalvas || [])
+  setConfirmando(false)
+}, [questao.id, respostaSalva, dicasSalvas])
 
   function abrirDica(idx) {
     setDicaAberta(dicaAberta === idx ? null : idx)
@@ -164,9 +174,15 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular }) {
 
           {/* Enunciado */}
           <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6 mb-4">
-            <p className="text-white text-xl font-medium text-center tracking-wide">
-  {questao.latex ? <Formula tex={questao.enunciado} block={true} /> : questao.enunciado}
-</p>
+           <div className="text-white text-xl font-medium text-center tracking-wide">
+  {questao.latex ? (
+    <Formula tex={questao.enunciado} block={true} />
+  ) : questao.enunciado.startsWith('<div') ? (
+    <div dangerouslySetInnerHTML={{ __html: questao.enunciado }} />
+  ) : (
+    <p>{questao.enunciado}</p>
+  )}
+</div>
           </div>
 
           {/* Alternativas */}
@@ -227,10 +243,18 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular }) {
             ))}
           </div>
 
+          
           {/* Botões de ação */}
-          <div className="flex gap-3">
-            <button
-              onClick={() => onPular(questao.id)}
+<div className="flex gap-3">
+  {podeVoltar && (
+    <button
+      onClick={onVoltar}
+      className="px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-light transition-colors">
+      ← Voltar
+    </button>
+  )}
+  <button
+    onClick={() => onPular(questao.id)}
               className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-light transition-colors">
               Não sei
             </button>
@@ -280,6 +304,7 @@ function Nivelamento() {
   const [respostas, setRespostas] = useState({})   // { "1": "A", ... }
   const [dicasUsadas, setDicasUsadas] = useState([]) // [1, 3, ...]
   const [puladas, setPuladas] = useState([])          // [2, 5, ...]
+  const [historicoDicas, setHistoricoDicas] = useState({}) // { "1": [0, 1], "3": [0], ... }
 
   async function carregarQuestoes() {
     try {
@@ -306,24 +331,34 @@ function Nivelamento() {
     }
   }
 
-  const [iniciadoEm, setIniciadoEm] = useState(null)
+  function handleVoltar() {
+  if (questaoAtual > 0) {
+    setQuestaoAtual(q => q - 1)
+  }
+}
+
+const [iniciadoEm, setIniciadoEm] = useState(null)
 
 function handleIniciar() {
-    carregarQuestoes()
-    setIniciadoEm(Date.now())
-    setTela('questao')
-  }
+  carregarQuestoes()
+  setIniciadoEm(Date.now())
+  setTela('questao')
+}
 
-  function handleResponder(questaoId, resposta) {
-    const novasRespostas = { ...respostas, [questaoId]: resposta }
-    setRespostas(novasRespostas)
+  function handleResponder(questaoId, resposta, dicasUsadasNaQuestao) {
+  const novasRespostas = { ...respostas, [questaoId]: resposta }
+  setRespostas(novasRespostas)
 
-    const novasDicas = [...dicasUsadas]
-    if (!novasDicas.includes(questaoId)) novasDicas.push(questaoId)
-    setDicasUsadas(novasDicas)
+  // Salva quais dicas foram usadas NESTA questão
+  const novoHistorico = { ...historicoDicas, [questaoId]: dicasUsadasNaQuestao }
+  setHistoricoDicas(novoHistorico)
 
-    avancar(novasRespostas)
-  }
+  const novasDicas = [...dicasUsadas]
+  if (!novasDicas.includes(questaoId)) novasDicas.push(questaoId)
+  setDicasUsadas(novasDicas)
+
+  avancar(novasRespostas)
+}
 
   function handlePularQuestao(questaoId) {
     const novasPuladas = [...puladas, questaoId]
@@ -374,18 +409,23 @@ function handleIniciar() {
     return <TelaAnalisando />
   }
 
-  if (tela === 'questao' && questoes.length > 0) {
-    return (
-      <TelaQuestao
-        questao={questoes[questaoAtual]}
-        total={questoes.length}
-        atual={questaoAtual + 1}
-        onResponder={handleResponder}
-        onPularQuestao={handlePularQuestao}
-        onPular={handlePularQuestao}
-      />
-    )
-  }
+ if (tela === 'questao' && questoes.length > 0) {
+  const questaoAtualObj = questoes[questaoAtual]
+  return (
+    <TelaQuestao
+      questao={questaoAtualObj}
+      total={questoes.length}
+      atual={questaoAtual + 1}
+      onResponder={handleResponder}
+      onPularQuestao={handlePularQuestao}
+      onPular={handlePularQuestao}
+      onVoltar={handleVoltar}
+      podeVoltar={questaoAtual > 0}
+      respostaSalva={respostas[questaoAtualObj.id]}
+      dicasSalvas={historicoDicas[questaoAtualObj.id] || []}
+    />
+  )
+}
 
   // Loading enquanto carrega questões
   return (

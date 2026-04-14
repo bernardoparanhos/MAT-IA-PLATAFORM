@@ -22,14 +22,15 @@ async function garantirCabecalho(sheets) {
       valueInputOption: 'RAW',
       requestBody: {
         values: [[
-          'Nome', 'RA', 'Turma', 'Nível Geral', 'Pontuação (0-17)',
-          'Inteiros (acertos/3)', 'Frações (acertos/3)', 'Raízes (acertos/3)', 'Potências (acertos/4)', 'Geometria (acertos/2)',
+          'Nome', 'RA', 'Turma', 'Nível Geral', 'Pontuação (0-20)',
+          'Inteiros (acertos/3)', 'Frações (acertos/3)', 'Raízes (acertos/3)', 'Potências (acertos/9)', 'Geometria (acertos/2)',
           'Dicas Usadas', 'Questões Puladas', 'Data e Hora', 'Tempo de Resposta',
 'Q1 (-2)(-2)(-2)', 'Q2 (-2)(-2)(-2)(-2)', 'Q3 -9+4',
 'Q4 16/8', 'Q5 √49', 'Q6 ³√27',
 'Q7 1/5+3/5', 'Q8 1/4+7/3', 'Q9 2³', 'Q10 3⁻³', 'Q11 ³√56',
-'Q12 fração potências', 'Q13 -6²', 'Q14 (27/8)⁻¹',
-'Q15 expressão mista', 'Q16 triângulo 6-8', 'Q17 triângulo 3-5'
+'Q12 fração potências', 'Q13 fração m/n/p', 'Q14 (81/16)⁻¹',
+'Q15 -6²', 'Q16 (27/8)⁻¹', 'Q17 expressão decimal',
+'Q18 expressão fração', 'Q19 triângulo 6-8', 'Q20 triângulo 3-5'
        ]]
       }
     })
@@ -72,7 +73,7 @@ async function registrarDiagnostico(dados) {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'Página1!A:AE',
+      range: 'Página1!A:AH',
       valueInputOption: 'RAW',
       requestBody: {
         values: [[
@@ -80,11 +81,11 @@ async function registrarDiagnostico(dados) {
           dados.ra,
           dados.turma,
           nivelLabel[dados.nivel] || dados.nivel,
-          `${dados.pontuacao}/17`,
+          `${dados.pontuacao}/20`,
 `${dados.blocos.inteiros?.acertos ?? 0}/3`,
 `${dados.blocos.fracoes?.acertos ?? 0}/3`,
 `${dados.blocos.raizes?.acertos ?? 0}/3`,
-`${dados.blocos.potencias?.acertos ?? 0}/6`,
+`${dados.blocos.potencias?.acertos ?? 0}/9`,
 `${dados.blocos.geometria?.acertos ?? 0}/2`,
           dados.dicas_usadas,
           dados.questoes_puladas,
@@ -92,7 +93,7 @@ async function registrarDiagnostico(dados) {
           dados.tempo_segundos ? `${Math.floor(dados.tempo_segundos/60)}min ${dados.tempo_segundos%60}s` : '-',
           dados.q1, dados.q2, dados.q3, dados.q4, dados.q5,
           dados.q6, dados.q7, dados.q8, dados.q9, dados.q10,
-dados.q11, dados.q12, dados.q13, dados.q14, dados.q15, dados.q16, dados.q17,
+dados.q11, dados.q12, dados.q13, dados.q14, dados.q15, dados.q16, dados.q17, dados.q18, dados.q19, dados.q20,
         ]]
       }
     })

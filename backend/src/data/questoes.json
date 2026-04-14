@@ -76,7 +76,7 @@
     "correta": "A",
     "dicas": [
       "Denominadores diferentes: encontre o MMC entre 4 e 3.",
-      "Converta: 1/4 = 3/12 (fazendo 4 × x = 12, temos x = 3; multiplique o numerador e o denominador por 3, e o mesmo procedimento serve para a próxima fração) e 7/3 = 28/12. Agora some."
+      "Transforme as duas frações em frações equivalentes que tenham o mesmo denominador."
     ]
   },
   {
@@ -94,7 +94,7 @@
     "enunciado": "3⁻³ =",
     "alternativas": { "A": "1/27", "B": "-27", "C": "-9", "D": "1/9" },
     "correta": "A",
-   "dicas": [
+    "dicas": [
       "a⁻ⁿ = 1/aⁿ",
       "se n = 3 então 3⁻³ = 1/3³"
     ]
@@ -106,102 +106,149 @@
     "correta": "A",
     "dicas": [
       "ⁿ√(a·b) = ⁿ√a · ⁿ√b — separe 56 em dois fatores onde um seja cubo perfeito.",
-      "56 = 8 × 7, e ³√8 = 2. Então ³√56 = ³√8 · ³√7 = 2·³√7"
+      "Exemplo: 88 = 8 × 11, então ³√88 = ³√8 · ³√11 = 2·³√11. Use o mesmo raciocínio."
+    ]
+  },
+  {
+    "id": 12, "bloco": "potencias",
+    "latex": true,
+    "enunciado": "\\frac{a^3 \\cdot b^2 \\cdot x^5 \\cdot y^2}{y^3 \\cdot x^4 \\cdot a \\cdot b^4} =",
+    "alternativas": {
+      "A": "\\frac{a^2 \\cdot x}{b^2 \\cdot y}",
+      "B": "\\frac{a^2 \\cdot x}{b^2 \\cdot y^2}",
+      "C": "\\frac{a \\cdot x}{b^2 \\cdot y}",
+      "D": "\\frac{a^2 \\cdot x^2}{b^2 \\cdot y}"
+    },
+    "correta": "A",
+    "dicas": [
+      "aⁿ · a⁻ᵐ = aⁿ⁻ᵐ — subtraia os expoentes de cada variável separadamente.",
+      "Calcule variável por variável: a³/a¹ = a², b²/b⁴ = b⁻², x⁵/x⁴ = x, y²/y³ = y⁻¹"
+    ]
+  },
+  {
+    "id": 13, "bloco": "potencias",
+    "latex": true,
+    "enunciado": "\\frac{m^4 \\cdot n^3 \\cdot p^2}{n^5 \\cdot p^4 \\cdot m^2} =",
+    "alternativas": {
+      "A": "m^2 \\cdot n^{-2} \\cdot p^{-2}",
+      "B": "\\frac{m^2}{n^2 \\cdot p^2}",
+      "C": "m^2 \\cdot n^{-3} \\cdot p^{-2}",
+      "D": "m^4 \\cdot n^{-5} \\cdot p^{-4}"
+    },
+    "correta": "A",
+    "dicas": [
+      "aⁿ · a⁻ᵐ = aⁿ⁻ᵐ — subtraia os expoentes de cada variável separadamente.",
+      "Calcule variável por variável: m⁴/m² = m², n³/n⁵ = n⁻², p²/p⁴ = p⁻²"
+    ]
+  },
+  {
+    "id": 14, "bloco": "potencias",
+    "latex": true,
+    "enunciado": "\\left(\\frac{81}{16}\\right)^{-1} =",
+    "alternativas": {
+      "A": "\\left(\\frac{3}{2}\\right)^4",
+      "B": "\\left(\\frac{16}{81}\\right)",
+      "C": "\\left(\\frac{2}{3}\\right)^4",
+      "D": "-\\frac{81}{16}"
+    },
+    "correta": "C",
+    "dicas": [
+      "a⁻¹ = 1/a — expoente -1 inverte a fração.",
+      "(81/16)⁻¹ = 16/81. Agora fatore: 16 = 2⁴ e 81 = 3⁴, então 16/81 = (2/3)⁴"
+    ]
+  },
+  {
+    "id": 15, "bloco": "potencias",
+    "latex": true,
+    "enunciado": "-6^2 =",
+    "alternativas": {
+      "A": "-36",
+      "B": "36",
+      "C": "\\frac{1}{36}",
+      "D": "-\\frac{1}{36}"
+    },
+    "correta": "A",
+    "dicas": [
+      "-x = -1 · x, ou seja, o sinal negativo está fora da potência.",
+      "Calcule 6² primeiro, depois aplique o sinal: -1 · 36 = ?"
+    ]
+  },
+  {
+    "id": 16, "bloco": "potencias",
+    "latex": true,
+    "enunciado": "\\left(\\frac{27}{8}\\right)^{-1} =",
+    "alternativas": {
+      "A": "\\left(\\frac{8}{27}\\right)^3",
+      "B": "\\frac{2^3}{3^3}",
+      "C": "\\frac{9^{-3}}{3^{-3}}",
+      "D": "\\frac{2}{3}"
+    },
+    "correta": "B",
+    "dicas": [
+      "a⁻ᵐ = 1/aᵐ — expoente negativo inverte a base.",
+      "(27/8)⁻¹ = 8/27. Agora escreva 8 e 27 como potências de 2 e 3."
+    ]
+  },
+  {
+    "id": 17, "bloco": "potencias",
+    "latex": true,
+    "enunciado": "A = 16^{0{,}5} + 8^{\\frac{1}{3}} + \\left(\\frac{1}{32}\\right)^{-0{,}2}",
+    "alternativas": {
+      "A": "8",
+      "B": "\\frac{1}{4}",
+      "C": "2^4",
+      "D": "-8"
+    },
+    "correta": "A",
+    "dicas": [
+      "1/aᵐ = a⁻ᵐ — expoente negativo inverte a base.",
+      "ⁿ√aᵏ = a^(k/n) — expoente fracionário é raiz: 16^0,5 = √16, 8^(1/3) = ³√8"
+    ]
+  },
+  {
+    "id": 18, "bloco": "potencias",
+    "latex": true,
+    "enunciado": "B = 16^{\\frac{1}{2}} + 8^{\\frac{1}{3}} + \\left(\\frac{1}{32}\\right)^{-\\frac{1}{5}}",
+    "alternativas": {
+      "A": "8",
+      "B": "6",
+      "C": "10",
+      "D": "2^3"
+    },
+    "correta": "A",
+    "dicas": [
+      "a^(-m) = 1/(a^m) — expoente negativo inverte a base.",
+      "a^(m/n) = ⁿ√(a^m) — expoente fracionário é raiz: 16^(1/2) = √16, 8^(1/3) = ³√8, (1/32)^(-1/5) = 32^(1/5) = ⁵√32"
+    ]
+  },
+ {
+    "id": 19, "bloco": "geometria",
+    "enunciado": "<div style='text-align:center;margin:10px 0;'><svg width='240' height='200' viewBox='0 0 240 200' xmlns='http://www.w3.org/2000/svg'><line x1='50' y1='160' x2='190' y2='160' stroke='#94a3b8' stroke-width='2.5'/><line x1='50' y1='160' x2='50' y2='30' stroke='#94a3b8' stroke-width='2.5'/><line x1='50' y1='30' x2='190' y2='160' stroke='#f97316' stroke-width='2.5'/><rect x='50' y='150' width='10' height='10' fill='none' stroke='#94a3b8' stroke-width='1.5'/><text x='120' y='180' fill='#94a3b8' font-size='16' text-anchor='middle' font-family='Outfit'>8 cm</text><text x='30' y='100' fill='#94a3b8' font-size='16' text-anchor='middle' font-family='Outfit'>6 cm</text><text x='125' y='85' fill='#f97316' font-size='18' font-weight='bold' text-anchor='middle' font-family='Outfit'>x</text><text x='38' y='178' fill='#cbd5e1' font-size='14' font-weight='600' font-family='Outfit'>B</text><text x='195' y='178' fill='#cbd5e1' font-size='14' font-weight='600' font-family='Outfit'>C</text><text x='38' y='22' fill='#cbd5e1' font-size='14' font-weight='600' font-family='Outfit'>A</text></svg><br><span style='color:#94a3b8;font-size:15px;font-family:Outfit;'>Determine o valor de <strong style=\"color:#f97316;\">x</strong> (hipotenusa).</span></div>",
+    "alternativas": {
+      "A": "10 cm",
+      "B": "9 cm",
+      "C": "7 cm",
+      "D": "3 cm"
+    },
+    "correta": "A",
+    "dicas": [
+      "Teorema de Pitágoras: hipotenusa² = cateto² + cateto²",
+      "x² = 6² + 8² = 36 + 64 = 100. Agora calcule √100."
+    ]
+  },
+  {
+    "id": 20, "bloco": "geometria",
+    "enunciado": "<div style='text-align:center;margin:10px 0;'><svg width='220' height='200' viewBox='0 0 220 200' xmlns='http://www.w3.org/2000/svg'><line x1='50' y1='160' x2='170' y2='160' stroke='#94a3b8' stroke-width='2.5'/><line x1='50' y1='160' x2='50' y2='40' stroke='#94a3b8' stroke-width='2.5'/><line x1='50' y1='40' x2='170' y2='160' stroke='#94a3b8' stroke-width='2.5'/><rect x='50' y='150' width='10' height='10' fill='none' stroke='#94a3b8' stroke-width='1.5'/><text x='110' y='180' fill='#94a3b8' font-size='16' text-anchor='middle' font-family='Outfit'>3 cm</text><text x='30' y='105' fill='#f97316' font-size='18' font-weight='bold' text-anchor='middle' font-family='Outfit'>x</text><text x='125' y='85' fill='#94a3b8' font-size='16' text-anchor='middle' font-family='Outfit'>5 cm</text><text x='38' y='178' fill='#cbd5e1' font-size='14' font-weight='600' font-family='Outfit'>E</text><text x='175' y='178' fill='#cbd5e1' font-size='14' font-weight='600' font-family='Outfit'>F</text><text x='38' y='32' fill='#cbd5e1' font-size='14' font-weight='600' font-family='Outfit'>D</text></svg><br><span style='color:#94a3b8;font-size:15px;font-family:Outfit;'>Determine o valor de <strong style=\"color:#f97316;\">x</strong> (cateto).</span></div>",
+    "alternativas": {
+      "A": "4 cm",
+      "B": "9 cm",
+      "C": "7 cm",
+      "D": "10 cm"
+    },
+    "correta": "A",
+    "dicas": [
+      "Teorema de Pitágoras: hipotenusa² = cateto² + cateto²",
+      "5² = 3² + x² → 25 = 9 + x² → x² = 16. Agora calcule √16."
     ]
   }
-  ,
-{
-  "id": 12, "bloco": "potencias",
-  "latex": true,
-  "enunciado": "\\frac{a^3 \\cdot b^2 \\cdot x^5 \\cdot y^2}{y^3 \\cdot x^4 \\cdot a \\cdot b^4} =",
-  "alternativas": {
-    "A": "\\frac{a^2 \\cdot x}{b^2 \\cdot y}",
-    "B": "\\frac{a^2 \\cdot x}{b^2 \\cdot y^2}",
-    "C": "\\frac{a \\cdot x}{b^2 \\cdot y}",
-    "D": "\\frac{a^2 \\cdot x^2}{b^2 \\cdot y}"
-  },
-  "correta": "A",
-  "dicas": [
-    "aⁿ · a⁻ᵐ = aⁿ⁻ᵐ — subtraia os expoentes de cada variável separadamente.",
-    "Calcule variável por variável: a³/a¹ = a², b²/b⁴ = b⁻², x⁵/x⁴ = x, y²/y³ = y⁻¹"
-  ]
-},
-{
-  "id": 13, "bloco": "potencias",
-  "latex": true,
-  "enunciado": "-6^2 =",
-  "alternativas": {
-    "A": "-36",
-    "B": "36",
-    "C": "\\frac{1}{36}",
-    "D": "-\\frac{1}{36}"
-  },
-  "correta": "A",
-  "dicas": [
-    "-x = -1 · x, ou seja, o sinal negativo está fora da potência.",
-    "Calcule 6² primeiro, depois aplique o sinal: -1 · 36 = ?"
-  ]
-},
-{
-  "id": 14, "bloco": "potencias",
-  "latex": true,
-  "enunciado": "\\left(\\frac{27}{8}\\right)^{-1} =",
-  "alternativas": {
-    "A": "\\left(\\frac{8}{27}\\right)^3",
-    "B": "\\frac{2^3}{3^3}",
-    "C": "\\frac{9^{-3}}{3^{-3}}",
-    "D": "\\frac{2}{3}"
-  },
-  "correta": "B",
-  "dicas": [
-    "a⁻ᵐ = 1/aᵐ — expoente negativo inverte a base.",
-    "(27/8)⁻¹ = 8/27. Agora escreva 8 e 27 como potências de 2 e 3."
-  ]
-},
-{
-  "id": 15, "bloco": "potencias",
-  "latex": true,
-  "enunciado": "A = 16^{0{,}5} + 8^{\\frac{1}{3}} + \\left(\\frac{1}{32}\\right)^{-0{,}2}",
-  "alternativas": {
-    "A": "8",
-    "B": "\\frac{1}{4}",
-    "C": "2^4",
-    "D": "-8"
-  },
-  "correta": "A",
-  "dicas": [
-    "1/aᵐ = a⁻ᵐ — expoente negativo inverte a base.",
-    "ⁿ√aᵏ = a^(k/n) — expoente fracionário é raiz: 16^0,5 = √16, 8^(1/3) = ³√8"
-  ]
-},
-{
-  "id": 16, "bloco": "geometria",
-  "enunciado": "Determine o valor de x: triângulo retângulo com catetos 6 cm e 8 cm, sendo x a hipotenusa.",
-  "alternativas": {
-    "A": "10 cm",
-    "B": "9 cm",
-    "C": "7 cm",
-    "D": "3 cm"
-  },
-  "correta": "A",
-  "dicas": [
-    "Teorema de Pitágoras: hipotenusa² = cateto² + cateto²",
-    "x² = 6² + 8² = 36 + 64 = 100. Agora calcule √100."
-  ]
-},
-{
-  "id": 17, "bloco": "geometria",
-  "enunciado": "Determine o valor de x: triângulo retângulo com cateto 3cm e hipotenusa 5 cm, sendo x o cateto desconhecido.",
-  "alternativas": {
-    "A": "4 cm",
-    "B": "9 cm",
-    "C": "7 cm",
-    "D": "10 cm"
-  },
-  "correta": "A",
-  "dicas": [
-    "Teorema de Pitágoras: hipotenusa² = cateto² + cateto²",
-    "5² = 3² + x² → 25 = 9 + x² → x² = 16. Agora calcule √16."
-  ]
-}
 ]

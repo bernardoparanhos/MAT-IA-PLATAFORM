@@ -341,7 +341,7 @@ if (respostas[q.id] === corretaReal) { bloco.acertos++; pontuacao++ }
     const { acertos, total } = blocos[b]
     blocos[b].nivel = acertos / total === 0 ? 'fraco' : acertos / total < 1 ? 'medio' : 'forte'
   })
-  const nivel = pontuacao <= 5 ? 'basico' : pontuacao <= 11 ? 'intermediario' : 'avancado'
+  const nivel = pontuacao <= 6 ? 'basico' : pontuacao <= 13 ? 'intermediario' : 'avancado'
   return { nivel, pontuacao, blocos }
 }
 
@@ -393,7 +393,7 @@ router.post('/diagnostico/responder', verifyToken, async (req, res) => {
     questoes_puladas: (pulou || []).length,
     feito_em: new Date().toLocaleString('pt-BR'),
     tempo_segundos: iniciado_em ? Math.round((Date.now() - iniciado_em) / 1000) : null,
-    ...[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].reduce((acc, id) => {
+    ...[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].reduce((acc, id) => {
       const q = questoes.find(q => q.id === id)
       acc[`q${id}`] = q ? (respostas[id] ? (respostas[id] === q.correta ? '✅' : '❌') : '—') : '—'
       return acc
@@ -672,7 +672,7 @@ Analise os dados da turma "${turma.rows[0].nome}" e forneça um resumo pedagógi
 DADOS DA TURMA:
 - Total de alunos que fizeram o diagnóstico: ${totalAlunos}
 - Distribuição por nível: Básico: ${niveis.basico} | Intermediário: ${niveis.intermediario} | Avançado: ${niveis.avancado}
-- Média geral: ${mediaGeral}/17
+- Média geral: ${mediaGeral}/20
 - Desempenho por bloco: ${mediasBlocos.map(b => `${b.bloco}: ${b.media}%`).join(' | ')}
 
 INSTRUÇÕES:
@@ -758,10 +758,10 @@ Analise o desempenho individual do aluno e forneça um feedback objetivo e útil
 
 DADOS DO ALUNO: ${nome}
 - Nível: ${nivel}
-- Pontuação: ${pontuacao}/17
+- Pontuação: ${pontuacao}/20
 - Desempenho por bloco: ${blocoTexto}
-- Dicas utilizadas: ${(usou_dicas || []).length} de 17 questões
-- Questões puladas: ${(pulou || []).length} de 17 questões
+- Dicas utilizadas: ${(usou_dicas || []).length} de 20 questões
+- Questões puladas: ${(pulou || []).length} de 20 questões
 - Tempo total de resposta: ${tempo_segundos ? `${Math.round(tempo_segundos / 60)} minutos (${tempo_segundos}s)` : 'não disponível'}
 
 INSTRUÇÕES:
