@@ -90,7 +90,7 @@ function TelaAnalisando() {
 }
 
 // ─── TELA: QUESTÃO ────────────────────────────────────────────────────────────
-function TelaQuestao({ questao, total, atual, onResponder, onPular, onVoltar, podeVoltar, respostaSalva, dicasSalvas }) {
+function TelaQuestao({ questao, total, atual, onResponder, onPular, onVoltar, podeVoltar, respostaSalva, dicasSalvas, questaoMaisAvancada, onIrParaMaisAvancada }) {
   const [selecionada, setSelecionada] = useState(null)
   const [dicaAberta, setDicaAberta] = useState(null) // 0 ou 1
   const [dicasUsadas, setDicasUsadas] = useState([])
@@ -232,9 +232,9 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular, onVoltar, po
                     <path d="M6 9l6 6 6-6"/>
                   </svg>
                 </button>
-                {dicaAberta === idx && (
+               {dicaAberta === idx && (
                   <div className="px-4 pb-4 pt-0">
-                    <p className="text-slate-300 text-sm font-light leading-relaxed italic border-t border-white/5 pt-3">
+                    <p className="text-slate-300 text-sm font-light leading-relaxed italic border-t border-white/5 pt-3 whitespace-pre-line">
                       {dica}
                     </p>
                   </div>
@@ -244,30 +244,44 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular, onVoltar, po
           </div>
 
           
-          {/* Botões de ação */}
-<div className="flex gap-3">
-  {podeVoltar && (
-    <button
-      onClick={onVoltar}
-      className="px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-light transition-colors">
-      ← Voltar
-    </button>
-  )}
-  <button
-    onClick={() => onPular(questao.id)}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-light transition-colors">
-              Não sei
-            </button>
-            <button
-              onClick={handleConfirmar}
-              disabled={!selecionada || confirmando}
-              className={`flex-2 px-8 py-3 rounded-xl text-sm font-medium transition-all
-                ${selecionada && !confirmando
-                  ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                  : 'bg-white/5 text-slate-500 cursor-not-allowed'
-                }`}>
-              {confirmando ? 'Confirmando...' : 'Confirmar →'}
-            </button>
+{/* Botões de ação */}
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              {podeVoltar && (
+                <button
+                  onClick={onVoltar}
+                  className="px-4 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-light transition-colors">
+                  Voltar
+                </button>
+              )}
+              <button
+                onClick={() => onPular(questao.id)}
+                className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 text-sm font-light transition-colors">
+                Não sei
+              </button>
+              <button
+                onClick={handleConfirmar}
+                disabled={!selecionada || confirmando}
+                className={`flex-2 px-8 py-3 rounded-xl text-sm font-medium transition-all
+                  ${selecionada && !confirmando
+                    ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                    : 'bg-white/5 text-slate-500 cursor-not-allowed'
+                  }`}>
+                {confirmando ? 'Confirmando...' : 'Confirmar →'}
+              </button>
+            </div>
+
+            {/* Botão de retorno rápido para a questão mais avançada */}
+            {questaoMaisAvancada > atual - 1 && (
+             <button
+                onClick={onIrParaMaisAvancada}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 text-sm font-light transition-colors mt-2">
+                <span>Pular de volta para a Questão {questaoMaisAvancada + 1}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                  <path d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
           </div>
 
         </div>
@@ -301,6 +315,7 @@ function Nivelamento() {
   const [tela, setTela] = useState('boasVindas') // boasVindas | questao | analisando
   const [questoes, setQuestoes] = useState([])
   const [questaoAtual, setQuestaoAtual] = useState(0)
+  const [questaoMaisAvancada, setQuestaoMaisAvancada] = useState(0)
   const [respostas, setRespostas] = useState({})   // { "1": "A", ... }
   const [dicasUsadas, setDicasUsadas] = useState([]) // [1, 3, ...]
   const [puladas, setPuladas] = useState([])          // [2, 5, ...]
@@ -370,7 +385,11 @@ function handleIniciar() {
     if (questaoAtual + 1 >= questoes.length) {
       finalizarTeste(respostasAtuais, puladasAtuais)
     } else {
-      setQuestaoAtual(q => q + 1)
+      const proxima = questaoAtual + 1
+      setQuestaoAtual(proxima)
+      if (proxima > questaoMaisAvancada) {
+        setQuestaoMaisAvancada(proxima)
+      }
     }
   }
 
@@ -423,6 +442,8 @@ function handleIniciar() {
       podeVoltar={questaoAtual > 0}
       respostaSalva={respostas[questaoAtualObj.id]}
       dicasSalvas={historicoDicas[questaoAtualObj.id] || []}
+      questaoMaisAvancada={questaoMaisAvancada}
+      onIrParaMaisAvancada={() => setQuestaoAtual(questaoMaisAvancada)}
     />
   )
 }

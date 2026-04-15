@@ -5,20 +5,20 @@
     "alternativas": { "A": "-8", "B": "8", "C": "-6", "D": "6" },
     "correta": "A",
     "dicas": [
-      "Negativo × Negativo = Positivo ( - )( - ) = ( + ), Negativo × Positivo = Negativo ( - )( + ) = ( - ) e Positivo × Negativo = Negativo ( + )( - ) = ( - )",
+      "Negativo × Negativo = Positivo ( - )( - ) = ( + )\nNegativo × Positivo = Negativo ( - )( + ) = ( - )\nPositivo × Negativo = Negativo ( + )( - ) = ( - )",
       "Faça passo a passo: (-2)×(-2) primeiro, depois multiplique o resultado por (-2)."
     ]
   },
   {
-    "id": 2, "bloco": "inteiros",
-    "enunciado": "(-2)(-2)(-2)(-2) =",
-    "alternativas": { "A": "16", "B": "-16", "C": "8", "D": "-8" },
-    "correta": "A",
-    "dicas": [
-      "A quantidade de fatores negativos determina o sinal final.",
-      "Negativo × Negativo = Positivo ( - )( - ) = ( + ), Negativo × Positivo = Negativo ( - )( + ) = ( - ) e Positivo × Negativo = Negativo ( + )( - ) = ( - )"
-    ]
-  },
+  "id": 2, "bloco": "inteiros",
+  "enunciado": "(-2)(-2)(-2)(-2) =",
+  "alternativas": { "A": "16", "B": "-16", "C": "8", "D": "-8" },
+  "correta": "A",
+  "dicas": [
+    "A quantidade de fatores negativos determina o sinal final.",
+    "Negativo × Negativo = Positivo ( - )( - ) = ( + )\nNegativo × Positivo = Negativo ( - )( + ) = ( - )\nPositivo × Negativo = Negativo ( + )( - ) = ( - )"
+  ]
+},
   {
     "id": 3, "bloco": "inteiros",
     "enunciado": "-9 + 4 =",
@@ -170,7 +170,7 @@
     "correta": "A",
     "dicas": [
       "-x = -1 · x, ou seja, o sinal negativo está fora da potência.",
-      "Calcule 6² primeiro, depois aplique o sinal: -1 · 36 = ?"
+      "Cuidado: (-a)² é diferente de -a².\nSem os parênteses, o sinal negativo não 'entra' no cálculo da potência. Ele fica de fora esperando o resultado."
     ]
   },
   {
