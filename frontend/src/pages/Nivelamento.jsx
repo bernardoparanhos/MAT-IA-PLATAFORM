@@ -381,17 +381,20 @@ function handleIniciar() {
     avancar(respostas, novasPuladas)
   }
 
-  function avancar(respostasAtuais, puladasAtuais = puladas) {
-    if (questaoAtual + 1 >= questoes.length) {
-      finalizarTeste(respostasAtuais, puladasAtuais)
-    } else {
-      const proxima = questaoAtual + 1
-      setQuestaoAtual(proxima)
-      if (proxima > questaoMaisAvancada) {
-        setQuestaoMaisAvancada(proxima)
-      }
-    }
+ function avancar(respostasAtuais, puladasAtuais = puladas) {
+  const proximaQuestaoIdx = questaoAtual + 1;
+
+  // ATUALIZA questaoMaisAvancada ANTES de avançar (pega a questão ATUAL respondida)
+  if (questaoAtual > questaoMaisAvancada) {
+    setQuestaoMaisAvancada(questaoAtual);
   }
+
+  if (proximaQuestaoIdx >= questoes.length) {
+    finalizarTeste(respostasAtuais, puladasAtuais);
+  } else {
+    setQuestaoAtual(proximaQuestaoIdx);
+  }
+}
 
   async function finalizarTeste(respostasFinais, puladasFinais) {
     setTela('analisando')
