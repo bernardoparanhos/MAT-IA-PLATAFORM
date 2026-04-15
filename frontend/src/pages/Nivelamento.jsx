@@ -381,20 +381,22 @@ function handleIniciar() {
     avancar(respostas, novasPuladas)
   }
 
- function avancar(respostasAtuais, puladasAtuais = puladas) {
-  const proximaQuestaoIdx = questaoAtual + 1;
+function avancar(respostasAtuais, puladasAtuais = puladas) {
+    // Definimos qual seria a próxima questão na sequência
+    const proximaQuestaoIdx = questaoAtual + 1;
 
-  // ATUALIZA questaoMaisAvancada ANTES de avançar (pega a questão ATUAL respondida)
-  if (questaoAtual > questaoMaisAvancada) {
-    setQuestaoMaisAvancada(questaoAtual);
+    if (proximaQuestaoIdx >= questoes.length) {
+      finalizarTeste(respostasAtuais, puladasAtuais);
+    } else {
+      setQuestaoAtual(proximaQuestaoIdx);
+      
+      // A lógica matadora: a "mais avançada" só aumenta se o aluno 
+      // chegar em um índice que ele nunca pisou antes.
+      if (proximaQuestaoIdx > questaoMaisAvancada) {
+        setQuestaoMaisAvancada(proximaQuestaoIdx);
+      }
+    }
   }
-
-  if (proximaQuestaoIdx >= questoes.length) {
-    finalizarTeste(respostasAtuais, puladasAtuais);
-  } else {
-    setQuestaoAtual(proximaQuestaoIdx);
-  }
-}
 
   async function finalizarTeste(respostasFinais, puladasFinais) {
     setTela('analisando')
