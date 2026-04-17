@@ -181,6 +181,27 @@ function DashboardProfessor() {
             </div>
           </div>
 
+          {/* Teste Diagnóstico */}
+          <div className="mb-8 lg:mb-10">
+            <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">Teste Diagnóstico</p>
+            <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6 lg:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-white font-medium text-lg mb-1">
+                  Testar diagnóstico
+                </p>
+                <p className="text-slate-400 text-sm font-light">
+                  Experimente o diagnóstico como seus alunos o veem
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/diagnostico/preview')}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-2.5 rounded-xl text-sm transition-colors whitespace-nowrap w-full sm:w-auto"
+              >
+                Iniciar teste 
+              </button>
+            </div>
+          </div>
+
           {/* Minhas Turmas */}
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">Minhas Turmas</p>

@@ -307,7 +307,7 @@ function embaralharQuestao(q) {
 }
 
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
-function Nivelamento() {
+function Nivelamento({ modo = 'aluno' }) {
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
@@ -400,27 +400,35 @@ function avancar(respostasAtuais, puladasAtuais = puladas) {
 
   async function finalizarTeste(respostasFinais, puladasFinais) {
     setTela('analisando')
-    try {
-      await fetch(`${API}/auth/diagnostico/responder`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-        respostas: respostasFinais,
-        usou_dicas: dicasUsadas,
-        pulou: puladasFinais,
-        iniciado_em: iniciadoEm
-      })
-      })
-    } catch (e) {
-      console.error('Erro ao enviar respostas', e)
+    
+    // Modo preview: NÃO salva no banco
+    if (modo !== 'preview') {
+      try {
+        await fetch(`${API}/auth/diagnostico/responder`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            respostas: respostasFinais,
+            usou_dicas: dicasUsadas,
+            pulou: puladasFinais,
+            iniciado_em: iniciadoEm
+          })
+        })
+      } catch (e) {
+        console.error('Erro ao enviar respostas', e)
+      }
     }
 
-    // Aguarda animação (3.5s) depois redireciona para resultado
+    // Aguarda animação (3.5s) depois redireciona
     setTimeout(() => {
-      navigate('/nivelamento/resultado')
+      if (modo === 'preview') {
+        navigate('/dashboard-professor')
+      } else {
+        navigate('/nivelamento/resultado')
+      }
     }, 3500)
   }
 

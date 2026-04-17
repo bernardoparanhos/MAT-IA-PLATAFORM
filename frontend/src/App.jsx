@@ -61,6 +61,12 @@ function App() {
           <Metricas />
         </ProtectedRoute>
       } />
+      <Route path="/diagnostico/preview" element={
+        <ProtectedRoute perfil="professor">
+          <Nivelamento modo="preview" />
+        </ProtectedRoute>
+      } />
+      
       {/* Protegidas — Aluno */}
       <Route path="/dashboard" element={
         <ProtectedRoute perfil="aluno">
