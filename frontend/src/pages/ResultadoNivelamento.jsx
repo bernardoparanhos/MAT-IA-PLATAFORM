@@ -260,15 +260,11 @@ function ResultadoNivelamento() {
     {enviandoFeedback ? 'Enviando...' : 'Enviar feedback e concluir'}
   </button>
 ) : (
-  <button
-    onClick={() => {
-      localStorage.removeItem('token')
-      localStorage.removeItem('usuario')
-      navigate('/login')
-    }}
-    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-xl text-sm transition-colors">
-    Voltar ao login
-  </button>
+<button
+  onClick={() => navigate('/dashboard')}
+  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-xl text-sm transition-colors">
+  Ir para o painel
+</button>
 )}
 
         <p className="text-slate-600 text-xs text-center mt-6 font-light">UTFPR Campus Medianeira — 2026</p>

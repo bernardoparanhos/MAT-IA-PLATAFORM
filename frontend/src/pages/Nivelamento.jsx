@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Formula from '../components/Formula'
 
 // ─── TELA: BOAS-VINDAS ────────────────────────────────────────────────────────
-function TelaBoasVindas({ onIniciar }) {
+function TelaBoasVindas({ onIniciar, onPular }) {
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
       <div className="w-full max-w-md">
@@ -34,11 +34,17 @@ function TelaBoasVindas({ onIniciar }) {
             </p>
           </div>
 
-          {/* Botões */}
+         {/* Botões */}
           <button
             onClick={onIniciar}
             className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-xl text-sm transition-colors mb-3">
             🎯 Fazer diagnóstico agora
+          </button>
+          
+          <button
+            onClick={onPular}
+            className="w-full border border-white/10 hover:border-white/20 text-slate-400 hover:text-white font-light py-3 rounded-xl text-sm transition-colors">
+            Fazer depois
           </button>
         </div>
       </div>
