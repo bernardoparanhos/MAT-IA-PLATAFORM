@@ -29,7 +29,12 @@ function Dashboard() {
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
-    if (jaVerificou) return
+    // Verifica se já checou nesta sessão
+    const jaChecou = sessionStorage.getItem('diagnostico_verificado')
+    if (jaChecou) {
+      setJaVerificou(true)
+      return
+    }
     
     setVerificando(true)
     
@@ -39,18 +44,23 @@ function Dashboard() {
           headers: { Authorization: `Bearer ${token}` }
         })
         const data = await res.json()
-        if (data.status === 'pendente') { navigate('/nivelamento'); return }
+        if (data.status === 'pendente') { 
+          navigate('/nivelamento')
+          return 
+        }
         setDiagnosticoStatus(data.status)
         setJaVerificou(true)
+        sessionStorage.setItem('diagnostico_verificado', 'true') // ← PERSISTE NA SESSÃO
       } catch (e) {
         console.error('Erro ao verificar diagnóstico', e)
         setJaVerificou(true)
+        sessionStorage.setItem('diagnostico_verificado', 'true') // ← PERSISTE MESMO COM ERRO
       } finally {
         setVerificando(false)
       }
     }
     verificarDiagnostico()
-  }, [jaVerificou, API, token, navigate])
+  }, [API, token, navigate]) // ← REMOVE jaVerificou das dependências
 
   useEffect(() => {
     function handleResize() {
