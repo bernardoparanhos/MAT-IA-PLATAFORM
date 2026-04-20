@@ -1,45 +1,37 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useNotificacoesAluno } from '../context/NotificacoesAlunoContext'
 import SidebarAluno from '../components/SidebarAluno'
+
+function tempoRelativo(dataStr) {
+  const dataUtc = dataStr.endsWith('Z') ? dataStr : dataStr + 'Z'
+  const diff = Math.floor((new Date() - new Date(dataUtc)) / 1000)
+  if (diff < 60) return 'agora mesmo'
+  if (diff < 3600) return `há ${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`
+  if (diff < 172800) return 'há 1 dia'
+  return `há ${Math.floor(diff / 86400)} dias`
+}
 
 function Dashboard() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
+  const { notificacoes, naoLidas, marcarLida } = useNotificacoesAluno()
   const [sidebarAberta, setSidebarAberta] = useState(false)
-  const [naoLidas, setNaoLidas] = useState(0)
   const [diagnosticoStatus, setDiagnosticoStatus] = useState(null)
   const [verificando, setVerificando] = useState(false)
   const [jaVerificou, setJaVerificou] = useState(false)
-
+  const [painelNotif, setPainelNotif] = useState(false)
+  const painelRef = useRef(null)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
-    async function buscarNotifAluno() {
-      try {
-        const res = await fetch(`${API}/auth/notificacoes/aluno`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const data = await res.json()
-        setNaoLidas((data.notificacoes || []).filter(n => !n.lida).length)
-      } catch (e) {
-        console.error('Erro ao buscar notificações do aluno', e)
-      }
-    }
-
-    buscarNotifAluno()
-    const intervalo = setInterval(buscarNotifAluno, 30000)
-    return () => clearInterval(intervalo)
-  }, [])
-
-
-
-  useEffect(() => {
-    if (jaVerificou) return // já verificou nessa sessão
+    if (jaVerificou) return
     
-    setVerificando(true) // ← ATIVA O SPINNER SÓ QUANDO VAI VERIFICAR
+    setVerificando(true)
     
     async function verificarDiagnostico() {
       try {
@@ -58,7 +50,7 @@ function Dashboard() {
       }
     }
     verificarDiagnostico()
-  }, [jaVerificou])
+  }, [jaVerificou, API, token, navigate])
 
   useEffect(() => {
     function handleResize() {
@@ -68,9 +60,76 @@ function Dashboard() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Fecha painel ao clicar fora
+  useEffect(() => {
+    function handleClick(e) {
+      if (painelRef.current && !painelRef.current.contains(e.target)) {
+        setPainelNotif(false)
+      }
+    }
+    if (painelNotif) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [painelNotif])
+
   if (verificando) return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center" style={{ fontFamily: 'Outfit, sans-serif' }}>
       <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  // ─── Botão sino ──────────────────────────────────────────────────────────────
+  const SinoBotao = () => (
+    <div className="relative" ref={painelRef}>
+      <button
+        onClick={() => setPainelNotif(v => !v)}
+        className="relative p-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
+        </svg>
+        {naoLidas > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-orange-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+            {naoLidas > 9 ? '9+' : naoLidas}
+          </span>
+        )}
+      </button>
+
+      {/* Painel dropdown */}
+      {painelNotif && (
+        <div className="absolute right-0 top-10 w-80 bg-[#1e2d3d] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <span className="text-white text-sm font-medium">Notificações</span>
+            <button 
+              onClick={() => { setPainelNotif(false); navigate('/notificacoes-aluno') }} 
+              className="text-orange-400 hover:text-orange-300 text-xs transition-colors">
+              Ver todas
+            </button>
+          </div>
+
+          <div className="max-h-80 overflow-y-auto">
+            {notificacoes.length === 0 ? (
+              <p className="text-slate-500 text-sm text-center py-8 font-light">
+                Nenhuma notificação
+              </p>
+            ) : (
+              notificacoes.slice(0, 5).map(n => (
+                <button
+                  key={n.id}
+                  onClick={() => { marcarLida(n.id); setPainelNotif(false); navigate(`/notificacoes-aluno?id=${n.id}`) }}
+                  className={`w-full text-left px-4 py-3 border-b border-white/5 transition-colors hover:bg-white/5 ${
+                    !n.lida ? 'bg-orange-500/10 border-l-2 border-l-orange-500' : ''
+                  }`}
+                >
+                  <p className={`text-sm ${!n.lida ? 'text-white' : 'text-slate-400'} font-light leading-snug`}>
+                    {n.mensagem}
+                  </p>
+                  <p className="text-slate-600 text-xs mt-1">{tempoRelativo(n.criado_em)}</p>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 
@@ -81,7 +140,6 @@ function Dashboard() {
         <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={() => setSidebarAberta(false)} />
       )}
 
-      {/* Sidebar (componente único) */}
       <SidebarAluno 
         sidebarAberta={sidebarAberta}
         setSidebarAberta={setSidebarAberta}
@@ -89,7 +147,6 @@ function Dashboard() {
         logout={logout}
       />
 
-      {/* Conteúdo principal */}
       <div className="flex-1 flex flex-col lg:ml-56">
 
         {/* Header mobile */}
@@ -100,16 +157,7 @@ function Dashboard() {
             </button>
             <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
           </div>
-          <div className="relative p-2 text-slate-400">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
-              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
-            </svg>
-            {naoLidas > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-orange-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                {naoLidas > 9 ? '9+' : naoLidas}
-              </span>
-            )}
-          </div>
+          <SinoBotao />
         </header>
 
         <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0 overflow-y-auto">
@@ -125,16 +173,7 @@ function Dashboard() {
               </p>
             </div>
             <div className="hidden lg:block">
-              <div className="relative p-2 text-slate-400">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
-                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
-                </svg>
-                {naoLidas > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-orange-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
-                    {naoLidas > 9 ? '9+' : naoLidas}
-                  </span>
-                )}
-              </div>
+              <SinoBotao />
             </div>
           </div>
 

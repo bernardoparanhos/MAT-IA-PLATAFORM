@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import DashboardProfessor from './pages/DashboardProfessor'
 import PerfilProfessor from './pages/PerfilProfessor'
 import NotificacoesProfessor from './pages/NotificacoesProfessor'
+import NotificacoesAluno from './pages/NotificacoesAluno'
 import PerfilAluno from './pages/PerfilAluno'
 import EsqueciSenha from './pages/EsqueciSenha'
 import RedefinirSenha from './pages/RedefinirSenha'
@@ -51,7 +52,7 @@ function App() {
           <ConfiguracoesProfessor />
         </ProtectedRoute>
       } />
-     <Route path="/turmas-professor" element={
+      <Route path="/turmas-professor" element={
         <ProtectedRoute perfil="professor">
           <TurmasProfessor />
         </ProtectedRoute>
@@ -78,26 +79,31 @@ function App() {
           <PerfilAluno />
         </ProtectedRoute>
       } />
+      <Route path="/notificacoes-aluno" element={
+        <ProtectedRoute perfil="aluno">
+          <NotificacoesAluno />
+        </ProtectedRoute>
+      } />
       <Route path="/configuracoes-aluno" element={
         <ProtectedRoute perfil="aluno">
           <ConfiguracoesAluno />
         </ProtectedRoute>
       } />
       <Route path="/nivelamento" element={
-  <ProtectedRoute perfil="aluno">
-    <Nivelamento />
-  </ProtectedRoute>
-} />
-<Route path="/nivelamento/resultado" element={
-  <ProtectedRoute perfil="aluno">
-    <ResultadoNivelamento />
-  </ProtectedRoute>
-} />
-<Route path="/minha-turma" element={
-  <ProtectedRoute perfil="aluno">
-    <MinhaTurma />
-  </ProtectedRoute>
-} />
+        <ProtectedRoute perfil="aluno">
+          <Nivelamento />
+        </ProtectedRoute>
+      } />
+      <Route path="/nivelamento/resultado" element={
+        <ProtectedRoute perfil="aluno">
+          <ResultadoNivelamento />
+        </ProtectedRoute>
+      } />
+      <Route path="/minha-turma" element={
+        <ProtectedRoute perfil="aluno">
+          <MinhaTurma />
+        </ProtectedRoute>
+      } />
       
       {/* Redirects */}
       <Route path="/" element={<Navigate to="/login" replace />} />

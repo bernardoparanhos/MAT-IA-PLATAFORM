@@ -190,6 +190,81 @@ router.delete('/notificacoes', verifyToken, async (req, res) => {
   return res.json({ ok: true })
 })
 
+// ─── NOTIFICAÇÕES DO ALUNO ────────────────────────────────────────────────────
+router.get('/notificacoes/aluno', verifyToken, async (req, res) => {
+  try {
+    if (req.usuario.perfil !== 'aluno') {
+      return res.status(403).json({ message: 'Acesso negado.' })
+    }
+
+    const result = await db.query(`
+      SELECT * FROM notificacoes_aluno 
+      WHERE aluno_id = $1 
+      ORDER BY criado_em DESC 
+      LIMIT 50
+    `, [req.usuario.id])
+
+    return res.json({ notificacoes: result.rows })
+  } catch (e) {
+    console.error('Erro ao buscar notificações do aluno', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.post('/notificacoes/aluno/:id/lida', verifyToken, async (req, res) => {
+  try {
+    if (req.usuario.perfil !== 'aluno') {
+      return res.status(403).json({ message: 'Acesso negado.' })
+    }
+
+    await db.query(
+      `UPDATE notificacoes_aluno SET lida = 1 WHERE id = $1 AND aluno_id = $2`,
+      [req.params.id, req.usuario.id]
+    )
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('Erro ao marcar notificação como lida', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.delete('/notificacoes/aluno/:id', verifyToken, async (req, res) => {
+  try {
+    if (req.usuario.perfil !== 'aluno') {
+      return res.status(403).json({ message: 'Acesso negado.' })
+    }
+
+    await db.query(
+      'DELETE FROM notificacoes_aluno WHERE id = $1 AND aluno_id = $2',
+      [req.params.id, req.usuario.id]
+    )
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('Erro ao apagar notificação', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.delete('/notificacoes/aluno', verifyToken, async (req, res) => {
+  try {
+    if (req.usuario.perfil !== 'aluno') {
+      return res.status(403).json({ message: 'Acesso negado.' })
+    }
+
+    await db.query(
+      'DELETE FROM notificacoes_aluno WHERE aluno_id = $1',
+      [req.usuario.id]
+    )
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('Erro ao apagar todas as notificações', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 // ─── REGISTER / LOGIN ─────────────────────────────────────────────────────────
 router.post('/register/aluno', registerAlunoValidation, (req, res) => register(req, res, 'aluno'));
 router.post('/register/professor', registerProfessorValidation, (req, res) => register(req, res, 'professor'));

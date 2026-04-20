@@ -49,6 +49,15 @@ async function initDB() {
       criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS notificacoes_aluno (
+  id SERIAL PRIMARY KEY,
+  aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL,
+  mensagem TEXT NOT NULL,
+  lida INTEGER DEFAULT 0,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
     CREATE TABLE IF NOT EXISTS tokens_recuperacao (
       id SERIAL PRIMARY KEY,
       usuario_id INTEGER NOT NULL REFERENCES usuarios(id),

@@ -99,6 +99,24 @@ async function loginAluno(req, res) {
 
     if (!usuario || !senhaCorreta) return res.status(401).json({ message: 'RA ou senha inválidos.' });
 
+    // Verifica se é o primeiro login (se já tem notificação de boas-vindas)
+    const jaTemNotificacao = await db.query(
+      `SELECT id FROM notificacoes_aluno WHERE aluno_id = $1`,
+      [usuario.id]
+    );
+
+    // Se não tem nenhuma notificação ainda, cria a de boas-vindas
+    if (jaTemNotificacao.rows.length === 0) {
+      const primeiroNome = usuario.nome.split(' ')[0];
+      await db.query(
+        `INSERT INTO notificacoes_aluno (aluno_id, tipo, mensagem) VALUES ($1, 'boas-vindas', $2)`,
+        [
+          usuario.id,
+          `Bem-vindo(a) ao MAT-IA, ${primeiroNome}! 🎉 Explore a plataforma e acompanhe seu progresso em matemática.`
+        ]
+      );
+    }
+
     const token = gerarToken({ id: usuario.id, perfil: 'aluno' });
     return res.status(200).json({ token, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, perfil: 'aluno' } });
 
