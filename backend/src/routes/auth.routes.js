@@ -162,34 +162,6 @@ router.get('/aluno/minha-turma', verifyToken, async (req, res) => {
   return res.json({ turma, professor: professorResult.rows[0] || null, colegas: colegasResult.rows });
 });
 
-// ─── NOTIFICAÇÕES ─────────────────────────────────────────────────────────────
-router.get('/notificacoes', verifyToken, async (req, res) => {
-  const result = await db.query(`
-    SELECT * FROM notificacoes WHERE professor_id = $1 ORDER BY criado_em DESC LIMIT 50
-  `, [req.usuario.id]);
-  return res.json({ notificacoes: result.rows });
-});
-
-router.post('/notificacoes/lida/:id', verifyToken, async (req, res) => {
-  await db.query(`UPDATE notificacoes SET lida = 1 WHERE id = $1 AND professor_id = $2`, [req.params.id, req.usuario.id]);
-  return res.json({ ok: true });
-});
-
-router.post('/notificacoes/lida-todas', verifyToken, async (req, res) => {
-  await db.query(`UPDATE notificacoes SET lida = 1 WHERE professor_id = $1`, [req.usuario.id]);
-  return res.json({ ok: true });
-});
-
-router.delete('/notificacoes/:id', verifyToken, async (req, res) => {
-  await db.query('DELETE FROM notificacoes WHERE id = $1 AND professor_id = $2', [req.params.id, req.usuario.id])
-  return res.json({ ok: true })
-})
-
-router.delete('/notificacoes', verifyToken, async (req, res) => {
-  await db.query('DELETE FROM notificacoes WHERE professor_id = $1', [req.usuario.id])
-  return res.json({ ok: true })
-})
-
 // ─── NOTIFICAÇÕES DO ALUNO ────────────────────────────────────────────────────
 router.get('/notificacoes/aluno', verifyToken, async (req, res) => {
   try {
@@ -264,6 +236,35 @@ router.delete('/notificacoes/aluno', verifyToken, async (req, res) => {
     return res.status(500).json({ message: 'Erro interno.' })
   }
 })
+
+// ─── NOTIFICAÇÕES ─────────────────────────────────────────────────────────────
+router.get('/notificacoes', verifyToken, async (req, res) => {
+  const result = await db.query(`
+    SELECT * FROM notificacoes WHERE professor_id = $1 ORDER BY criado_em DESC LIMIT 50
+  `, [req.usuario.id]);
+  return res.json({ notificacoes: result.rows });
+});
+
+router.post('/notificacoes/lida/:id', verifyToken, async (req, res) => {
+  await db.query(`UPDATE notificacoes SET lida = 1 WHERE id = $1 AND professor_id = $2`, [req.params.id, req.usuario.id]);
+  return res.json({ ok: true });
+});
+
+router.post('/notificacoes/lida-todas', verifyToken, async (req, res) => {
+  await db.query(`UPDATE notificacoes SET lida = 1 WHERE professor_id = $1`, [req.usuario.id]);
+  return res.json({ ok: true });
+});
+
+router.delete('/notificacoes/:id', verifyToken, async (req, res) => {
+  await db.query('DELETE FROM notificacoes WHERE id = $1 AND professor_id = $2', [req.params.id, req.usuario.id])
+  return res.json({ ok: true })
+})
+
+router.delete('/notificacoes', verifyToken, async (req, res) => {
+  await db.query('DELETE FROM notificacoes WHERE professor_id = $1', [req.usuario.id])
+  return res.json({ ok: true })
+})
+
 
 // ─── REGISTER / LOGIN ─────────────────────────────────────────────────────────
 router.post('/register/aluno', registerAlunoValidation, (req, res) => register(req, res, 'aluno'));

@@ -1,7 +1,9 @@
 import { useLocation } from 'react-router-dom'
+import { useNotificacoesAluno } from '../context/NotificacoesAlunoContext'
 
 function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
   const location = useLocation()
+  const { naoLidas } = useNotificacoesAluno()
 
   const isActive = (path) => location.pathname === path
 
@@ -73,20 +75,29 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
         </button>
 
      {/* Notificações - ATIVO */}
-        <button 
-          onClick={() => { navigate('/notificacoes-aluno'); onClick?.() }}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
-            isActive('/notificacoes-aluno')
-              ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
-              : 'text-slate-400 hover:bg-white/5 hover:text-white'
-          }`}>
-          <span className={isActive('/notificacoes-aluno') ? 'text-orange-400' : 'text-slate-500'}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
-              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
-            </svg>
-          </span>
-          <span>Notificações</span>
-        </button>
+       {/* Notificações - ATIVO */}
+<button 
+  onClick={() => { navigate('/notificacoes-aluno'); onClick?.() }}
+  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
+    isActive('/notificacoes-aluno')
+      ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
+      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+  }`}>
+  <span className={`relative ${isActive('/notificacoes-aluno') ? 'text-orange-400' : 'text-slate-500'}`}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9m-4.27 13a2 2 0 01-3.46 0"/>
+    </svg>
+    {naoLidas > 0 && (
+      <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full" />
+    )}
+  </span>
+  <span>Notificações</span>
+  {naoLidas > 0 && (
+    <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+      {naoLidas}
+    </span>
+  )}
+</button>
         
         {/* Perfil */}
         <button 
