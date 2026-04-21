@@ -88,7 +88,7 @@ async function loginAluno(req, res) {
 
   try {
     const result = await db.query(
-      `SELECT id, nome, email, senha, perfil FROM usuarios WHERE ra = $1 AND perfil = 'aluno'`,
+      `SELECT id, nome, email, senha, perfil, diagnostico_status FROM usuarios WHERE ra = $1 AND perfil = 'aluno'`,
       [ra]
     );
     const usuario = result.rows[0];
@@ -118,7 +118,16 @@ async function loginAluno(req, res) {
     }
 
     const token = gerarToken({ id: usuario.id, perfil: 'aluno' });
-    return res.status(200).json({ token, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, perfil: 'aluno' } });
+    return res.status(200).json({ 
+      token, 
+      usuario: { 
+        id: usuario.id, 
+        nome: usuario.nome, 
+        email: usuario.email, 
+        perfil: 'aluno' 
+      },
+      diagnostico_status: usuario.diagnostico_status // ← ADICIONA O STATUS NO RETORNO
+    });
 
   } catch (error) {
     console.error('[loginAluno] Erro:', error);

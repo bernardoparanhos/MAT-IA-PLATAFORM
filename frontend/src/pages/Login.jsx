@@ -112,40 +112,45 @@ function Login() {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setErro('')
-    setCarregando(true)
+  e.preventDefault()
+  setErro('')
+  setCarregando(true)
 
-    try {
-      const url = perfil === 'aluno'
-        ? `${import.meta.env.VITE_API_URL}/auth/login/aluno`
-        : `${import.meta.env.VITE_API_URL}/auth/login/professor`
+  try {
+    const url = perfil === 'aluno'
+      ? `${import.meta.env.VITE_API_URL}/auth/login/aluno`
+      : `${import.meta.env.VITE_API_URL}/auth/login/professor`
 
-      const body = perfil === 'aluno'
-        ? { ra: form.ra, senha: form.senha }
-        : { siape: form.siape, senha: form.senha }
+    const body = perfil === 'aluno'
+      ? { ra: form.ra, senha: form.senha }
+      : { siape: form.siape, senha: form.senha }
 
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
 
-      const data = await res.json()
+    const data = await res.json()
 
-      if (!res.ok) {
-        setErro(data.errors?.[0]?.msg || data.message || 'Erro ao fazer login.')
-        return
-      }
-
-      login(data.token, data.usuario)
-
-    } catch {
-      setErro('Erro de conexão. Verifique se o servidor está rodando.')
-    } finally {
-      setCarregando(false)
+    if (!res.ok) {
+      setErro(data.errors?.[0]?.msg || data.message || 'Erro ao fazer login.')
+      return
     }
+
+    login(data.token, data.usuario)
+    
+    // ← ADICIONA LÓGICA DE REDIRECIONAMENTO BASEADO NO STATUS
+    if (perfil === 'aluno' && data.diagnostico_status === 'pendente') {
+      window.location.href = '/nivelamento'
+    }
+
+  } catch {
+    setErro('Erro de conexão. Verifique se o servidor está rodando.')
+  } finally {
+    setCarregando(false)
   }
+}
 
   const inputClass = "w-full bg-white/5 text-white rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-orange-400 placeholder-slate-500 border border-white/10 transition-all"
   const labelClass = "text-slate-400 text-xs uppercase tracking-wider mb-1.5 block font-light"
