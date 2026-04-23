@@ -88,7 +88,7 @@ async function loginAluno(req, res) {
 
   try {
     const result = await db.query(
-      `SELECT id, nome, email, senha, perfil, diagnostico_status FROM usuarios WHERE ra = $1 AND perfil = 'aluno'`,
+      `SELECT id, nome, email, senha, perfil, diagnostico_status, boas_vindas_enviada FROM usuarios WHERE ra = $1 AND perfil = 'aluno'`,
       [ra]
     );
     const usuario = result.rows[0];
@@ -99,21 +99,15 @@ async function loginAluno(req, res) {
 
     if (!usuario || !senhaCorreta) return res.status(401).json({ message: 'RA ou senha inválidos.' });
 
-    // Verifica se é o primeiro login (se já tem notificação de boas-vindas)
-    const jaTemNotificacao = await db.query(
-  `SELECT id FROM notificacoes_aluno WHERE aluno_id = $1 AND tipo = 'boas-vindas'`,
-  [usuario.id]
-);
-
-    // Se não tem nenhuma notificação ainda, cria a de boas-vindas
-    if (jaTemNotificacao.rows.length === 0) {
+    if (!usuario.boas_vindas_enviada) {
       const primeiroNome = usuario.nome.split(' ')[0];
       await db.query(
         `INSERT INTO notificacoes_aluno (aluno_id, tipo, mensagem) VALUES ($1, 'boas-vindas', $2)`,
-        [
-          usuario.id,
-          `Bem-vindo(a) ao MAT-IA, ${primeiroNome}! 🎉 Explore a plataforma e acompanhe seu progresso em matemática.`
-        ]
+        [usuario.id, `Bem-vindo(a) ao MAT-IA, ${primeiroNome}! 🎉 Explore a plataforma e acompanhe seu progresso em matemática.`]
+      );
+      await db.query(
+        `UPDATE usuarios SET boas_vindas_enviada = true WHERE id = $1`,
+        [usuario.id]
       );
     }
 
