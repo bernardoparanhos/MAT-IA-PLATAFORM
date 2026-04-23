@@ -105,13 +105,8 @@ function Dashboard() {
       {/* Painel dropdown */}
       {painelNotif && (
         <div className="absolute right-0 top-10 w-80 bg-[#1e2d3d] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="px-4 py-3 border-b border-white/10">
             <span className="text-white text-sm font-medium">Notificações</span>
-            <button 
-              onClick={() => { setPainelNotif(false); navigate('/notificacoes-aluno') }} 
-              className="text-orange-400 hover:text-orange-300 text-xs transition-colors">
-              Ver todas
-            </button>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
