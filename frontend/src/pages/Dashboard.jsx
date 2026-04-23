@@ -21,7 +21,6 @@ function Dashboard() {
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [diagnosticoStatus, setDiagnosticoStatus] = useState(null)
   const [verificando, setVerificando] = useState(false)
-  const [jaVerificou, setJaVerificou] = useState(false)
   const [painelNotif, setPainelNotif] = useState(false)
   const painelRef = useRef(null)
 
@@ -29,38 +28,31 @@ function Dashboard() {
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
-    // Verifica se já checou nesta sessão
-    const jaChecou = sessionStorage.getItem('diagnostico_verificado')
-    if (jaChecou) {
-      setJaVerificou(true)
-      return
-    }
-    
-    setVerificando(true)
-    
-    async function verificarDiagnostico() {
-      try {
-        const res = await fetch(`${API}/auth/diagnostico/status`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const data = await res.json()
-        if (data.status === 'pendente') { 
-          navigate('/nivelamento')
-          return 
-        }
-        setDiagnosticoStatus(data.status)
-        setJaVerificou(true)
-        sessionStorage.setItem('diagnostico_verificado', 'true') // ← PERSISTE NA SESSÃO
-      } catch (e) {
-        console.error('Erro ao verificar diagnóstico', e)
-        setJaVerificou(true)
-        sessionStorage.setItem('diagnostico_verificado', 'true') // ← PERSISTE MESMO COM ERRO
-      } finally {
-        setVerificando(false)
+  setVerificando(true)
+  
+  async function verificarDiagnostico() {
+    try {
+      const res = await fetch(`${API}/auth/diagnostico/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      
+      if (data.status === 'pendente') { 
+        navigate('/nivelamento')
+        return 
       }
+      
+      setDiagnosticoStatus(data.status)
+      
+    } catch (e) {
+      console.error('Erro ao verificar diagnóstico', e)
+    } finally {
+      setVerificando(false)
     }
-    verificarDiagnostico()
-  }, [API, token, navigate]) // ← REMOVE jaVerificou das dependências
+  }
+  
+  verificarDiagnostico()
+}, [API, token, navigate])
 
   useEffect(() => {
     function handleResize() {
