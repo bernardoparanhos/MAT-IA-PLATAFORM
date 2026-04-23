@@ -28,7 +28,12 @@ function Dashboard() {
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
-  setVerificando(true)
+  const jaChecou = sessionStorage.getItem('diagnostico_verificado')
+  
+  // Se já checou, não mostra spinner mas AINDA busca o status em background
+  if (!jaChecou) {
+    setVerificando(true)
+  }
   
   async function verificarDiagnostico() {
     try {
@@ -43,6 +48,7 @@ function Dashboard() {
       }
       
       setDiagnosticoStatus(data.status)
+      sessionStorage.setItem('diagnostico_verificado', 'true')
       
     } catch (e) {
       console.error('Erro ao verificar diagnóstico', e)
