@@ -101,9 +101,9 @@ async function loginAluno(req, res) {
 
     // Verifica se é o primeiro login (se já tem notificação de boas-vindas)
     const jaTemNotificacao = await db.query(
-      `SELECT id FROM notificacoes_aluno WHERE aluno_id = $1`,
-      [usuario.id]
-    );
+  `SELECT id FROM notificacoes_aluno WHERE aluno_id = $1 AND tipo = 'boas-vindas'`,
+  [usuario.id]
+);
 
     // Se não tem nenhuma notificação ainda, cria a de boas-vindas
     if (jaTemNotificacao.rows.length === 0) {
