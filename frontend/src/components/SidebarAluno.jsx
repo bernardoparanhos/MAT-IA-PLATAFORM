@@ -28,32 +28,38 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
           <span>Início</span>
         </button>
 
-        {/* DESABILITADOS - Em construção */}
-        {[
-          { 
-            label: 'Matérias', 
-            icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg>
-          },
-          { 
-            label: 'Tutor IA', 
-            icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg>
-          },
-          { 
-            label: 'Jogos', 
-            icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4m-2-2v4m7-2h.01M15 12h.01"/></svg>
-          },
-          { 
-            label: 'Fórum', 
-            icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-          },
-        ].map(item => (
-          <div 
-            key={item.label}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 cursor-not-allowed text-sm font-light opacity-50">
-            <span className="text-slate-600">{item.icon}</span>
-            <span>{item.label}</span>
-          </div>
-        ))}
+        {/* Matérias - BLOQUEADO */}
+        <div className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 cursor-not-allowed text-sm font-light opacity-50">
+          <span className="text-slate-600">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+              <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/>
+            </svg>
+          </span>
+          <span>Matérias</span>
+        </div>
+
+{/* DESABILITADOS - Em construção */}
+{[
+  { 
+    label: 'Tutor IA', 
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg>
+  },
+  { 
+    label: 'Jogos', 
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4m-2-2v4m7-2h.01M15 12h.01"/></svg>
+  },
+  { 
+    label: 'Fórum', 
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  },
+].map(item => (
+  <div 
+    key={item.label}
+    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 cursor-not-allowed text-sm font-light opacity-50">
+    <span className="text-slate-600">{item.icon}</span>
+    <span>{item.label}</span>
+  </div>
+))}
 
         <div className="border-t border-white/10 my-4" />
         <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 px-3">Minha Conta</p>

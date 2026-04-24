@@ -146,6 +146,28 @@ async function initDB() {
       pontuacao INTEGER NOT NULL,
       jogado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS questoes (
+  id SERIAL PRIMARY KEY,
+  bloco TEXT NOT NULL CHECK(bloco IN ('inteiros','fracoes','raizes','potencias','geometria')),
+  enunciado TEXT NOT NULL,
+  alternativas JSONB NOT NULL,
+  correta TEXT NOT NULL CHECK(correta IN ('A','B','C','D')),
+  latex BOOLEAN DEFAULT false,
+  dificuldade TEXT DEFAULT 'intermediario' CHECK(dificuldade IN ('basico','intermediario','avancado')),
+  ativa BOOLEAN DEFAULT true,
+  origem TEXT DEFAULT 'manual' CHECK(origem IN ('manual','ia_revisada','moodle_xml')),
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS questoes_historico (
+  id SERIAL PRIMARY KEY,
+  aluno_id INTEGER NOT NULL REFERENCES usuarios(id),
+  questao_id INTEGER NOT NULL REFERENCES questoes(id),
+  resposta_dada TEXT NOT NULL,
+  acertou BOOLEAN NOT NULL,
+  respondido_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
   `)
   console.log('✅ Banco de dados PostgreSQL conectado e tabelas criadas!')
 }

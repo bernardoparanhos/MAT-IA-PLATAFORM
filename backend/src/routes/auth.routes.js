@@ -886,4 +886,200 @@ INSTRUÇÕES:
   }
 })
 
+// ─── MATÉRIAS ─────────────────────────────────────────────────────────────────
+
+router.get('/materias/stats', verifyToken, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE acertou = true) as acertos,
+        COUNT(*) FILTER (WHERE acertou = false) as erros
+      FROM questoes_historico
+      WHERE aluno_id = $1
+    `, [req.usuario.id])
+    const { total, acertos, erros } = result.rows[0]
+    return res.json({ total: parseInt(total), acertos: parseInt(acertos), erros: parseInt(erros) })
+  } catch (e) {
+    console.error('[materias/stats] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.get('/materias/blocos', verifyToken, async (req, res) => {
+  try {
+    const blocos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria']
+
+    const totais = await db.query(`
+      SELECT bloco, COUNT(*) as total
+      FROM questoes WHERE ativa = true
+      GROUP BY bloco
+    `)
+
+    const historico = await db.query(`
+      SELECT q.bloco,
+        COUNT(*) as feitas,
+        COUNT(*) FILTER (WHERE qh.acertou = true) as acertos
+      FROM questoes_historico qh
+      INNER JOIN questoes q ON q.id = qh.questao_id
+      WHERE qh.aluno_id = $1
+      GROUP BY q.bloco
+    `, [req.usuario.id])
+
+    const totaisMap = {}
+    totais.rows.forEach(r => { totaisMap[r.bloco] = parseInt(r.total) })
+
+    const historicoMap = {}
+    historico.rows.forEach(r => {
+      historicoMap[r.bloco] = { feitas: parseInt(r.feitas), acertos: parseInt(r.acertos) }
+    })
+
+    const resultado = blocos.map(bloco => {
+      const h = historicoMap[bloco] || { feitas: 0, acertos: 0 }
+      const total = totaisMap[bloco] || 0
+      return {
+        bloco,
+        total,
+        feitas: h.feitas,
+        acertos: h.acertos,
+        erros: h.feitas - h.acertos
+      }
+    })
+
+    return res.json({ blocos: resultado })
+  } catch (e) {
+    console.error('[materias/blocos] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.get('/materias/:bloco/questoes', verifyToken, async (req, res) => {
+  try {
+    const blocosValidos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria']
+    if (!blocosValidos.includes(req.params.bloco))
+      return res.status(400).json({ message: 'Bloco inválido.' })
+
+    const questoesResult = await db.query(`
+      SELECT id, enunciado, alternativas, latex, dificuldade
+      FROM questoes
+      WHERE bloco = $1 AND ativa = true
+      ORDER BY id ASC
+    `, [req.params.bloco])
+
+    const historicoResult = await db.query(`
+      SELECT questao_id, acertou, resposta_dada, respondido_em
+      FROM questoes_historico
+      WHERE aluno_id = $1 AND questao_id = ANY(
+        SELECT id FROM questoes WHERE bloco = $2 AND ativa = true
+      )
+      ORDER BY respondido_em DESC
+    `, [req.usuario.id, req.params.bloco])
+
+    const historicoMap = {}
+    historicoResult.rows.forEach(r => {
+      if (!historicoMap[r.questao_id]) {
+        historicoMap[r.questao_id] = { acertou: r.acertou, resposta_dada: r.resposta_dada }
+      }
+    })
+
+    const questoes = questoesResult.rows.map((q, idx) => ({
+      ...q,
+      numero: idx + 1,
+      status: historicoMap[q.id]
+        ? (historicoMap[q.id].acertou ? 'acerto' : 'erro')
+        : 'pendente'
+    }))
+
+    return res.json({ questoes })
+  } catch (e) {
+    console.error('[materias/bloco/questoes] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.post('/materias/responder', verifyToken, async (req, res) => {
+  try {
+    const { questaoId, respostaDada } = req.body
+    if (!questaoId || !respostaDada)
+      return res.status(400).json({ message: 'questaoId e respostaDada são obrigatórios.' })
+
+    const questao = await db.query(
+      'SELECT id, correta FROM questoes WHERE id = $1 AND ativa = true',
+      [questaoId]
+    )
+    if (questao.rows.length === 0)
+      return res.status(404).json({ message: 'Questão não encontrada.' })
+
+    const acertou = questao.rows[0].correta === respostaDada.toUpperCase()
+
+    await db.query(`
+      INSERT INTO questoes_historico (aluno_id, questao_id, resposta_dada, acertou)
+      VALUES ($1, $2, $3, $4)
+    `, [req.usuario.id, questaoId, respostaDada.toUpperCase(), acertou])
+
+    return res.json({ acertou, correta: questao.rows[0].correta })
+  } catch (e) {
+    console.error('[materias/responder] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── FAVORITAS ────────────────────────────────────────────────────────────────
+
+router.get('/materias/favoritas', verifyToken, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT q.id, q.bloco, q.enunciado, q.alternativas, q.latex, q.dificuldade,
+             qf.criado_em as favoritado_em
+      FROM questoes_favoritas qf
+      INNER JOIN questoes q ON q.id = qf.questao_id
+      WHERE qf.aluno_id = $1
+      ORDER BY q.bloco ASC, q.id ASC
+    `, [req.usuario.id])
+
+    const porBloco = {}
+    result.rows.forEach((q, idx) => {
+      if (!porBloco[q.bloco]) porBloco[q.bloco] = []
+      porBloco[q.bloco].push({ ...q, numero: idx + 1 })
+    })
+
+    return res.json({ favoritas: result.rows, porBloco, total: result.rows.length })
+  } catch (e) {
+    console.error('[materias/favoritas] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.post('/materias/favoritar', verifyToken, async (req, res) => {
+  try {
+    const { questaoId } = req.body
+    if (!questaoId) return res.status(400).json({ message: 'questaoId é obrigatório.' })
+
+    await db.query(`
+      INSERT INTO questoes_favoritas (aluno_id, questao_id)
+      VALUES ($1, $2)
+      ON CONFLICT (aluno_id, questao_id) DO NOTHING
+    `, [req.usuario.id, questaoId])
+
+    return res.json({ ok: true, favoritado: true })
+  } catch (e) {
+    console.error('[materias/favoritar] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.delete('/materias/favoritar/:questaoId', verifyToken, async (req, res) => {
+  try {
+    await db.query(`
+      DELETE FROM questoes_favoritas
+      WHERE aluno_id = $1 AND questao_id = $2
+    `, [req.usuario.id, req.params.questaoId])
+
+    return res.json({ ok: true, favoritado: false })
+  } catch (e) {
+    console.error('[materias/desfavoritar] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 module.exports = router;

@@ -19,6 +19,9 @@ import Nivelamento from './pages/Nivelamento'
 import ResultadoNivelamento from './pages/ResultadoNivelamento'
 import Metricas from './pages/Metricas'
 import ProtectedRoute from './components/ProtectedRoute'
+import Materias from './pages/Materias'
+import MateriaBloco from './pages/MateriaBloco'
+import MateriaFavoritas from './pages/MateriaFavoritas'
 
 function App() {
   return (
@@ -102,6 +105,21 @@ function App() {
       <Route path="/minha-turma" element={
         <ProtectedRoute perfil="aluno">
           <MinhaTurma />
+        </ProtectedRoute>
+      } />
+      <Route path="/materias" element={
+        <ProtectedRoute perfil="aluno">
+          <Materias />
+        </ProtectedRoute>
+      } />
+      <Route path="/materias/:bloco" element={
+        <ProtectedRoute perfil="aluno">
+          <MateriaBloco />
+        </ProtectedRoute>
+      } />
+      <Route path="/materias/favoritas" element={
+        <ProtectedRoute perfil="aluno">
+          <MateriaFavoritas />
         </ProtectedRoute>
       } />
       
