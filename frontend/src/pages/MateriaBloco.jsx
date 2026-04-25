@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SidebarAluno from '../components/SidebarAluno'
+import Formula from '../components/Formula'
 
 const BLOCOS_CONFIG = {
   inteiros:  { label: 'Números Inteiros', cor: '#f97316', corBg: 'rgba(249,115,22,0.12)',
@@ -297,17 +298,49 @@ function MateriaBloco() {
                 <span className="text-xs text-slate-500 font-light">Questão {modalQuestao.numero}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-600" />
                 <span className="text-xs font-light" style={{ color: cfg.cor }}>{cfg.label}</span>
+                {favoritas.has(modalQuestao.id) && (
+                  <span className="text-yellow-400 text-xs">★</span>
+                )}
               </div>
-              <button onClick={fecharModal} className="text-slate-500 hover:text-white transition-colors">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
+              <div className="flex items-center gap-1">
+                {/* Setas de navegação */}
+                <button
+                  onClick={() => {
+                    const idx = questoes.findIndex(q => q.id === modalQuestao.id)
+                    if (idx > 0) { setModalQuestao(questoes[idx - 1]); setRespostaModal(null); setFeedbackModal(null) }
+                  }}
+                  disabled={questoes.findIndex(q => q.id === modalQuestao.id) === 0}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <span className="text-xs text-slate-600 font-light px-1">
+                  {questoes.findIndex(q => q.id === modalQuestao.id) + 1}/{questoes.length}
+                </span>
+                <button
+                  onClick={() => {
+                    const idx = questoes.findIndex(q => q.id === modalQuestao.id)
+                    if (idx < questoes.length - 1) { setModalQuestao(questoes[idx + 1]); setRespostaModal(null); setFeedbackModal(null) }
+                  }}
+                  disabled={questoes.findIndex(q => q.id === modalQuestao.id) === questoes.length - 1}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+                <div className="w-px h-4 bg-white/10 mx-1" />
+                <button onClick={fecharModal} className="text-slate-500 hover:text-white transition-colors p-1.5">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
             </div>
 
             {/* Enunciado */}
             <div className="px-5 py-5">
-              <p className="text-slate-200 text-sm font-light leading-relaxed mb-5">
-                {modalQuestao.enunciado}
-              </p>
+              <div className="text-slate-200 text-sm font-light leading-relaxed mb-5">
+                {modalQuestao.latex
+                  ? <Formula tex={modalQuestao.enunciado} block={true} />
+                  : modalQuestao.enunciado}
+              </div>
 
               {/* Alternativas */}
               <div className="space-y-2">
@@ -330,7 +363,7 @@ function MateriaBloco() {
                       style={letra === respostaModal && !feedbackModal ? { borderColor: cfg.cor, background: `${cfg.cor}15` } : {}}
                     >
                       <span className="font-medium mr-2" style={{ color: letra === respostaModal && !feedbackModal ? cfg.cor : undefined }}>{letra}.</span>
-                      {texto}
+                     {modalQuestao.latex ? <Formula tex={texto} /> : texto}
                     </button>
                   )
                 })}

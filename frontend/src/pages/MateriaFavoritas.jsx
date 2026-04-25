@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SidebarAluno from '../components/SidebarAluno'
+import Formula from '../components/Formula'
 
 const BLOCOS_CONFIG = {
   inteiros:  { label: 'Números Inteiros', cor: '#f97316' },
@@ -209,7 +210,11 @@ function MateriaFavoritas() {
             </div>
 
             <div className="px-5 py-5">
-              <p className="text-slate-200 text-sm font-light leading-relaxed mb-5">{modalQuestao.enunciado}</p>
+              <div className="text-slate-200 text-sm font-light leading-relaxed mb-5">
+                {modalQuestao.latex
+                  ? <Formula tex={modalQuestao.enunciado} block={true} />
+                  : modalQuestao.enunciado}
+              </div>
               <div className="space-y-2">
                 {Object.entries(modalQuestao.alternativas).map(([letra, texto]) => {
                   let estilo = 'border-white/8 text-slate-300 hover:border-white/20 hover:bg-white/3'
@@ -229,7 +234,7 @@ function MateriaFavoritas() {
                       style={letra === respostaModal && !feedbackModal ? { borderColor: '#facc15', background: 'rgba(250,204,21,0.08)' } : {}}
                     >
                       <span className="font-medium mr-2" style={{ color: letra === respostaModal && !feedbackModal ? '#facc15' : undefined }}>{letra}.</span>
-                      {texto}
+                      {modalQuestao.latex ? <Formula tex={texto} /> : texto}
                     </button>
                   )
                 })}
