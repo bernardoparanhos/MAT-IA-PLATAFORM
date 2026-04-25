@@ -21,7 +21,7 @@ const icons = {
 // ─── Estrutura dos menus ──────────────────────────────────────────────────────
 const MENU_ITEMS = [
   { label: 'Início', path: '/dashboard-professor', icon: icons.inicio },
-  { label: 'Matérias', icon: icons.materias },
+  { label: 'Matérias', path: '/materias', icon: icons.materias },
   { label: 'Tutor IA', icon: icons.tutorIA },
   { label: 'Jogos', icon: icons.jogos },
   { label: 'Fórum', icon: icons.forum },

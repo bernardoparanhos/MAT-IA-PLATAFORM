@@ -32,10 +32,11 @@ function MateriaBloco() {
   const [favoritas, setFavoritas] = useState(new Set())
   const [toast, setToast] = useState(null)
 
-  const token = localStorage.getItem('token')
+ const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
   const cfg = BLOCOS_CONFIG[bloco]
-
+  const { usuario } = useAuth()
+  const isProfessor = usuario?.perfil === 'professor'
  const carregar = useCallback(async () => {
     try {
       const [resQuestoes, resFav] = await Promise.all([
@@ -380,14 +381,20 @@ function MateriaBloco() {
                   </p>
                 </div>
               ) : (
-                <button
-                  onClick={responder}
-                  disabled={!respostaModal || enviando}
-                  className="w-full py-3 rounded-xl text-sm font-light transition-all disabled:opacity-30 disabled:cursor-not-allowed text-white"
-                  style={{ background: respostaModal ? cfg.cor : undefined, backgroundColor: !respostaModal ? '#334155' : undefined }}
-                >
-                  {enviando ? 'Enviando...' : 'Confirmar resposta'}
-                </button>
+                isProfessor ? (
+                  <div className="w-full py-3 rounded-xl text-sm font-light text-center text-slate-500 bg-white/5">
+                    Modo visualização — respostas não são registradas
+                  </div>
+                ) : (
+                  <button
+                    onClick={responder}
+                    disabled={!respostaModal || enviando}
+                    className="w-full py-3 rounded-xl text-sm font-light transition-all disabled:opacity-30 disabled:cursor-not-allowed text-white"
+                    style={{ background: respostaModal ? cfg.cor : undefined, backgroundColor: !respostaModal ? '#334155' : undefined }}
+                  >
+                    {enviando ? 'Enviando...' : 'Confirmar resposta'}
+                  </button>
+                )
               )}
             </div>
 

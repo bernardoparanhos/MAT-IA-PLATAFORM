@@ -107,21 +107,9 @@ function App() {
           <MinhaTurma />
         </ProtectedRoute>
       } />
-      <Route path="/materias" element={
-        <ProtectedRoute perfil="aluno">
-          <Materias />
-        </ProtectedRoute>
-      } />
-      <Route path="/materias/:bloco" element={
-        <ProtectedRoute perfil="aluno">
-          <MateriaBloco />
-        </ProtectedRoute>
-      } />
-      <Route path="/materias/favoritas" element={
-        <ProtectedRoute perfil="aluno">
-          <MateriaFavoritas />
-        </ProtectedRoute>
-      } />
+      <Route path="/materias" element={<Materias />} />
+      <Route path="/materias/:bloco" element={<MateriaBloco />} />
+      <Route path="/materias/favoritas" element={<MateriaFavoritas />} />
       
       {/* Redirects */}
       <Route path="/" element={<Navigate to="/login" replace />} />
