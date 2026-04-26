@@ -1,4 +1,4 @@
-# MAT-IA — Plataforma de Suporte Inteligente ao Aprendizado de Matemática
+# MAT-IA — Plataforma de Suporte Inteligente ao Aprendizado de Matemática 
 
 Plataforma web educacional baseada em Inteligência Artificial voltada ao **diagnóstico, nivelamento e reforço** em Fundamentos de Matemática para estudantes ingressantes nos cursos de Engenharia da **UTFPR Campus Medianeira**.
 
