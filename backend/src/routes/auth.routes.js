@@ -1082,4 +1082,35 @@ router.delete('/materias/favoritar/:questaoId', verifyToken, async (req, res) =>
   }
 })
 
+// ─── ÚLTIMO ACESSO ────────────────────────────────────────────────────────────
+
+router.get('/materias/ultimo-acesso', verifyToken, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT q.bloco, COUNT(*) as feitas
+      FROM questoes_historico qh
+      INNER JOIN questoes q ON q.id = qh.questao_id
+      WHERE qh.aluno_id = $1
+      GROUP BY q.bloco
+      ORDER BY MAX(qh.respondido_em) DESC
+      LIMIT 1
+    `, [req.usuario.id])
+
+    if (result.rows.length === 0) return res.json({ bloco: null })
+
+    const bloco = result.rows[0].bloco
+    const feitas = parseInt(result.rows[0].feitas)
+
+    const total = await db.query(
+      'SELECT COUNT(*) as total FROM questoes WHERE bloco = $1 AND ativa = true',
+      [bloco]
+    )
+
+    return res.json({ bloco, feitas, total: parseInt(total.rows[0].total) })
+  } catch (e) {
+    console.error('[materias/ultimo-acesso] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 module.exports = router;

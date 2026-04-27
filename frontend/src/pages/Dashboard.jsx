@@ -23,6 +23,7 @@ function Dashboard() {
   const [verificando, setVerificando] = useState(false)
   const [painelNotif, setPainelNotif] = useState(false)
   const painelRef = useRef(null)
+  const [ultimoAcesso, setUltimoAcesso] = useState(null)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
@@ -49,7 +50,14 @@ function Dashboard() {
       
       setDiagnosticoStatus(data.status)
       sessionStorage.setItem('diagnostico_verificado', 'true')
-      
+
+      // Busca último acesso às matérias
+      const resAcesso = await fetch(`${API}/auth/materias/ultimo-acesso`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const dataAcesso = await resAcesso.json()
+      if (dataAcesso.bloco) setUltimoAcesso(dataAcesso)
+
     } catch (e) {
       console.error('Erro ao verificar diagnóstico', e)
     } finally {
@@ -252,18 +260,78 @@ function Dashboard() {
                 </div>
               </div>
 
-              {/* Continue de onde parou */}
+             {/* Continue de onde parou */}
               <div>
                 <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">📚 Continue de Onde Parou</p>
-                <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-5 lg:p-6 h-full flex flex-col items-center justify-center text-center">
-                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-3">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-slate-500">
-                      <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/>
-                    </svg>
+                {ultimoAcesso ? (
+                  <button
+                    onClick={() => navigate(`/materias/${ultimoAcesso.bloco}`)}
+                    className="w-full bg-[#1e2d3d] border border-white/5 hover:border-orange-500/20 rounded-2xl p-5 lg:p-6 h-full text-left transition-all group"
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ background: {
+                          inteiros: 'rgba(249,115,22,0.12)',
+                          fracoes: 'rgba(139,92,246,0.12)',
+                          raizes: 'rgba(20,184,166,0.12)',
+                          potencias: 'rgba(59,130,246,0.12)',
+                          geometria: 'rgba(236,72,153,0.12)',
+                        }[ultimoAcesso.bloco] }}
+                      >
+                        { {
+                          inteiros: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"><line x1="4" y1="10" x2="16" y2="10"/><line x1="10" y1="4" x2="10" y2="16"/><line x1="5" y1="6" x2="5" y2="8"/><line x1="15" y1="12" x2="15" y2="14"/></svg>,
+                          fracoes: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round"><circle cx="7.5" cy="6.5" r="2" fill="rgba(139,92,246,0.18)" stroke="#8b5cf6"/><circle cx="12.5" cy="13.5" r="2" fill="rgba(139,92,246,0.18)" stroke="#8b5cf6"/><line x1="4" y1="16" x2="16" y2="4"/></svg>,
+                          raizes: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#14b8a6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,12 5,12 8,16 13,4 16,4"/><line x1="16" y1="4" x2="18" y2="4"/></svg>,
+                          potencias: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round"><text x="3" y="15" fontSize="11" fontWeight="600" fill="#3b82f6" stroke="none" fontFamily="serif">x</text><text x="11" y="9" fontSize="8" fontWeight="600" fill="#3b82f6" stroke="none" fontFamily="serif">n</text></svg>,
+                          geometria: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#ec4899" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="10,3 18,17 2,17" fill="rgba(236,72,153,0.15)" stroke="#ec4899"/><line x1="10" y1="3" x2="10" y2="17" strokeDasharray="2 1.5" strokeWidth="1"/></svg>,
+                        }[ultimoAcesso.bloco] }
+                      </div>
+                      <div>
+                        <p className="text-white text-sm font-medium capitalize">
+                          {{
+                            inteiros: 'Números Inteiros',
+                            fracoes: 'Frações',
+                            raizes: 'Raízes',
+                            potencias: 'Potências',
+                            geometria: 'Geometria',
+                          }[ultimoAcesso.bloco] || ultimoAcesso.bloco}
+                        </p>
+                        <p className="text-slate-500 text-xs font-light mt-0.5">
+                          {ultimoAcesso.feitas} de {ultimoAcesso.total} questões feitas
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-full bg-white/5 rounded-full h-1.5 mb-3">
+                     <div
+                        className="h-1.5 rounded-full transition-all"
+                        style={{
+                          width: `${Math.round((ultimoAcesso.feitas / ultimoAcesso.total) * 100)}%`,
+                          background: {
+                            inteiros: '#f97316',
+                            fracoes: '#8b5cf6',
+                            raizes: '#14b8a6',
+                            potencias: '#3b82f6',
+                            geometria: '#ec4899',
+                          }[ultimoAcesso.bloco]
+                        }}
+                      />
+                    </div>
+                    <p className="text-orange-400 text-xs font-light group-hover:text-orange-300 transition-colors">
+                      Continuar
+                    </p>
+                  </button>
+                ) : (
+                  <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-5 lg:p-6 h-full flex flex-col items-center justify-center text-center">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-3">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-slate-500">
+                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/>
+                      </svg>
+                    </div>
+                    <p className="text-slate-400 text-sm font-light">Nenhuma matéria iniciada ainda</p>
+                    <p className="text-slate-600 text-xs mt-1 font-light">Acesse Matérias para começar</p>
                   </div>
-                  <p className="text-slate-400 text-sm font-light">Nenhuma matéria iniciada ainda</p>
-                  <p className="text-slate-600 text-xs mt-1 font-light">Acesse Matérias para começar</p>
-                </div>
+                )}
               </div>
             </div>
 
