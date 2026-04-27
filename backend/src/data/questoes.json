@@ -147,7 +147,7 @@
     "enunciado": "\\left(\\frac{81}{16}\\right)^{-1} =",
     "alternativas": {
       "A": "\\left(\\frac{3}{2}\\right)^4",
-      "B": "\\left(\\frac{16}{81}\\right)",
+      "B": "\\frac{81}{16}",
       "C": "\\left(\\frac{2}{3}\\right)^4",
       "D": "-\\frac{81}{16}"
     },
@@ -213,7 +213,7 @@
       "A": "8",
       "B": "6",
       "C": "10",
-      "D": "2^3"
+      "D": "2^4"
     },
     "correta": "A",
     "dicas": [
