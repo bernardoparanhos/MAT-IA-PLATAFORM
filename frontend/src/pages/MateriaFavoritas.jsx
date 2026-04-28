@@ -5,11 +5,16 @@ import SidebarAluno from '../components/SidebarAluno'
 import Formula from '../components/Formula'
 
 const BLOCOS_CONFIG = {
-  inteiros:  { label: 'Números Inteiros', cor: '#f97316' },
-  fracoes:   { label: 'Frações',          cor: '#8b5cf6' },
-  raizes:    { label: 'Raízes',           cor: '#14b8a6' },
-  potencias: { label: 'Potências',        cor: '#3b82f6' },
-  geometria: { label: 'Geometria',        cor: '#ec4899' },
+  inteiros:     { label: 'Números Inteiros',        cor: '#f97316' },
+  fracoes:      { label: 'Frações',                 cor: '#8b5cf6' },
+  raizes:       { label: 'Raízes',                  cor: '#14b8a6' },
+  potencias:    { label: 'Potências',               cor: '#3b82f6' },
+  geometria:    { label: 'Geometria',               cor: '#ec4899' },
+  equacao1:     { label: 'Equação 1º Grau',         cor: '#f59e0b' },
+  equacao2:     { label: 'Equação 2º Grau',         cor: '#06b6d4' },
+  modulo:       { label: 'Módulo',                  cor: '#84cc16' },
+  exponencial:  { label: 'Exponencial e Logaritmo', cor: '#e11d48' },
+  trigonometria:{ label: 'Trigonometria',           cor: '#a855f7' },
 }
 
 function MateriaFavoritas() {

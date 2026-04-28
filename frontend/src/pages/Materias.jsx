@@ -14,6 +14,18 @@ const BLOCOS_CONFIG = {
     icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round"><text x="3" y="15" fontSize="11" fontWeight="600" fill="#3b82f6" stroke="none" fontFamily="serif">x</text><text x="11" y="9" fontSize="8" fontWeight="600" fill="#3b82f6" stroke="none" fontFamily="serif">n</text></svg> },
   geometria: { label: 'Geometria', cor: '#ec4899', corBg: 'rgba(236,72,153,0.12)',
     icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#ec4899" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="10,3 18,17 2,17" fill="rgba(236,72,153,0.15)" stroke="#ec4899"/><line x1="10" y1="3" x2="10" y2="17" strokeDasharray="2 1.5" strokeWidth="1"/></svg> },
+  equacao1:  { label: 'Equação 1º Grau', cor: '#f59e0b', corBg: 'rgba(245,158,11,0.12)',
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round"><line x1="3" y1="10" x2="17" y2="10"/><text x="4" y="8" fontSize="7" fill="#f59e0b" stroke="none" fontFamily="serif">ax+b</text><text x="6" y="16" fontSize="7" fill="#f59e0b" stroke="none" fontFamily="serif">=0</text>
+</svg> },
+  equacao2:  { label: 'Equação 2º Grau', cor: '#06b6d4', corBg: 'rgba(6,182,212,0.12)',
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#06b6d4" strokeWidth="1.5" strokeLinecap="round"><path d="M2,17 Q10,5 18,17" fill="none"/>
+</svg> },
+ modulo:    { label: 'Módulo', cor: '#84cc16', corBg: 'rgba(132,204,22,0.12)',
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#84cc16" strokeWidth="2" strokeLinecap="round"><line x1="7" y1="3" x2="7" y2="17"/><line x1="13" y1="3" x2="13" y2="17"/></svg> },
+  exponencial: { label: 'Exponencial e Logaritmo', cor: '#e11d48', corBg: 'rgba(225,29,72,0.12)',
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#e11d48" strokeWidth="1.5" strokeLinecap="round"><text x="2" y="14" fontSize="9" fill="#e11d48" stroke="none" fontFamily="serif">aˣ</text><text x="10" y="14" fontSize="7" fill="#e11d48" stroke="none" fontFamily="serif">log</text></svg> },
+  trigonometria: { label: 'Trigonometria', cor: '#a855f7', corBg: 'rgba(168,85,247,0.12)',
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#a855f7" strokeWidth="1.5" strokeLinecap="round"><path d="M2,14 Q6,4 10,14 Q14,4 18,14" fill="none"/></svg> },
 }
 
 function Materias() {
@@ -51,7 +63,7 @@ function Materias() {
     carregar()
   }, [API, token])
 
-  const taxa = stats.total > 0 ? Math.round((stats.acertos / stats.total) * 100) : 0
+    const taxa = stats.feitas > 0 ? Math.round((stats.acertos / stats.feitas) * 100) : 0
 
   if (carregando) return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center" style={{ fontFamily: 'Outfit, sans-serif' }}>
@@ -153,7 +165,7 @@ function Materias() {
             <p className="text-slate-500 text-xs uppercase tracking-wider font-light mb-3">Seu desempenho geral</p>
             <div className="grid grid-cols-4 gap-2">
               {[
-                { val: stats.total,   label: 'Feitas',  cor: '#f1f5f9' },
+                                                { val: stats.feitas,  label: 'Feitas',  cor: '#f1f5f9' },
                 { val: stats.acertos, label: 'Acertos', cor: '#4ade80' },
                 { val: stats.erros,   label: 'Erros',   cor: '#f87171' },
                 { val: `${taxa}%`,    label: 'Taxa',    cor: '#f97316' },

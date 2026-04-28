@@ -890,16 +890,29 @@ INSTRUÇÕES:
 
 router.get('/materias/stats', verifyToken, async (req, res) => {
   try {
-    const result = await db.query(`
-      SELECT
-        COUNT(*) as total,
-        COUNT(*) FILTER (WHERE acertou = true) as acertos,
-        COUNT(*) FILTER (WHERE acertou = false) as erros
-      FROM questoes_historico
-      WHERE aluno_id = $1
-    `, [req.usuario.id])
-    const { total, acertos, erros } = result.rows[0]
-    return res.json({ total: parseInt(total), acertos: parseInt(acertos), erros: parseInt(erros) })
+    const [resFeitas, resTotal] = await Promise.all([
+      db.query(`
+        SELECT
+        COUNT(DISTINCT questao_id) as total,
+        COUNT(DISTINCT questao_id) FILTER (WHERE acertou = true) as acertos,
+        COUNT(DISTINCT questao_id) FILTER (WHERE acertou = false) as erros
+      FROM (
+        SELECT DISTINCT ON (questao_id) questao_id, acertou
+        FROM questoes_historico
+        WHERE aluno_id = $1
+        ORDER BY questao_id, respondido_em DESC
+      ) ultima
+      `, [req.usuario.id]),
+      db.query(`SELECT COUNT(*) as total FROM questoes WHERE ativa = true`)
+    ])
+        const { total: feitas, acertos, erros } = resFeitas.rows[0]
+    const { total } = resTotal.rows[0]
+    return res.json({
+      feitas: parseInt(feitas),
+      acertos: parseInt(acertos),
+      erros: parseInt(erros),
+      total: parseInt(total)
+    })
   } catch (e) {
     console.error('[materias/stats] Erro:', e)
     return res.status(500).json({ message: 'Erro interno.' })
@@ -908,7 +921,7 @@ router.get('/materias/stats', verifyToken, async (req, res) => {
 
 router.get('/materias/blocos', verifyToken, async (req, res) => {
   try {
-    const blocos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria']
+    const blocos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria', 'equacao1', 'equacao2', 'modulo', 'exponencial', 'trigonometria']
 
     const totais = await db.query(`
       SELECT bloco, COUNT(*) as total
@@ -917,13 +930,17 @@ router.get('/materias/blocos', verifyToken, async (req, res) => {
     `)
 
     const historico = await db.query(`
-      SELECT q.bloco,
+      SELECT bloco,
         COUNT(*) as feitas,
-        COUNT(*) FILTER (WHERE qh.acertou = true) as acertos
-      FROM questoes_historico qh
-      INNER JOIN questoes q ON q.id = qh.questao_id
-      WHERE qh.aluno_id = $1
-      GROUP BY q.bloco
+        COUNT(*) FILTER (WHERE acertou = true) as acertos
+      FROM (
+        SELECT DISTINCT ON (qh.questao_id) qh.questao_id, q.bloco, qh.acertou
+        FROM questoes_historico qh
+        INNER JOIN questoes q ON q.id = qh.questao_id
+        WHERE qh.aluno_id = $1
+        ORDER BY qh.questao_id, qh.respondido_em DESC
+      ) ultima
+      GROUP BY bloco
     `, [req.usuario.id])
 
     const totaisMap = {}
@@ -955,7 +972,7 @@ router.get('/materias/blocos', verifyToken, async (req, res) => {
 
 router.get('/materias/:bloco/questoes', verifyToken, async (req, res) => {
   try {
-    const blocosValidos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria']
+        const blocosValidos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria', 'equacao1', 'equacao2', 'modulo', 'exponencial', 'trigonometria']
     if (!blocosValidos.includes(req.params.bloco))
       return res.status(400).json({ message: 'Bloco inválido.' })
 

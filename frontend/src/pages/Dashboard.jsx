@@ -23,7 +23,8 @@ function Dashboard() {
   const [verificando, setVerificando] = useState(false)
   const [painelNotif, setPainelNotif] = useState(false)
   const painelRef = useRef(null)
-  const [ultimoAcesso, setUltimoAcesso] = useState(null)
+ const [ultimoAcesso, setUltimoAcesso] = useState(null)
+  const [stats, setStats] = useState(null)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
@@ -52,11 +53,14 @@ function Dashboard() {
       sessionStorage.setItem('diagnostico_verificado', 'true')
 
       // Busca último acesso às matérias
-      const resAcesso = await fetch(`${API}/auth/materias/ultimo-acesso`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const [resAcesso, resStats] = await Promise.all([
+        fetch(`${API}/auth/materias/ultimo-acesso`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/auth/materias/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+      ])
       const dataAcesso = await resAcesso.json()
+      const dataStats = await resStats.json()
       if (dataAcesso.bloco) setUltimoAcesso(dataAcesso)
+      setStats(dataStats)
 
     } catch (e) {
       console.error('Erro ao verificar diagnóstico', e)
@@ -243,20 +247,42 @@ function Dashboard() {
             {/* Progresso + Continue */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
-              {/* Progresso Geral */}
+             {/* Progresso Geral */}
               <div>
                 <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">🎯 Seu Progresso Geral</p>
                 <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-5 lg:p-6 h-full">
-                  <div className="flex items-end gap-2 mb-3">
-                    <span className="text-4xl font-semibold text-white">—</span>
-                    <span className="text-slate-400 text-sm font-light mb-1">concluído</span>
-                  </div>
-                  <div className="w-full bg-white/5 rounded-full h-2 mb-3">
-                    <div className="bg-orange-500/30 h-2 rounded-full w-0" />
-                  </div>
-                  <p className="text-slate-500 text-xs font-light">
-                    Seu progresso aparecerá conforme você avança nas matérias
-                  </p>
+                  {stats && stats.total > 0 ? (
+                    <>
+                      <div className="flex items-end gap-2 mb-3">
+                        <span className="text-3xl font-semibold text-white">
+                          {Math.round((stats.feitas / stats.total) * 100)}%
+                        </span>
+                        <span className="text-slate-400 text-sm font-light mb-1">concluído</span>
+                      </div>
+                      <div className="w-full bg-white/5 rounded-full h-2 mb-3">
+                        <div
+                          className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.round((stats.feitas / stats.total) * 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-slate-500 text-xs font-light">
+                        {stats.feitas} de {stats.total} questões feitas
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-end gap-2 mb-3">
+                        <span className="text-4xl font-semibold text-white">0%</span>
+                        <span className="text-slate-400 text-sm font-light mb-1">concluído</span>
+                      </div>
+                      <div className="w-full bg-white/5 rounded-full h-2 mb-3">
+                        <div className="bg-orange-500/30 h-2 rounded-full w-0" />
+                      </div>
+                      <p className="text-slate-500 text-xs font-light">
+                        Seu progresso aparecerá conforme você avança nas matérias
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -277,6 +303,11 @@ function Dashboard() {
                           raizes: 'rgba(20,184,166,0.12)',
                           potencias: 'rgba(59,130,246,0.12)',
                           geometria: 'rgba(236,72,153,0.12)',
+                          equacao1: 'rgba(245,158,11,0.12)',
+                          equacao2: 'rgba(6,182,212,0.12)',
+                          modulo: 'rgba(132,204,22,0.12)',
+                          exponencial: 'rgba(225,29,72,0.12)',
+                          trigonometria: 'rgba(168,85,247,0.12)',
                         }[ultimoAcesso.bloco] }}
                       >
                         { {
@@ -285,6 +316,13 @@ function Dashboard() {
                           raizes: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#14b8a6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,12 5,12 8,16 13,4 16,4"/><line x1="16" y1="4" x2="18" y2="4"/></svg>,
                           potencias: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round"><text x="3" y="15" fontSize="11" fontWeight="600" fill="#3b82f6" stroke="none" fontFamily="serif">x</text><text x="11" y="9" fontSize="8" fontWeight="600" fill="#3b82f6" stroke="none" fontFamily="serif">n</text></svg>,
                           geometria: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#ec4899" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="10,3 18,17 2,17" fill="rgba(236,72,153,0.15)" stroke="#ec4899"/><line x1="10" y1="3" x2="10" y2="17" strokeDasharray="2 1.5" strokeWidth="1"/></svg>,
+                          equacao1: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round"><line x1="3" y1="10" x2="17" y2="10"/><text x="4" y="8" fontSize="7" fill="#f59e0b" stroke="none" fontFamily="serif">ax+b</text><text x="6" y="18" fontSize="7" fill="#f59e0b" stroke="none" fontFamily="serif">=0</text></svg>,
+                          equacao2: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#06b6d4" strokeWidth="1.5" strokeLinecap="round"><path d="M2,17 Q10,5 18,17" fill="none"/>
+</svg>,
+modulo:    { label: 'Módulo', cor: '#84cc16', corBg: 'rgba(132,204,22,0.12)',
+    icon: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#84cc16" strokeWidth="2" strokeLinecap="round"><line x1="7" y1="3" x2="7" y2="17"/><line x1="13" y1="3" x2="13" y2="17"/></svg> },
+                          exponencial: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#e11d48" strokeWidth="1.5" strokeLinecap="round"><text x="2" y="14" fontSize="9" fill="#e11d48" stroke="none" fontFamily="serif">aˣ</text><text x="10" y="14" fontSize="7" fill="#e11d48" stroke="none" fontFamily="serif">log</text></svg>,
+                          trigonometria: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#a855f7" strokeWidth="1.5" strokeLinecap="round"><path d="M2,14 Q6,4 10,14 Q14,4 18,14" fill="none"/></svg>,
                         }[ultimoAcesso.bloco] }
                       </div>
                       <div>
@@ -295,6 +333,11 @@ function Dashboard() {
                             raizes: 'Raízes',
                             potencias: 'Potências',
                             geometria: 'Geometria',
+                            equacao1: 'Equação 1º Grau',
+                            equacao2: 'Equação 2º Grau',
+                            modulo: 'Módulo',
+                            exponencial: 'Exponencial e Logaritmo',
+                            trigonometria: 'Trigonometria',
                           }[ultimoAcesso.bloco] || ultimoAcesso.bloco}
                         </p>
                         <p className="text-slate-500 text-xs font-light mt-0.5">
@@ -313,6 +356,11 @@ function Dashboard() {
                             raizes: '#14b8a6',
                             potencias: '#3b82f6',
                             geometria: '#ec4899',
+                            equacao1: '#f59e0b',
+                            equacao2: '#06b6d4',
+                            modulo: '#84cc16',
+                            exponencial: '#e11d48',
+                            trigonometria: '#a855f7',
                           }[ultimoAcesso.bloco]
                         }}
                       />
