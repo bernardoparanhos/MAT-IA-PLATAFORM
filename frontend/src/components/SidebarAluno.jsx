@@ -28,16 +28,22 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
           <span>Início</span>
         </button>
 
-      
-{/* Matérias - BLOQUEADO */}
-        <div className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 cursor-not-allowed text-sm font-light opacity-50">
-          <span className="text-slate-600">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
-              <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/>
-            </svg>
-          </span>
+
+        {/* Matérias - ATIVO */}
+        <button
+            onClick={() => { navigate('/materias'); onClick?.() }}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
+                isActive('/materias') || location.pathname.startsWith('/materias/')
+                    ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+            }`}>
+  <span className={isActive('/materias') || location.pathname.startsWith('/materias/') ? 'text-orange-400' : 'text-slate-500'}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+      <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/>
+    </svg>
+  </span>
           <span>Matérias</span>
-        </div>
+        </button>
 
 {/* DESABILITADOS - Em construção */}
 {[
