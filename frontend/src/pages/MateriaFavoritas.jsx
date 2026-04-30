@@ -216,9 +216,11 @@ function MateriaFavoritas() {
 
             <div className="px-5 py-5">
               <div className="text-slate-200 text-sm font-light leading-relaxed mb-5">
-                {modalQuestao.latex
-                  ? <Formula tex={modalQuestao.enunciado} block={true} />
-                  : modalQuestao.enunciado}
+                {modalQuestao.enunciado.includes('<svg')
+                    ? <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />
+                    : modalQuestao.latex
+                        ? <Formula tex={modalQuestao.enunciado} block={true} />
+                        : <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />}
               </div>
               <div className="space-y-2">
                 {Object.entries(modalQuestao.alternativas).map(([letra, texto]) => {
@@ -239,7 +241,7 @@ function MateriaFavoritas() {
                       style={letra === respostaModal && !feedbackModal ? { borderColor: '#facc15', background: 'rgba(250,204,21,0.08)' } : {}}
                     >
                       <span className="font-medium mr-2" style={{ color: letra === respostaModal && !feedbackModal ? '#facc15' : undefined }}>{letra}.</span>
-                      {modalQuestao.latex ? <Formula tex={texto} /> : texto}
+                      {texto.includes('$') ? <Formula tex={texto} /> : texto}
                     </button>
                   )
                 })}

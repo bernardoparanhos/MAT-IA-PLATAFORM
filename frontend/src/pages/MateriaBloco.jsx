@@ -350,9 +350,11 @@ function MateriaBloco() {
             {/* Enunciado */}
             <div className="px-5 py-5">
               <div className="text-slate-200 text-sm font-light leading-relaxed mb-5">
-                {modalQuestao.latex
-                  ? <Formula tex={modalQuestao.enunciado} block={true} />
-                  : modalQuestao.enunciado}
+                {modalQuestao.enunciado.includes('<svg')
+                    ? <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />
+                    : modalQuestao.latex
+                        ? <Formula tex={modalQuestao.enunciado} block={true} />
+                        : <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />}
               </div>
 
               {/* Alternativas */}
@@ -376,7 +378,9 @@ function MateriaBloco() {
                       style={letra === respostaModal && !feedbackModal ? { borderColor: cfg.cor, background: `${cfg.cor}15` } : {}}
                     >
                       <span className="font-medium mr-2" style={{ color: letra === respostaModal && !feedbackModal ? cfg.cor : undefined }}>{letra}.</span>
-                     {modalQuestao.latex ? <Formula tex={texto} /> : texto}
+                      {texto.includes('$')
+                          ? <Formula tex={texto} />
+                          : texto}
                     </button>
                   )
                 })}
