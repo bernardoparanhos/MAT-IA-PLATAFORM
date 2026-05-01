@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // ─── FAQ PANEL ────────────────────────────────────────────────────────────────
 const faqs = [
@@ -90,6 +91,7 @@ function FAQPanel({ aberto, onFechar }) {
 
 // ─── CADASTRO ─────────────────────────────────────────────────────────────────
 function Cadastro() {
+  usePageTitle('Cadastro')
   const navigate = useNavigate()
   const [perfil, setPerfil] = useState('')
   const [form, setForm] = useState({ nome: '', email: '', senha: '', ra: '', turmaId: '', siape: '' })

@@ -1,7 +1,7 @@
  import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-
+ import { usePageTitle } from '../hooks/usePageTitle'
 // ─── FAQ PANEL ────────────────────────────────────────────────────────────────
 const faqs = [
   {
@@ -99,9 +99,10 @@ function FAQPanel({ aberto, onFechar }) {
 }
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
-function Login() {
-  const { login } = useAuth()
-  const [perfil, setPerfil] = useState('')
+ function Login() {
+   const { login } = useAuth()
+   usePageTitle('Entrar')
+   const [perfil, setPerfil] = useState('')
   const [form, setForm] = useState({ ra: '', siape: '', senha: '' })
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)

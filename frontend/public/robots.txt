@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /cadastro
+Allow: /termos
+Allow: /privacidade
+Allow: /esqueci-senha
+
+Disallow: /dashboard
+Disallow: /dashboard-professor
+Disallow: /nivelamento
+Disallow: /metricas
+Disallow: /turmas-professor
+Disallow: /perfil-professor
+Disallow: /perfil-aluno
+Disallow: /configuracoes-professor
+Disallow: /configuracoes-aluno
+Disallow: /notificacoes-professor
+Disallow: /notificacoes-aluno
+Disallow: /minha-turma
+Disallow: /materias
+Disallow: /redefinir-senha
+
+Sitemap: https://plataformamati.dev/sitemap.xml

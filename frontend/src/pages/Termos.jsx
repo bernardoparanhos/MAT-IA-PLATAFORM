@@ -1,6 +1,8 @@
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 function Termos() {
+  usePageTitle('Termos de Uso')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 const from = searchParams.get('from')

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 function EsqueciSenha() {
+  usePageTitle('Recuperar Senha')
   const [email, setEmail] = useState('')
   const [enviado, setEnviado] = useState(false)
   const [carregando, setCarregando] = useState(false)
