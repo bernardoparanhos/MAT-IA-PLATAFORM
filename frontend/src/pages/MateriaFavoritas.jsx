@@ -241,7 +241,9 @@ function MateriaFavoritas() {
                       style={letra === respostaModal && !feedbackModal ? { borderColor: '#facc15', background: 'rgba(250,204,21,0.08)' } : {}}
                     >
                       <span className="font-medium mr-2" style={{ color: letra === respostaModal && !feedbackModal ? '#facc15' : undefined }}>{letra}.</span>
-                      {texto.includes('$') ? <Formula tex={texto} /> : texto}
+                      {(modalQuestao.latex && !modalQuestao.enunciado.includes('<svg')) || texto.includes('$')
+                          ? <Formula tex={texto} />
+                          : texto}
                     </button>
                   )
                 })}
