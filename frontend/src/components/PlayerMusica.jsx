@@ -15,7 +15,6 @@ export default function PlayerMusica() {
   } = useMusica()
 
   const [expandido, setExpandido] = useState(false)
-  const [arrastando, setArrastando] = useState(false)
 
   const pct = duracao > 0 ? (progresso / duracao) * 100 : 0
 
@@ -56,32 +55,12 @@ export default function PlayerMusica() {
               <span>{formatarTempo(duracao)}</span>
             </div>
             {/* Barra de progresso */}
-            <input
-              type="range"
-              min="0"
-              max={duracao || 0}
-              step="1"
-              value={progresso}
-              onMouseDown={() => {
-                setArrastando(true)
-                const audio = document.querySelector('audio')
-                if (audio) audio.pause()
-              }}
-              onMouseUp={e => {
-                const audio = document.querySelector('audio')
-                if (audio) {
-                  audio.currentTime = parseFloat(e.target.value)
-                  if (tocando) audio.play().catch(err => console.error('Erro ao retomar', err))
-                }
-                setArrastando(false)
-              }}
-              onChange={e => {
-                const audio = document.querySelector('audio')
-                if (audio && arrastando) audio.currentTime = parseFloat(e.target.value)
-              }}
-              className="w-full accent-orange-500 mt-1"
-              style={{ height: '4px' }}
-            />
+            <div className="w-full h-1 rounded-full bg-white/10 mt-1 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-orange-500 transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
           </div>
 
           {/* Controles */}
