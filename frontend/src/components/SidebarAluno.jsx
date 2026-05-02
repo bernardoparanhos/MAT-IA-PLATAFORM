@@ -1,9 +1,11 @@
 import { useLocation } from 'react-router-dom'
 import { useNotificacoesAluno } from '../context/NotificacoesAlunoContext'
+import { useMusica } from '../context/MusicaContext'
 
 function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
   const location = useLocation()
   const { naoLidas } = useNotificacoesAluno()
+  const { pararMusica } = useMusica()
 
   const isActive = (path) => location.pathname === path
 
@@ -146,7 +148,7 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
 
         {/* Sair */}
         <button 
-          onClick={logout}
+          onClick={() => { pararMusica(); logout() }}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-colors text-sm font-light">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4m7 14l5-5-5-5m5 5H9"/>

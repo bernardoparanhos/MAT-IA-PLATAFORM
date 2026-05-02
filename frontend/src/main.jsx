@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { NotificacoesProvider } from './context/NotificacoesContext.jsx'
 import { NotificacoesAlunoProvider } from './context/NotificacoesAlunoContext.jsx'
+import { MusicaProvider } from './context/MusicaContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <NotificacoesProvider>
           <NotificacoesAlunoProvider>
-            <App />
+          <MusicaProvider>
+              <App />
+            </MusicaProvider>
           </NotificacoesAlunoProvider>
         </NotificacoesProvider>
       </AuthProvider>

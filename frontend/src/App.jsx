@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import PlayerMusica from './components/PlayerMusica'
 import Login from './pages/Login'
 import Cadastro from './pages/Cadastro'
 import Dashboard from './pages/Dashboard'
@@ -24,7 +25,11 @@ import MateriaBloco from './pages/MateriaBloco'
 import MateriaFavoritas from './pages/MateriaFavoritas'
 
 function App() {
+  const location = useLocation()
+  const mostrarPlayer = location.pathname.startsWith('/materias')
+
   return (
+    <>
     <Routes>
       {/* Públicas */}
       <Route path="/login" element={<Login />} />
@@ -114,7 +119,9 @@ function App() {
       {/* Redirects */}
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+      </Routes>
+      {mostrarPlayer && <PlayerMusica />}
+    </>
   )
 }
 

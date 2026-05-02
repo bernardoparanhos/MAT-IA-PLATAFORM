@@ -265,6 +265,34 @@ router.delete('/notificacoes', verifyToken, async (req, res) => {
   return res.json({ ok: true })
 })
 
+// Músicas favoritas
+router.get('/musicas-favoritas', verifyToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT musicas_favoritas FROM usuarios WHERE id = $1',
+      [req.usuario.id]
+    )
+    res.json({ favoritas: result.rows[0]?.musicas_favoritas || [] })
+  } catch (e) {
+    console.error('Erro ao buscar músicas favoritas', e)
+    res.status(500).json({ erro: 'Erro interno' })
+  }
+})
+
+router.post('/musicas-favoritas', verifyToken, async (req, res) => {
+  try {
+    const { favoritas } = req.body
+    await db.query(
+      'UPDATE usuarios SET musicas_favoritas = $1 WHERE id = $2',
+      [JSON.stringify(favoritas), req.usuario.id]
+    )
+    res.json({ ok: true })
+  } catch (e) {
+    console.error('Erro ao salvar músicas favoritas', e)
+    res.status(500).json({ erro: 'Erro interno' })
+  }
+})
+
 
 // ─── REGISTER / LOGIN ─────────────────────────────────────────────────────────
 router.post('/register/aluno', registerAlunoValidation, (req, res) => register(req, res, 'aluno'));
