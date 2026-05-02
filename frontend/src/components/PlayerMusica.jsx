@@ -2,16 +2,17 @@ import { useState } from 'react'
 import { useMusica } from '../context/MusicaContext'
 
 export default function PlayerMusica() {
-    const {
-        tocando, togglePlay,
-        faixaAtual, PLAYLIST, indiceAtual, setIndiceAtual,
-        proxima, anterior,
-        volume, setVolume,
-        aleatorio, setAleatorio,
-        repetir, setRepetir,
-        progresso, duracao, formatarTempo,
-        favoritas, toggleFavoritaMusica,
-      } = useMusica()
+  const {
+    tocando, togglePlay,
+    faixaAtual, PLAYLIST, indiceAtual, setIndiceAtual,
+    proxima, anterior,
+    volume, setVolume,
+    aleatorio, setAleatorio,
+    repetir, setRepetir,
+    progresso, duracao, formatarTempo,
+    favoritas, toggleFavoritaMusica,
+    audioRef,
+  } = useMusica()
 
   const [expandido, setExpandido] = useState(false)
   const [arrastando, setArrastando] = useState(false)

@@ -152,6 +152,7 @@ export function MusicaProvider({ children }) {
       progresso, duracao, formatarTempo,
       favoritas, toggleFavoritaMusica,
       pararMusica,
+      audioRef,
     }}>
       <audio
         ref={audioRef}
