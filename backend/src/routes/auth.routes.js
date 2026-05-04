@@ -1132,7 +1132,7 @@ router.delete('/materias/favoritar/:questaoId', verifyToken, async (req, res) =>
 router.get('/materias/ultimo-acesso', verifyToken, async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT q.bloco, COUNT(*) as feitas
+      SELECT q.bloco, COUNT(DISTINCT qh.questao_id) as feitas
       FROM questoes_historico qh
       INNER JOIN questoes q ON q.id = qh.questao_id
       WHERE qh.aluno_id = $1
