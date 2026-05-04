@@ -52,3 +52,9 @@ Thumbs.db
 docs/
 
 .idea/
+
+# ==========================================
+# FERRAMENTAS DE SEGURANÇA
+# ==========================================
+.secrets.baseline
+.secrets.*
