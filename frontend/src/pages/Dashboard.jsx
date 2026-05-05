@@ -25,9 +25,42 @@ function Dashboard() {
   const painelRef = useRef(null)
  const [ultimoAcesso, setUltimoAcesso] = useState(null)
   const [stats, setStats] = useState(null)
+  const [modalFeedbackAberto, setModalFeedbackAberto] = useState(false)
+  const [feedbackTipo, setFeedbackTipo] = useState('sugestao')
+  const [feedbackMensagem, setFeedbackMensagem] = useState('')
+  const [permitirContato, setPermitirContato] = useState(false)
+  const [enviandoFeedback, setEnviandoFeedback] = useState(false)
+  const [feedbackEnviado, setFeedbackEnviado] = useState(false)
+  const [dropdownAberto, setDropdownAberto] = useState(false)
 
   const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
+  const handleEnviarFeedback = async (e) => {
+    e.preventDefault()
+    if (feedbackMensagem.trim().length < 10) return alert('A mensagem deve ter pelo menos 10 caracteres.')
+    setEnviandoFeedback(true)
+    try {
+      const res = await fetch(`${API}/auth/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ tipo: feedbackTipo, mensagem: feedbackMensagem, permitirContato })
+      })
+      if (res.ok) {
+        setFeedbackEnviado(true)
+        setTimeout(() => {
+          setModalFeedbackAberto(false); setFeedbackMensagem(''); setFeedbackTipo('sugestao'); setPermitirContato(false); setFeedbackEnviado(false)
+        }, 2000)
+      } else {
+        const data = await res.json()
+        alert(data.message || 'Erro ao enviar feedback')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('Erro ao enviar feedback. Tente novamente.')
+    } finally {
+      setEnviandoFeedback(false)
+    }
+  }
 
   useEffect(() => {
   const jaChecou = sessionStorage.getItem('diagnostico_verificado')
@@ -194,6 +227,27 @@ function Dashboard() {
 
           {/* Grid principal */}
           <div className="space-y-6">
+
+            {/* Bloco de Feedback */}
+            <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-5 lg:p-6 mb-8">
+              <div className="flex items-start lg:items-center justify-between flex-col lg:flex-row gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6 text-orange-400"><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-medium text-base">Nos ajude a melhorar!</h3>
+                    <p className="text-slate-400 text-sm font-light mt-0.5">Sua opinião é importante. Envie sugestões ou relate problemas.</p>
+                  </div>
+                </div>
+                <button
+                    onClick={() => setModalFeedbackAberto(true)}
+                    className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors whitespace-nowrap w-full lg:w-auto"
+                >
+                  Enviar Feedback
+                </button>
+              </div>
+            </div>
 
             {/* Banner diagnóstico pulado */}
             {diagnosticoStatus === 'pulado' && (
@@ -415,6 +469,104 @@ function Dashboard() {
           </div>
         </main>
       </div>
+
+      {/* MODAL DE FEEDBACK */}
+      {modalFeedbackAberto && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#1e2d3d] rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <h2 className="text-xl font-medium text-white flex items-center gap-2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-orange-400"><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                  Envie seu Feedback
+                </h2>
+                <button onClick={() => setModalFeedbackAberto(false)} className="text-slate-400 hover:text-white transition-colors">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              <form onSubmit={handleEnviarFeedback} className="p-6 space-y-5">
+                {feedbackEnviado ? (
+                    <div className="py-8 text-center">
+                      <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-green-400"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                      </div>
+                      <p className="text-green-400 font-medium text-lg">Feedback enviado com sucesso!</p>
+                      <p className="text-slate-400 text-sm mt-1 font-light">Obrigado pela sua contribuição.</p>
+                    </div>
+                ) : (
+                    <>
+                      <div className="relative">
+                        <label className="block text-xs uppercase tracking-wider text-slate-400 font-medium mb-2">Tipo de Feedback</label>
+
+                        {/* Botão que simula o Select */}
+                        <button
+                            type="button"
+                            onClick={() => setDropdownAberto(!dropdownAberto)}
+                            className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 border border-white/10 hover:border-white/20 focus:border-orange-500 focus:outline-none font-light flex items-center justify-between transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            {feedbackTipo === 'sugestao' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-yellow-400"><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>}
+                            {feedbackTipo === 'problema' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-red-400"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
+                            {feedbackTipo === 'elogio' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-green-400"><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>}
+                            {feedbackTipo === 'outro' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-blue-400"><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>}
+                            <span className="capitalize">{feedbackTipo}</span>
+                          </div>
+
+                          {/* Setinha afastada da borda (mr-2) que gira ao abrir */}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-4 h-4 text-slate-400 mr-2 transition-transform duration-200 ${dropdownAberto ? 'rotate-180' : ''}`}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                        </button>
+
+                        {/* Caixa com as opções */}
+                        {dropdownAberto && (
+                            <div className="absolute z-10 w-full mt-2 bg-[#1e2d3d] border border-white/10 rounded-xl shadow-xl overflow-hidden py-1">
+                              {[
+                                { id: 'sugestao', label: 'Sugestão', color: 'text-yellow-400', svg: <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /> },
+                                { id: 'problema', label: 'Problema', color: 'text-red-400', svg: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /> },
+                                { id: 'elogio', label: 'Elogio', color: 'text-green-400', svg: <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /> },
+                                { id: 'outro', label: 'Outro', color: 'text-blue-400', svg: <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /> }
+                              ].map((op) => (
+                                  <button
+                                      key={op.id}
+                                      type="button"
+                                      onClick={() => { setFeedbackTipo(op.id); setDropdownAberto(false); }}
+                                      className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors ${feedbackTipo === op.id ? 'bg-orange-500/10 text-white' : 'text-slate-400'}`}
+                                  >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={`w-5 h-5 ${op.color}`}>
+                                      {op.svg}
+                                    </svg>
+                                    <span className="capitalize font-light">{op.label}</span>
+                                  </button>
+                              ))}
+                            </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs uppercase tracking-wider text-slate-400 font-medium mb-2">Mensagem</label>
+                        <textarea value={feedbackMensagem} onChange={(e) => setFeedbackMensagem(e.target.value)} maxLength={500} rows={5} placeholder="Descreva sua sugestão, problema ou comentário..." className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 border border-white/10 focus:border-orange-500 focus:outline-none font-light resize-none" required />
+                        <p className="text-xs text-slate-500 mt-1 text-right">{feedbackMensagem.length}/500 caracteres</p>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <input type="checkbox" id="permitir-contato" checked={permitirContato} onChange={(e) => setPermitirContato(e.target.checked)} className="mt-1 w-4 h-4 rounded border-white/20 bg-[#0f172a] text-orange-500 focus:ring-orange-500 focus:ring-offset-0" />
+                        <label htmlFor="permitir-contato" className="text-sm text-slate-400 font-light cursor-pointer leading-snug">
+                          Permitir contato para mais informações (seu email será compartilhado)
+                        </label>
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setModalFeedbackAberto(false)} className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-medium transition-colors">Cancelar</button>
+                        <button type="submit" disabled={enviandoFeedback || feedbackMensagem.trim().length < 10} className="flex-1 px-4 py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 disabled:text-white/50 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
+                          {enviandoFeedback ? 'Enviando...' : 'Enviar Feedback'}
+                        </button>
+                      </div>
+                    </>
+                )}
+              </form>
+            </div>
+          </div>
+      )}
+
     </div>
   )
 }

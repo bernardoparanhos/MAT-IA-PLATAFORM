@@ -1158,4 +1158,90 @@ router.get('/materias/ultimo-acesso', verifyToken, async (req, res) => {
   }
 })
 
+// ─── ÚLTIMO ACESSO ────────────────────────────────────────────────────────────
+
+router.get('/materias/ultimo-acesso', verifyToken, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT q.bloco, COUNT(DISTINCT qh.questao_id) as feitas
+      FROM questoes_historico qh
+      INNER JOIN questoes q ON q.id = qh.questao_id
+      WHERE qh.aluno_id = $1
+      GROUP BY q.bloco
+      ORDER BY MAX(qh.respondido_em) DESC
+      LIMIT 1
+    `, [req.usuario.id])
+
+    if (result.rows.length === 0) return res.json({ bloco: null })
+
+    const bloco = result.rows[0].bloco
+    const feitas = parseInt(result.rows[0].feitas)
+
+    const total = await db.query(
+        'SELECT COUNT(*) as total FROM questoes WHERE bloco = $1 AND ativa = true',
+        [bloco]
+    )
+
+    return res.json({ bloco, feitas, total: parseInt(total.rows[0].total) })
+  } catch (e) {
+    console.error('[materias/ultimo-acesso] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── FEEDBACK DO DASHBOARD ────────────────────────────────────────────────────
+router.post('/feedback', verifyToken, async (req, res) => {
+  const { tipo, mensagem, permitirContato } = req.body;
+  const alunoId = req.usuario.id;
+
+  if (!mensagem || mensagem.trim().length < 10) {
+    return res.status(400).json({ message: 'A mensagem deve ter pelo menos 10 caracteres.' });
+  }
+
+  try {
+    // 1. Salvar no Banco
+    await db.query(
+        'INSERT INTO feedbacks (aluno_id, tipo, mensagem, permitir_contato) VALUES ($1, $2, $3, $4)',
+        [alunoId, tipo, mensagem, permitirContato]
+    );
+
+    // 2. Buscar dados do aluno para o email
+    const userResult = await db.query('SELECT nome, email, ra FROM usuarios WHERE id = $1', [alunoId]);
+    const { nome, email, ra } = userResult.rows[0] || { nome: 'Aluno', email: 'N/A', ra: 'N/A' };
+
+    // 3. Montar HTML do Email
+    const htmlEmail = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: #f97316; color: white; padding: 20px; text-align: center;">
+          <h2 style="margin: 0;">💬 Novo Feedback — MAT-IA</h2>
+        </div>
+        <div style="padding: 24px; color: #334155;">
+          <p><strong>Tipo:</strong> <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px;">${tipo.toUpperCase()}</span></p>
+          <p><strong>Aluno:</strong> ${nome} (RA: ${ra})</p>
+          <p><strong>Contato liberado?</strong> ${permitirContato ? `✅ Sim (${email})` : '❌ Não'}</p>
+          <div style="margin-top: 20px; padding: 16px; background: #f8fafc; border-left: 4px solid #f97316; font-style: italic;">
+            "${mensagem.replace(/\n/g, '<br>')}"
+          </div>
+          <hr style="margin: 24px 0; border: 0; border-top: 1px solid #e2e8f0;" />
+          <p style="font-size: 12px; color: #64748b;">Enviado em: ${new Date().toLocaleString('pt-BR')}</p>
+        </div>
+      </div>
+    `;
+
+    // 4. Enviar usando a função enviarEmail que já existe no topo do seu arquivo
+    await enviarEmail({
+      to: process.env.FEEDBACK_EMAIL || 'beparanhosborges@gmail.com',
+      subject: `[Feedback MAT-IA] ${tipo}: ${nome}`,
+      html: htmlEmail
+    });
+
+    res.status(200).json({ message: 'Feedback enviado com sucesso!' });
+  } catch (e) {
+    console.error('[auth/feedback] Erro:', e);
+    res.status(500).json({ message: 'Erro ao processar feedback.' });
+  }
+});
+
+module.exports = router;
+
 module.exports = router;
