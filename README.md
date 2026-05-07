@@ -1,8 +1,10 @@
-# MAT-IA — Plataforma de Suporte Inteligente ao Aprendizado de Matemática 
+# MAT-IA — Plataforma de Suporte Inteligente ao Aprendizado de Matemática
 
 Plataforma web educacional baseada em Inteligência Artificial voltada ao **diagnóstico, nivelamento e reforço** em Fundamentos de Matemática para estudantes ingressantes nos cursos de Engenharia da **UTFPR Campus Medianeira**.
 
 Projeto aprovado no **Edital 53/2025 — PROGRAD/UTFPR**, no âmbito do Programa Institucional de Inovação nos Cursos de Graduação (**InovaGrad**), linha temática *Uso de Inteligência Artificial no Processo Ensino-Aprendizagem*.
+
+🌐 **Acesso:** [plataformamati.dev](https://plataformamati.dev)
 
 ---
 
@@ -12,7 +14,9 @@ Apoiar estudantes ingressantes em Engenharia que apresentam dificuldades em mate
 
 - Diagnóstico automatizado do nível de conhecimento prévio
 - Análise pedagógica dos resultados assistida por IA
-- Dashboard de métricas para o professor acompanhar a turma
+- Dashboard de métricas para o professor acompanhar a turma em tempo real
+- Banco de questões de prática com 300+ exercícios em 10 blocos temáticos
+- Gamificação com pontuação, ranking e reforço positivo
 - Trilhas de reforço direcionadas (em desenvolvimento)
 - Tutor inteligente contextualizado por conteúdo (em desenvolvimento)
 
@@ -26,31 +30,58 @@ A proposta contribui para a permanência e o êxito acadêmico dos ingressantes,
 - Cadastro e login separados para aluno (RA) e professor (SIAPE)
 - Validação de domínio institucional `@utfpr.edu.br` para professores
 - Recuperação de senha via email (integração Brevo API)
-- Rate limiting e log de tentativas
-- JWT para rotas protegidas por perfil
+- Rate limiting, log de tentativas e proteção contra força bruta
+- JWT para rotas protegidas com controle de perfil (RBAC)
 
 ### Diagnóstico de nivelamento
-- Teste com 17 questões cobrindo 5 blocos temáticos:
-  - Inteiros, Frações, Raízes, Potências e Geometria
-- Renderização de notação matemática com **KaTeX** (Q12–Q17)
-- Sistema de dicas progressivas e opção de pular questões
-- Embaralhamento de alternativas (Fisher-Yates)
+- Teste com **20 questões** cobrindo 5 blocos temáticos: Inteiros, Frações, Raízes, Potências e Geometria
+- Renderização de notação matemática com **KaTeX**
+- Sistema de dicas progressivas, botão voltar e opção de pular questões
+- Embaralhamento de alternativas anti-cola (Fisher-Yates client-side)
 - Classificação automática em três níveis: **Básico**, **Intermediário** e **Avançado**
+- Feedback opcional do aluno após o diagnóstico (nota 0–10 + comentário)
+- Modo preview para professores testarem sem salvar dados
+
+### Módulo de Matérias — banco de questões de prática
+- **300+ questões** distribuídas em **10 blocos temáticos:**
+  - Números Inteiros, Frações, Raízes, Potências
+  - Equações 1º e 2º grau, Módulo, Exponencial
+  - Trigonometria, Geometria
+- Histórico de respostas com rastreio de acertos e erros
+- Questões favoritas (marcação e revisão)
+- Busca global por palavra-chave
+- Progresso percentual por bloco
+
+### Gamificação
+- Sistema de pontuação: +10 pts no 1º acerto, +5 pts no 2º, 0 em erros
+- HUD flutuante com pontos atuais e posição no ranking em tempo real
+- Ranking Top 10 com desempate por eficiência (quem errou menos)
+- Animação de confetes ao acertar questão
+- Privacidade garantida: ranking exibe apenas nome, sem RA
+
+### Player de música ambiente
+- 15 faixas instrumentais para estudo (lofi, ambiente, jazz)
+- Controles completos: play/pause, anterior/próxima, aleatório, repetir
+- Favoritas sincronizadas por conta (persiste entre dispositivos)
 
 ### Painel do professor
 - Gerenciamento de múltiplas turmas
 - Dashboard de métricas com gráficos interativos (Recharts)
-- Distribuição de alunos por nível, médias por bloco, identificação do conteúdo mais fraco da turma
-- Análise pedagógica da turma gerada por IA
-- Análise individual por aluno gerada por IA, considerando desempenho, tempo de resposta, uso de dicas e questões puladas
-- Sistema de notificações em tempo real
-- Exportação integrada para Google Sheets
+- Distribuição de alunos por nível, médias por bloco, identificação do conteúdo mais fraco
+- Análise pedagógica da turma gerada por IA (GPT-4o-mini)
+- Análise individual por aluno gerada por IA (desempenho, tempo, dicas, questões puladas)
+- Sistema de notificações em tempo real (professor e aluno)
+- Exportação automática para Google Sheets (diagnósticos + feedbacks + prática por turma)
+- Relatórios de prática segmentados por turma em abas separadas
 
-### Infraestrutura
+### Infraestrutura e segurança
 - Backend em produção no Render
-- Frontend em produção na Vercel
-- Banco PostgreSQL gerenciado
+- Frontend em produção na Vercel com domínio personalizado
+- Banco PostgreSQL permanente no Neon
 - Interface responsiva (desktop e mobile)
+- Firewall configurado (bloqueio de bots, scanners e scrapers)
+- Sanitização de HTML com DOMPurify
+- Headers de segurança via Helmet + CSP no `vercel.json`
 
 ---
 
@@ -58,40 +89,45 @@ A proposta contribui para a permanência e o êxito acadêmico dos ingressantes,
 
 Funcionalidades planejadas para o ciclo 2026:
 
+- [ ] Expansão do banco de questões para 1.000 (100 por bloco)
 - [ ] Tutor IA contextualizado por conteúdo, disponível após o diagnóstico
 - [ ] Trilhas de aprendizagem personalizadas por bloco temático
-- [ ] Exercícios com feedback automático
-- [ ] Mini-jogos matemáticos para fixação
-- [ ] Fórum de dúvidas por disciplina
-- [ ] Análise por item (item analysis) para mapeamento de questões mais difíceis
+- [ ] Sistema de dificuldade progressiva nas questões de prática
+- [ ] Modo revisão (apenas questões erradas)
+- [ ] Mini-jogos matemáticos para fixação (Tabuada Veloz, Calculadora Mental)
+- [ ] Fórum de dúvidas por turma
+- [ ] Conquistas e badges
 - [ ] Relatório pedagógico exportável em PDF
+- [ ] Análise por item para mapeamento de questões mais difíceis
 
 ---
 
 ## 🛠️ Stack técnica
 
 **Frontend**
-- React 18 + Vite
-- Tailwind CSS
-- React Router
+- React 19 + Vite 7
+- Tailwind CSS v4
+- React Router 7
 - Recharts (visualização de dados)
-- KaTeX (renderização de fórmulas)
+- KaTeX (renderização de fórmulas LaTeX)
+- canvas-confetti (animações de reforço positivo)
+- DOMPurify (sanitização de HTML)
 
 **Backend**
 - Node.js + Express
-- PostgreSQL
-- JWT para autenticação
+- PostgreSQL (Neon)
+- JWT para autenticação com controle de perfil (RBAC)
 - bcryptjs, helmet, express-rate-limit, express-validator
 
 **Integrações**
 - OpenAI GPT-4o-mini (análise pedagógica por IA)
 - Brevo API (envio transacional de email)
-- Google Sheets API (exportação de resultados)
+- Google Sheets API (relatórios automáticos por turma)
 
 **Deploy**
-- Frontend: Vercel
-- Backend: Render
-- Banco: PostgreSQL gerenciado (Render)
+- Frontend: Vercel (`plataformamati.dev`)
+- Backend: Render (`api.plataformamati.dev`)
+- Banco: Neon (PostgreSQL permanente)
 
 ---
 
@@ -100,7 +136,7 @@ Funcionalidades planejadas para o ciclo 2026:
 ### Pré-requisitos
 - Node.js 18+
 - PostgreSQL 14+ (local ou via conexão remota)
-- Conta configurada nos serviços externos utilizados (opcional para desenvolvimento)
+- Conta configurada nos serviços externos (opcional para desenvolvimento)
 
 ### Backend
 
@@ -111,7 +147,15 @@ cp .env.example .env   # preencher variáveis
 node src/server.js
 ```
 
-Variáveis de ambiente necessárias: `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `OPENAI_API_KEY`, `BREVO_API_KEY`.
+Variáveis de ambiente necessárias:
+
+```
+DATABASE_URL, JWT_SECRET, FRONTEND_URL
+BREVO_API_KEY, OPENAI_API_KEY
+GOOGLE_PROJECT_ID, GOOGLE_PRIVATE_KEY, GOOGLE_CLIENT_EMAIL
+GOOGLE_SPREADSHEET_ID, GOOGLE_SPREADSHEET_FEEDBACKS_ID
+ALLOWED_ORIGIN, SIAPES_AUTORIZADOS
+```
 
 ### Frontend
 
@@ -131,8 +175,8 @@ Acesso local:
 ## 👥 Equipe
 
 - **Coordenador proponente:** Prof. Dr. Fausto Pinheiro da Silva
-- **Discente bolsista:** Bernardo Paranhos Borges Oliveira
-- **Instituição:** UTFPR Campus Medianeira — Engenharia de Produção
+- **Discente bolsista:** Bernardo Paranhos Borges Oliveira — Engenharia de Produção
+- **Instituição:** UTFPR Campus Medianeira
 
 ---
 
