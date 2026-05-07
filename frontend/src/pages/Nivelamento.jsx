@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Formula from '../components/Formula'
+import DOMPurify from 'dompurify'
 
 // ─── TELA: BOAS-VINDAS ────────────────────────────────────────────────────────
 function TelaBoasVindas({ onIniciar, onPular }) {
@@ -184,7 +185,7 @@ function TelaQuestao({ questao, total, atual, onResponder, onPular, onVoltar, po
   {questao.latex ? (
     <Formula tex={questao.enunciado} block={true} />
   ) : questao.enunciado.startsWith('<div') ? (
-    <div dangerouslySetInnerHTML={{ __html: questao.enunciado }} />
+    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(questao.enunciado) }} />
   ) : (
     <p>{questao.enunciado}</p>
   )}

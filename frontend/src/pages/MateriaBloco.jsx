@@ -5,6 +5,8 @@ import SidebarAluno from '../components/SidebarAluno'
 import Formula from '../components/Formula'
 import HUDAluno from '../components/HUDAluno'
 import { dispararConfetesCentro } from '../components/ConfettiReward'
+import DOMPurify from 'dompurify'
+
 
 const BLOCOS_CONFIG = {
   inteiros:  { label: 'Números Inteiros', cor: '#f97316', corBg: 'rgba(249,115,22,0.12)',
@@ -381,10 +383,10 @@ function MateriaBloco() {
             <div className="px-5 py-5">
               <div className="text-slate-200 text-sm font-light leading-relaxed mb-5">
                 {modalQuestao.enunciado.includes('<svg')
-                    ? <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />
+                    ? <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(modalQuestao.enunciado) }} />
                     : modalQuestao.latex
                         ? <Formula tex={modalQuestao.enunciado} block={true} />
-                        : <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />}
+                        : <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(modalQuestao.enunciado) }} />}
               </div>
 
               {/* Alternativas */}

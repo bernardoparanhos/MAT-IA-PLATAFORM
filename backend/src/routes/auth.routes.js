@@ -2,7 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const { register, loginAluno, loginProfessor } = require('../controllers/auth.controller');
 const sheetsService = require('../services/sheets.service');
-const { verifyToken } = require('../middlewares/auth.middleware');
+const { verifyToken, requirePerfil } = require('../middlewares/auth.middleware');
 const db = require('../config/database');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
@@ -81,7 +81,7 @@ const loginProfessorValidation = [
 ];
 
 // ─── TURMAS ───────────────────────────────────────────────────────────────────
-router.get('/turmas/minhas', verifyToken, async (req, res) => {
+router.get('/turmas/minhas', verifyToken, requirePerfil('professor'), async (req, res) => {
   const result = await db.query(`
     SELECT t.id, t.nome, t.codigo_acesso, COUNT(ta.aluno_id) as total_alunos
     FROM turmas t
@@ -92,12 +92,12 @@ router.get('/turmas/minhas', verifyToken, async (req, res) => {
   return res.json({ turmas: result.rows });
 });
 
-router.get('/turmas/disponiveis', verifyToken, async (req, res) => {
+router.get('/turmas/disponiveis', verifyToken, requirePerfil('professor'), async (req, res) => {
   const result = await db.query(`SELECT id, nome, codigo_acesso FROM turmas WHERE professor_id IS NULL`);
   return res.json({ turmas: result.rows });
 });
 
-router.post('/turmas/associar', verifyToken, async (req, res) => {
+router.post('/turmas/associar', verifyToken, requirePerfil('professor'), async (req, res) => {
   const { turmaId } = req.body;
   if (!turmaId) return res.status(400).json({ message: 'turmaId é obrigatório' });
   const turma = await db.query('SELECT id FROM turmas WHERE id = $1', [turmaId]);
@@ -111,7 +111,7 @@ router.get('/turmas/publicas', async (req, res) => {
   return res.json({ turmas: result.rows });
 });
 
-router.get('/turmas/:id', verifyToken, async (req, res) => {
+router.get('/turmas/:id', verifyToken, requirePerfil('professor'), async (req, res) => {
   const result = await db.query(`
     SELECT t.id, t.nome, t.codigo_acesso, t.criado_em, COUNT(ta.aluno_id) as total_alunos
     FROM turmas t
@@ -123,7 +123,7 @@ router.get('/turmas/:id', verifyToken, async (req, res) => {
   return res.json({ turma: result.rows[0] });
 });
 
-router.get('/turmas/:id/alunos', verifyToken, async (req, res) => {
+router.get('/turmas/:id/alunos', verifyToken, requirePerfil('professor'), async (req, res) => {
   const turma = await db.query('SELECT id FROM turmas WHERE id = $1 AND professor_id = $2', [req.params.id, req.usuario.id]);
   if (turma.rows.length === 0) return res.status(404).json({ message: 'Turma não encontrada.' });
   const alunos = await db.query(`
@@ -137,7 +137,7 @@ router.get('/turmas/:id/alunos', verifyToken, async (req, res) => {
 });
 
 // ─── MINHA TURMA — ALUNO ──────────────────────────────────────────────────────
-router.get('/aluno/minha-turma', verifyToken, async (req, res) => {
+router.get('/aluno/minha-turma', verifyToken, requirePerfil('aluno'), async (req, res) => {
   const turmaResult = await db.query(`
     SELECT t.id, t.nome, t.codigo_acesso, t.criado_em
     FROM turmas t
@@ -164,12 +164,8 @@ router.get('/aluno/minha-turma', verifyToken, async (req, res) => {
 });
 
 // ─── NOTIFICAÇÕES DO ALUNO ────────────────────────────────────────────────────
-router.get('/notificacoes/aluno', verifyToken, async (req, res) => {
+router.get('/notificacoes/aluno', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
-    if (req.usuario.perfil !== 'aluno') {
-      return res.status(403).json({ message: 'Acesso negado.' })
-    }
-
     const result = await db.query(`
       SELECT * FROM notificacoes_aluno 
       WHERE aluno_id = $1 
@@ -184,12 +180,8 @@ router.get('/notificacoes/aluno', verifyToken, async (req, res) => {
   }
 })
 
-router.post('/notificacoes/aluno/:id/lida', verifyToken, async (req, res) => {
+router.post('/notificacoes/aluno/:id/lida', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
-    if (req.usuario.perfil !== 'aluno') {
-      return res.status(403).json({ message: 'Acesso negado.' })
-    }
-
     await db.query(
       `UPDATE notificacoes_aluno SET lida = 1 WHERE id = $1 AND aluno_id = $2`,
       [req.params.id, req.usuario.id]
@@ -202,12 +194,8 @@ router.post('/notificacoes/aluno/:id/lida', verifyToken, async (req, res) => {
   }
 })
 
-router.delete('/notificacoes/aluno/:id', verifyToken, async (req, res) => {
+router.delete('/notificacoes/aluno/:id', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
-    if (req.usuario.perfil !== 'aluno') {
-      return res.status(403).json({ message: 'Acesso negado.' })
-    }
-
     await db.query(
       'DELETE FROM notificacoes_aluno WHERE id = $1 AND aluno_id = $2',
       [req.params.id, req.usuario.id]
@@ -220,12 +208,8 @@ router.delete('/notificacoes/aluno/:id', verifyToken, async (req, res) => {
   }
 })
 
-router.delete('/notificacoes/aluno', verifyToken, async (req, res) => {
+router.delete('/notificacoes/aluno', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
-    if (req.usuario.perfil !== 'aluno') {
-      return res.status(403).json({ message: 'Acesso negado.' })
-    }
-
     await db.query(
       'DELETE FROM notificacoes_aluno WHERE aluno_id = $1',
       [req.usuario.id]
@@ -239,35 +223,35 @@ router.delete('/notificacoes/aluno', verifyToken, async (req, res) => {
 })
 
 // ─── NOTIFICAÇÕES ─────────────────────────────────────────────────────────────
-router.get('/notificacoes', verifyToken, async (req, res) => {
+router.get('/notificacoes', verifyToken, requirePerfil('professor'), async (req, res) => {
   const result = await db.query(`
     SELECT * FROM notificacoes WHERE professor_id = $1 ORDER BY criado_em DESC LIMIT 50
   `, [req.usuario.id]);
   return res.json({ notificacoes: result.rows });
 });
 
-router.post('/notificacoes/lida/:id', verifyToken, async (req, res) => {
+router.post('/notificacoes/lida/:id', verifyToken, requirePerfil('professor'), async (req, res) => {
   await db.query(`UPDATE notificacoes SET lida = 1 WHERE id = $1 AND professor_id = $2`, [req.params.id, req.usuario.id]);
   return res.json({ ok: true });
 });
 
-router.post('/notificacoes/lida-todas', verifyToken, async (req, res) => {
+router.post('/notificacoes/lida-todas', verifyToken, requirePerfil('professor'), async (req, res) => {
   await db.query(`UPDATE notificacoes SET lida = 1 WHERE professor_id = $1`, [req.usuario.id]);
   return res.json({ ok: true });
 });
 
-router.delete('/notificacoes/:id', verifyToken, async (req, res) => {
+router.delete('/notificacoes/:id', verifyToken, requirePerfil('professor'), async (req, res) => {
   await db.query('DELETE FROM notificacoes WHERE id = $1 AND professor_id = $2', [req.params.id, req.usuario.id])
   return res.json({ ok: true })
 })
 
-router.delete('/notificacoes', verifyToken, async (req, res) => {
+router.delete('/notificacoes', verifyToken, requirePerfil('professor'), async (req, res) => {
   await db.query('DELETE FROM notificacoes WHERE professor_id = $1', [req.usuario.id])
   return res.json({ ok: true })
 })
 
 // Músicas favoritas
-router.get('/musicas-favoritas', verifyToken, async (req, res) => {
+router.get('/musicas-favoritas', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const result = await db.query(
       'SELECT musicas_favoritas FROM usuarios WHERE id = $1',
@@ -280,7 +264,7 @@ router.get('/musicas-favoritas', verifyToken, async (req, res) => {
   }
 })
 
-router.post('/musicas-favoritas', verifyToken, async (req, res) => {
+router.post('/musicas-favoritas', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const { favoritas } = req.body
     await db.query(
@@ -302,7 +286,7 @@ router.post('/login/aluno', loginAlunoValidation, loginAluno);
 router.post('/login/professor', loginProfessorValidation, loginProfessor);
 
 // ─── ALUNO PERFIL ─────────────────────────────────────────────────────────────
-router.get('/aluno/perfil', verifyToken, async (req, res) => {
+router.get('/aluno/perfil', verifyToken, requirePerfil('aluno'), async (req, res) => {
   const turmaResult = await db.query(`
     SELECT t.id, t.nome, t.codigo_acesso
     FROM turmas t
@@ -322,8 +306,8 @@ router.get('/aluno/perfil', verifyToken, async (req, res) => {
 });
 
 const alunoController = require('../controllers/aluno.controller');
-router.get('/aluno/perfil-completo', verifyToken, alunoController.getPerfil);
-router.post('/aluno/alterar-senha', verifyToken, alunoController.alterarSenha);
+router.get('/aluno/perfil-completo', verifyToken, requirePerfil('aluno'), alunoController.getPerfil);
+router.post('/aluno/alterar-senha', verifyToken, requirePerfil('aluno'), alunoController.alterarSenha);
 
 // ─── ESQUECI SENHA — ALUNO ────────────────────────────────────────────────────
 router.post('/aluno/esqueci-senha', limiterEsqueciSenha, async (req, res) => {
@@ -439,7 +423,7 @@ function calcularResultado(respostas) {
   questoes.forEach(q => {
     const bloco = blocos[q.bloco]
     bloco.total++
-    const corretaReal = global.gabaritoAtual?.[q.id] || q.correta
+    const corretaReal = q.correta
 if (respostas[q.id] === corretaReal) { bloco.acertos++; pontuacao++ }
   })
   Object.keys(blocos).forEach(b => {
@@ -450,19 +434,19 @@ if (respostas[q.id] === corretaReal) { bloco.acertos++; pontuacao++ }
   return { nivel, pontuacao, blocos }
 }
 
-router.get('/diagnostico/status', verifyToken, async (req, res) => {
+router.get('/diagnostico/status', verifyToken, requirePerfil('aluno'), async (req, res) => {
   const result = await db.query('SELECT diagnostico_status FROM usuarios WHERE id = $1', [req.usuario.id]);
   return res.json({ status: result.rows[0]?.diagnostico_status || 'pendente' });
 });
 
-router.post('/diagnostico/pular', verifyToken, async (req, res) => {
+router.post('/diagnostico/pular', verifyToken, requirePerfil('aluno'), async (req, res) => {
   await db.query("UPDATE usuarios SET diagnostico_status = 'pulado' WHERE id = $1", [req.usuario.id]);
   return res.json({ ok: true });
 });
 
 const { registrarDiagnostico } = require('../services/sheets.service')
 
-router.post('/diagnostico/responder', verifyToken, async (req, res) => {
+router.post('/diagnostico/responder', verifyToken, requirePerfil('aluno'), async (req, res) => {
   const { respostas, usou_dicas, pulou, iniciado_em } = req.body
   if (!respostas || typeof respostas !== 'object')
     return res.status(400).json({ message: 'Respostas inválidas.' })
@@ -508,14 +492,14 @@ router.post('/diagnostico/responder', verifyToken, async (req, res) => {
   return res.json({ nivel, pontuacao, blocos })
 })
 
-router.get('/diagnostico/resultado', verifyToken, async (req, res) => {
+router.get('/diagnostico/resultado', verifyToken, requirePerfil('aluno'), async (req, res) => {
   const result = await db.query('SELECT resultado_json, feito_em FROM diagnosticos WHERE aluno_id = $1', [req.usuario.id])
   if (result.rows.length === 0) return res.status(404).json({ message: 'Diagnóstico não encontrado.' })
   return res.json({ resultado: JSON.parse(result.rows[0].resultado_json), feito_em: result.rows[0].feito_em })
 })
 
 // ─── FEEDBACK DO DIAGNÓSTICO ─────────────────────────────────────────────────
-router.post('/diagnostico/feedback', verifyToken, async (req, res) => {
+router.post('/diagnostico/feedback', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const { nota, comentario } = req.body
     
@@ -589,7 +573,7 @@ router.post('/diagnostico/feedback', verifyToken, async (req, res) => {
   }
 })
 
-router.get('/turmas/:id/feedbacks', verifyToken, async (req, res) => {
+router.get('/turmas/:id/feedbacks', verifyToken, requirePerfil('professor'), async (req, res) => {
   try {
     const turma = await db.query(
       'SELECT id FROM turmas WHERE id = $1 AND professor_id = $2',
@@ -617,7 +601,7 @@ router.get('/turmas/:id/feedbacks', verifyToken, async (req, res) => {
   }
 })
 
-router.get('/diagnostico/feedback-enviado', verifyToken, async (req, res) => {
+router.get('/diagnostico/feedback-enviado', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const result = await db.query(
       'SELECT id FROM feedbacks_diagnostico WHERE aluno_id = $1',
@@ -630,39 +614,13 @@ router.get('/diagnostico/feedback-enviado', verifyToken, async (req, res) => {
   }
 })
 
-router.get('/diagnostico/questoes', verifyToken, (req, res) => {
+router.get('/diagnostico/questoes', verifyToken, requirePerfil('aluno'), (req, res) => {
   const semGabarito = questoes.map(({ correta, ...q }) => q)
   return res.json({ questoes: semGabarito })
 })
 
-// TEMPORÁRIO — embaralhamento desativado até próxima versão
-router.get('/diagnostico/questoes-OLD', verifyToken, (req, res) => {
-  const questoesEmbaralhadas = questoes.map(({ correta, ...q }) => {
-    const letrasOriginais = ['A', 'B', 'C', 'D']
-    const letrasEmbaralhadas = [...letrasOriginais]
-    for (let i = letrasEmbaralhadas.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [letrasEmbaralhadas[i], letrasEmbaralhadas[j]] = [letrasEmbaralhadas[j], letrasEmbaralhadas[i]]
-    }
-    // Cada posição i: letraEmbaralhada[i] recebe conteúdo de letrasOriginais[i]
-    const novasAlternativas = {}
-    letrasEmbaralhadas.forEach((letraNova, idx) => {
-      novasAlternativas[letraNova] = q.alternativas[letrasOriginais[idx]]
-    })
-    // A nova letra correta é aquela que ficou na posição original da correta
-    const idxCorreta = letrasOriginais.indexOf(correta)
-const novaCorreta = letrasEmbaralhadas[idxCorreta]
-return { ...q, alternativas: novasAlternativas, correta: novaCorreta }
-  })
-  // Salva gabarito embaralhado em memória temporária por sessão
-global.gabaritoAtual = {}
-questoesEmbaralhadas.forEach(q => { global.gabaritoAtual[q.id] = q.correta })
-
-return res.json({ questoes: questoesEmbaralhadas.map(({ correta, ...q }) => q) })
-})
-
 // ─── MÉTRICAS — DIAGNÓSTICO POR TURMA ────────────────────────────────────────
-router.get('/turmas/:id/diagnosticos', verifyToken, async (req, res) => {
+router.get('/turmas/:id/diagnosticos', verifyToken, requirePerfil('professor'), async (req, res) => {
   try {
     const turma = await db.query(
       'SELECT id, nome FROM turmas WHERE id = $1 AND professor_id = $2',
@@ -708,7 +666,7 @@ router.get('/turmas/:id/diagnosticos', verifyToken, async (req, res) => {
   }
 })
 
-router.delete('/diagnosticos/:alunoId', verifyToken, async (req, res) => {
+router.delete('/diagnosticos/:alunoId', verifyToken, requirePerfil('professor'), async (req, res) => {
   try {
     const turma = await db.query(`
       SELECT t.id FROM turmas t
@@ -730,7 +688,7 @@ router.delete('/diagnosticos/:alunoId', verifyToken, async (req, res) => {
 })
 
 // ─── IA — ANÁLISE DE TURMA ───────────────────────────────────────────────────
-router.post('/ia/analisar-turma', verifyToken, async (req, res) => {
+router.post('/ia/analisar-turma', verifyToken, requirePerfil('professor'), async (req, res) => {
   try {
     const { turmaId } = req.body
     if (!turmaId) return res.status(400).json({ message: 'turmaId é obrigatório.' })
@@ -826,7 +784,7 @@ INSTRUÇÕES:
 })
 
 // ─── IA — ANÁLISE INDIVIDUAL ─────────────────────────────────────────────────
-router.post('/ia/analisar-aluno', verifyToken, async (req, res) => {
+router.post('/ia/analisar-aluno', verifyToken, requirePerfil('professor'), async (req, res) => {
   try {
     const { alunoId } = req.body
     if (!alunoId) return res.status(400).json({ message: 'alunoId é obrigatório.' })
@@ -917,7 +875,7 @@ INSTRUÇÕES:
 
 // ─── MATÉRIAS ─────────────────────────────────────────────────────────────────
 
-router.get('/materias/stats', verifyToken, async (req, res) => {
+router.get('/materias/stats', verifyToken, requirePerfil('aluno', 'professor'), async (req, res) => {
   try {
     const [resFeitas, resTotal] = await Promise.all([
       db.query(`
@@ -948,7 +906,7 @@ router.get('/materias/stats', verifyToken, async (req, res) => {
   }
 })
 
-router.get('/materias/blocos', verifyToken, async (req, res) => {
+router.get('/materias/blocos', verifyToken, requirePerfil('aluno', 'professor'), async (req, res) => {
   try {
     const blocos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria', 'equacao1', 'equacao2', 'modulo', 'exponencial', 'trigonometria']
 
@@ -999,7 +957,7 @@ router.get('/materias/blocos', verifyToken, async (req, res) => {
   }
 })
 
-router.get('/materias/:bloco/questoes', verifyToken, async (req, res) => {
+router.get('/materias/:bloco/questoes', verifyToken, requirePerfil('aluno', 'professor'), async (req, res) => {
   try {
         const blocosValidos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria', 'equacao1', 'equacao2', 'modulo', 'exponencial', 'trigonometria']
     if (!blocosValidos.includes(req.params.bloco))
@@ -1043,7 +1001,7 @@ router.get('/materias/:bloco/questoes', verifyToken, async (req, res) => {
   }
 })
 
-router.post('/materias/responder', verifyToken, async (req, res) => {
+router.post('/materias/responder', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const { questaoId, respostaDada, tempo_segundos, bloco } = req.body;
     const alunoId = req.usuario.id;
@@ -1157,7 +1115,7 @@ router.post('/materias/responder', verifyToken, async (req, res) => {
 
 // ─── FAVORITAS ────────────────────────────────────────────────────────────────
 
-router.get('/materias/favoritas', verifyToken, async (req, res) => {
+router.get('/materias/favoritas', verifyToken, requirePerfil('aluno', 'professor'), async (req, res) => {
   try {
     const result = await db.query(`
       SELECT q.id, q.bloco, q.enunciado, q.alternativas, q.latex, q.dificuldade,
@@ -1181,7 +1139,7 @@ router.get('/materias/favoritas', verifyToken, async (req, res) => {
   }
 })
 
-router.post('/materias/favoritar', verifyToken, async (req, res) => {
+router.post('/materias/favoritar', verifyToken, requirePerfil('aluno', 'professor'), async (req, res) => {
   try {
     const { questaoId } = req.body
     if (!questaoId) return res.status(400).json({ message: 'questaoId é obrigatório.' })
@@ -1199,7 +1157,7 @@ router.post('/materias/favoritar', verifyToken, async (req, res) => {
   }
 })
 
-router.delete('/materias/favoritar/:questaoId', verifyToken, async (req, res) => {
+router.delete('/materias/favoritar/:questaoId', verifyToken, requirePerfil('aluno', 'professor'), async (req, res) => {
   try {
     await db.query(`
       DELETE FROM questoes_favoritas
@@ -1215,7 +1173,7 @@ router.delete('/materias/favoritar/:questaoId', verifyToken, async (req, res) =>
 
 // ─── ÚLTIMO ACESSO ────────────────────────────────────────────────────────────
 
-router.get('/materias/ultimo-acesso', verifyToken, async (req, res) => {
+router.get('/materias/ultimo-acesso', verifyToken, requirePerfil('aluno', 'professor'), async (req, res) => {
   try {
     const result = await db.query(`
       SELECT q.bloco, COUNT(DISTINCT qh.questao_id) as feitas
@@ -1244,39 +1202,8 @@ router.get('/materias/ultimo-acesso', verifyToken, async (req, res) => {
   }
 })
 
-// ─── ÚLTIMO ACESSO ────────────────────────────────────────────────────────────
-
-router.get('/materias/ultimo-acesso', verifyToken, async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT q.bloco, COUNT(DISTINCT qh.questao_id) as feitas
-      FROM questoes_historico qh
-      INNER JOIN questoes q ON q.id = qh.questao_id
-      WHERE qh.aluno_id = $1
-      GROUP BY q.bloco
-      ORDER BY MAX(qh.respondido_em) DESC
-      LIMIT 1
-    `, [req.usuario.id])
-
-    if (result.rows.length === 0) return res.json({ bloco: null })
-
-    const bloco = result.rows[0].bloco
-    const feitas = parseInt(result.rows[0].feitas)
-
-    const total = await db.query(
-        'SELECT COUNT(*) as total FROM questoes WHERE bloco = $1 AND ativa = true',
-        [bloco]
-    )
-
-    return res.json({ bloco, feitas, total: parseInt(total.rows[0].total) })
-  } catch (e) {
-    console.error('[materias/ultimo-acesso] Erro:', e)
-    return res.status(500).json({ message: 'Erro interno.' })
-  }
-})
-
 // ─── FEEDBACK DO DASHBOARD ────────────────────────────────────────────────────
-router.post('/feedback', verifyToken, async (req, res) => {
+router.post('/feedback', verifyToken, requirePerfil('aluno'), async (req, res) => {
   const { tipo, mensagem, permitirContato } = req.body;
   const alunoId = req.usuario.id;
 
@@ -1330,7 +1257,7 @@ router.post('/feedback', verifyToken, async (req, res) => {
 
 // ─── GAMIFICAÇÃO: RANKING E PROGRESSO ────────────────────────────────────────
 
-router.get('/ranking', verifyToken, async (req, res) => {
+router.get('/ranking', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const alunoLogadoId = req.usuario.id;
 
@@ -1373,7 +1300,7 @@ router.get('/ranking', verifyToken, async (req, res) => {
   }
 });
 
-router.get('/meu-progresso', verifyToken, async (req, res) => {
+router.get('/meu-progresso', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const stats = await db.query(
         'SELECT pontos_totais, questoes_respondidas, questoes_corretas FROM usuarios WHERE id = $1',

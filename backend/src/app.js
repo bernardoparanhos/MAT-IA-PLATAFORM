@@ -27,7 +27,7 @@ app.use(cors({
 // 3. Rate limit geral
 const limiterGeral = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500, // Era 100, agora 500
+  max: 100, // Era 100, agora 500
   message: { erro: 'Muitas requisições. Tente novamente em alguns minutos.' }
 });
 app.use(limiterGeral);
@@ -35,7 +35,7 @@ app.use(limiterGeral);
 // 4. Rate limit no login
 const limiterLogin = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50, // Era 10, agora 50
+  max: 10,
   message: { erro: 'Muitas tentativas de login. Aguarde 15 minutos.' }
 });
 app.use('/auth/login', limiterLogin);
@@ -74,12 +74,7 @@ app.use((err, req, res, next) => {
     return res.status(403).json({ erro: 'Origem não permitida pelo CORS' });
   }
 
-  res.status(500).json({
-    erro: 'Ocorreu um erro interno no servidor.',
-    mensagem: err.message
-  });
+  res.status(500).json({ erro: 'Ocorreu um erro interno no servidor.' });
 });
-
-module.exports = app;
 
 module.exports = app;

@@ -20,4 +20,16 @@ function verifyToken(req, res, next) {
   }
 }
 
-module.exports = { verifyToken };
+function requirePerfil(...perfis) {
+  return (req, res, next) => {
+    if (!req.usuario) {
+      return res.status(401).json({ message: 'Não autenticado.' });
+    }
+    if (!perfis.includes(req.usuario.perfil)) {
+      return res.status(403).json({ message: 'Acesso negado.' });
+    }
+    next();
+  };
+}
+
+module.exports = { verifyToken, requirePerfil };

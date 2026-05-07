@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SidebarAluno from '../components/SidebarAluno'
 import Formula from '../components/Formula'
+import DOMPurify from 'dompurify'
+
 
 const BLOCOS_CONFIG = {
   inteiros:     { label: 'Números Inteiros',        cor: '#f97316' },
@@ -217,7 +219,7 @@ function MateriaFavoritas() {
             <div className="px-5 py-5">
               <div className="text-slate-200 text-sm font-light leading-relaxed mb-5">
                 {modalQuestao.enunciado.includes('<svg')
-                    ? <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />
+                    ? <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(modalQuestao.enunciado) }} />
                     : modalQuestao.latex
                         ? <Formula tex={modalQuestao.enunciado} block={true} />
                         : <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />}
