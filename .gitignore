@@ -58,3 +58,6 @@ docs/
 # ==========================================
 .secrets.baseline
 .secrets.*
+
+# Contexto local para IAs
+AGENTS.md
