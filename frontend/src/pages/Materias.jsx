@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SidebarAluno from '../components/SidebarAluno'
+import HUDAluno from '../components/HUDAluno'
 
 const BLOCOS_CONFIG = {
   inteiros:  { label: 'Números Inteiros', cor: '#f97316', corBg: 'rgba(249,115,22,0.12)',
@@ -29,7 +30,8 @@ const BLOCOS_CONFIG = {
 }
 
 function Materias() {
-  const { logout } = useAuth()
+  const { usuario, logout } = useAuth()
+  const isProfessor = usuario?.perfil === 'professor'
   const navigate = useNavigate()
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [blocos, setBlocos] = useState([])
@@ -94,7 +96,10 @@ function Materias() {
           <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
         </header>
 
-        <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0">
+        <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0 relative">
+
+          {/* HUD FLUTUANTE (aparece na listagem geral também) */}
+          {!isProfessor && <HUDAluno />}
 
           <div className="mb-8">
             <h2 className="text-2xl lg:text-3xl font-semibold text-white tracking-tight">Matérias</h2>

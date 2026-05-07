@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useNotificacoesAluno } from '../context/NotificacoesAlunoContext'
 import SidebarAluno from '../components/SidebarAluno'
+import RankingCard from '../components/RankingCard'
 
 function tempoRelativo(dataStr) {
   const dataUtc = dataStr.endsWith('Z') ? dataStr : dataStr + 'Z'
@@ -267,35 +268,9 @@ function Dashboard() {
               </div>
             )}
 
-           {/* Ranking de Turmas */}
+            {/* Ranking de Turmas */}
             <div>
-              <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">🏆 Ranking de Turmas</p>
-              <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-5 lg:p-6">
-                <div className="space-y-3">
-                  {[
-                    { pos: 1, medal: '🥇' },
-                    { pos: 2, medal: '🥈' },
-                    { pos: 3, medal: '🥉' },
-                  ].map(({ pos, medal }, idx) => (
-                    <div key={pos} className={`flex items-center justify-between py-2 ${idx < 2 ? 'border-b border-white/5' : ''}`}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{medal}</span>
-                        <span className="text-slate-500 text-sm font-light">— pts</span>
-                      </div>
-                      <span className="text-slate-600 text-xs">—</span>
-                    </div>
-                  ))}
-                  <div className="pt-3 mt-1 border-t border-white/10">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-orange-400 text-sm font-medium">—</span>
-                        <span className="text-xs text-slate-500 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">você</span>
-                      </div>
-                      <span className="text-slate-500 text-sm">— pts</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <RankingCard />
             </div>
 
             {/* Progresso + Continue */}

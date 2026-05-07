@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SidebarAluno from '../components/SidebarAluno'
 import Formula from '../components/Formula'
+import HUDAluno from '../components/HUDAluno'
+import { dispararConfetesCentro } from '../components/ConfettiReward'
 
 const BLOCOS_CONFIG = {
   inteiros:  { label: 'Números Inteiros', cor: '#f97316', corBg: 'rgba(249,115,22,0.12)',
@@ -120,20 +122,45 @@ function MateriaBloco() {
   async function responder() {
     if (!respostaModal || enviando || feedbackModal) return
     setEnviando(true)
+
+    // Marca o momento exato em que ele clicou em responder (usado para calcular o tempo, se você estiver usando)
+    const tempoDecorrido = 10; // Exemplo estático. No futuro você pode colocar um timer no modal se quiser.
+
     try {
       const res = await fetch(`${API}/auth/materias/responder`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questaoId: modalQuestao.id, respostaDada: respostaModal })
+        body: JSON.stringify({
+          questaoId: modalQuestao.id,
+          respostaDada: respostaModal,
+          tempo_segundos: tempoDecorrido,
+          bloco: bloco
+        })
       })
       const data = await res.json()
-      setFeedbackModal({ acertou: data.acertou, correta: data.correta })
+
+      // Atualiza o estado com as informações de acerto, erro e pontuação
+      setFeedbackModal({
+        acertou: data.acertou,
+        correta: data.correta,
+        pontosGanhos: data.pontosGanhos
+      })
+
+      // 🎉 MOMENTO WOW: Se acertou de primeira, estoura confetes!
+      if (data.acertou && data.pontosGanhos > 0) {
+        dispararConfetesCentro()
+      }
+
+      // Atualiza o HUD no canto da tela instantaneamente
+      if (window.atualizarHUD) {
+        window.atualizarHUD()
+      }
 
       // Atualiza o grid localmente (sem novo fetch)
       setQuestoes(prev => prev.map(q =>
-        q.id === modalQuestao.id
-          ? { ...q, status: data.acertou ? 'acerto' : 'erro' }
-          : q
+          q.id === modalQuestao.id
+              ? { ...q, status: data.acertou ? 'acerto' : 'erro' }
+              : q
       ))
       setStats(prev => {
         const jaFeita = modalQuestao.status !== 'pendente'
@@ -146,8 +173,8 @@ function MateriaBloco() {
         }
       })
 
-      // Fecha após 1.5s
-      setTimeout(() => { fecharModal() }, 1500)
+      // Mantém o modal aberto por um tempo extra para o aluno ver o feedback e os pontos antes de fechar
+      setTimeout(() => { fecharModal() }, 2500)
     } catch (e) {
       console.error('Erro ao responder questão', e)
     } finally {
@@ -189,7 +216,10 @@ function MateriaBloco() {
           <h1 className="text-xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
         </header>
 
-        <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0">
+        <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0 relative">
+
+          {/* HUD FLUTUANTE (só aparece se for aluno) */}
+          {!isProfessor && <HUDAluno />}
 
           {/* Voltar */}
           <button onClick={() => navigate('/materias')} className="flex items-center gap-2 text-slate-500 hover:text-slate-300 text-sm font-light mb-6 transition-colors">
@@ -390,12 +420,40 @@ function MateriaBloco() {
             {/* Footer modal */}
             <div className="px-5 pb-5">
               {feedbackModal ? (
-                <div className={`flex items-center gap-3 rounded-xl px-4 py-3 ${feedbackModal.acertou ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
-                  <span className="text-lg">{feedbackModal.acertou ? '✅' : '❌'}</span>
-                  <p className={`text-sm font-light ${feedbackModal.acertou ? 'text-green-300' : 'text-red-300'}`}>
-                    {feedbackModal.acertou ? 'Correto! Muito bem.' : `Incorreto. A resposta era ${feedbackModal.correta}.`}
-                  </p>
-                </div>
+                  <div className={`flex items-center justify-between rounded-xl px-4 py-3 ${feedbackModal.acertou ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+                    <div className="flex items-center gap-3">
+                      {/* Ícone de Sucesso ou Erro em SVG */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${feedbackModal.acertou ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                        {feedbackModal.acertou ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col">
+                        <p className={`text-sm font-medium ${feedbackModal.acertou ? 'text-green-400' : 'text-red-400'}`}>
+                          {feedbackModal.acertou ? 'Correto! Excelente trabalho.' : 'Incorreto. Tente novamente!'}
+                        </p>
+                        {/* Só mostra a linha da resposta correta SE o backend enviar ela (que agora é null) */}
+                        {feedbackModal.correta && (
+                            <p className="text-xs text-red-300/80 font-light mt-0.5">
+                              A resposta correta era <strong className="text-red-300">{feedbackModal.correta}</strong>.
+                            </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Badge de Pontos com Estrela em SVG */}
+                    {feedbackModal.acertou && feedbackModal.pontosGanhos > 0 && (
+                        <div className="flex items-center gap-2 bg-green-500/20 px-3 py-1.5 rounded-lg border border-green-500/30 animate-pulse shadow-[0_0_15px_rgba(74,222,128,0.1)]">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#4ade80" className="text-green-400">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                          </svg>
+                          <span className="text-green-400 font-bold text-sm">+{feedbackModal.pontosGanhos} pts</span>
+                        </div>
+                    )}
+                  </div>
               ) : (
                 isProfessor ? (
                   <div className="w-full py-3 rounded-xl text-sm font-light text-center text-slate-500 bg-white/5">

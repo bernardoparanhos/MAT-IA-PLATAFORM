@@ -1,6 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const { register, loginAluno, loginProfessor } = require('../controllers/auth.controller');
+const sheetsService = require('../services/sheets.service');
 const { verifyToken } = require('../middlewares/auth.middleware');
 const db = require('../config/database');
 const crypto = require('crypto');
@@ -1044,30 +1045,115 @@ router.get('/materias/:bloco/questoes', verifyToken, async (req, res) => {
 
 router.post('/materias/responder', verifyToken, async (req, res) => {
   try {
-    const { questaoId, respostaDada } = req.body
-    if (!questaoId || !respostaDada)
-      return res.status(400).json({ message: 'questaoId e respostaDada são obrigatórios.' })
+    const { questaoId, respostaDada, tempo_segundos, bloco } = req.body;
+    const alunoId = req.usuario.id;
 
-    const questao = await db.query(
-      'SELECT id, correta FROM questoes WHERE id = $1 AND ativa = true',
-      [questaoId]
-    )
-    if (questao.rows.length === 0)
-      return res.status(404).json({ message: 'Questão não encontrada.' })
+    if (!questaoId || !respostaDada) {
+      return res.status(400).json({ message: 'Dados incompletos.' });
+    }
 
-    const acertou = questao.rows[0].correta === respostaDada.toUpperCase()
+    // ✨ BUSCA DADOS COMPLETOS DO ALUNO (Resolve o erro de 'undefined' na planilha)
+    const usuarioDadosRes = await db.query(
+        'SELECT nome, ra FROM usuarios WHERE id = $1',
+        [alunoId]
+    );
+    const alunoDados = usuarioDadosRes.rows[0];
 
+    if (!alunoDados) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+
+    // 1. Buscar a questão para validar a resposta
+    const questaoRes = await db.query(
+        'SELECT id, correta FROM questoes WHERE id = $1 AND ativa = true',
+        [questaoId]
+    );
+
+    if (questaoRes.rows.length === 0) {
+      return res.status(404).json({ message: 'Questão não encontrada.' });
+    }
+
+    const correta = questaoRes.rows[0].correta;
+    const acertou = correta.toUpperCase() === String(respostaDada).toUpperCase();
+
+    // 2. BUSCAR HISTÓRICO
+    const historicoRes = await db.query(
+        'SELECT acertou FROM questoes_historico WHERE aluno_id = $1 AND questao_id = $2',
+        [alunoId, questaoId]
+    );
+
+    let pontosGanhos = 0;
+    const jaAcertouAntes = historicoRes.rows.some(h => h.acertou);
+
+    if (acertou && !jaAcertouAntes) {
+      const jaTinhaTentativas = historicoRes.rows.length > 0;
+      pontosGanhos = jaTinhaTentativas ? 5 : 10;
+    }
+
+    // 3. Registrar o log da tentativa atual
     await db.query(`
-      INSERT INTO questoes_historico (aluno_id, questao_id, resposta_dada, acertou)
-      VALUES ($1, $2, $3, $4)
-    `, [req.usuario.id, questaoId, respostaDada.toUpperCase(), acertou])
+      INSERT INTO questoes_historico (aluno_id, questao_id, resposta_dada, acertou, tempo_segundos, pontos_ganhos)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `, [alunoId, questaoId, String(respostaDada).toUpperCase(), acertou, tempo_segundos || 0, pontosGanhos]);
 
-    return res.json({ acertou, correta: questao.rows[0].correta })
+    // 4. ATUALIZAR O PERFIL DO USUÁRIO (Contagem de únicas)
+    await db.query(`
+      UPDATE usuarios 
+      SET 
+        pontos_totais = pontos_totais + $1,
+        questoes_respondidas = (SELECT COUNT(DISTINCT questao_id) FROM questoes_historico WHERE aluno_id = $2),
+        questoes_corretas = (SELECT COUNT(DISTINCT questao_id) FROM questoes_historico WHERE aluno_id = $2 AND acertou = true)
+      WHERE id = $2
+    `, [pontosGanhos, alunoId]);
+
+    // 5. Buscar nova posição no ranking e dados atualizados para o HUD
+    const dadosRanking = await db.query(`
+      SELECT pontos_totais, questoes_corretas, questoes_respondidas,
+             (SELECT COUNT(*) + 1 FROM usuarios WHERE pontos_totais > u.pontos_totais AND perfil = 'aluno') as posicao
+      FROM usuarios u
+      WHERE id = $1
+    `, [alunoId]);
+
+    const novoProgresso = dadosRanking.rows[0];
+
+    // 6. Buscar o nome da turma para a planilha
+    const resTurma = await db.query(`
+      SELECT t.nome FROM turma_alunos ta
+                           JOIN turmas t ON t.id = ta.turma_id
+      WHERE ta.aluno_id = $1 LIMIT 1
+    `, [alunoId]);
+
+    const nomeTurma = resTurma.rows[0]?.nome || 'Sem Turma';
+
+    // 7. Enviar para o Google Sheets (Usando os dados reais buscados no início)
+    if (sheetsService.registrarQuestaoRespondida) {
+      sheetsService.registrarQuestaoRespondida(
+          alunoDados.nome, // Nome real do banco
+          alunoDados.ra,   // RA real do banco
+          nomeTurma,
+          questaoId,
+          bloco || 'geral',
+          acertou,
+          pontosGanhos,
+          tempo_segundos || 0
+      ).catch(err => console.error('Erro Sheets:', err));
+    }
+
+    // 8. Retorno FINAL para o Frontend
+    return res.json({
+      acertou,
+      // Se acertou, não precisa da correta.
+      // Se errou, enviamos null para a plataforma NÃO mostrar qual era a certa.
+      correta: null,
+      pontosGanhos,
+      novoProgresso
+    });
+
   } catch (e) {
-    console.error('[materias/responder] Erro:', e)
-    return res.status(500).json({ message: 'Erro interno.' })
+    console.error('[materias/responder] Erro:', e);
+    return res.status(500).json({ message: 'Erro interno ao processar resposta.' });
   }
-})
+});
 
 // ─── FAVORITAS ────────────────────────────────────────────────────────────────
 
@@ -1242,6 +1328,70 @@ router.post('/feedback', verifyToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+// ─── GAMIFICAÇÃO: RANKING E PROGRESSO ────────────────────────────────────────
+
+router.get('/ranking', verifyToken, async (req, res) => {
+  try {
+    const alunoLogadoId = req.usuario.id;
+
+    const result = await db.query(`
+      SELECT 
+        id, -- Precisamos do ID para comparar
+        nome, 
+        ra, 
+        pontos_totais, 
+        questoes_corretas, 
+        questoes_respondidas,
+        CASE WHEN questoes_respondidas > 0 
+             THEN ROUND((questoes_corretas::numeric / questoes_respondidas::numeric) * 100, 1)
+             ELSE 0 END as taxa_acerto
+      FROM usuarios 
+      WHERE perfil = 'aluno' AND pontos_totais > 0
+      ORDER BY 
+        pontos_totais DESC, 
+        questoes_corretas DESC, 
+        questoes_respondidas ASC, -- Desempate: quem errou menos ganha
+        nome ASC
+      LIMIT 10
+    `);
+
+    // Adiciona o "(você)" com uma comparação mais robusta
+    const rankingFormatado = result.rows.map(aluno => {
+      // Forçamos a comparação como String para garantir que tipos diferentes não quebrem a lógica
+      const ehUsuarioLogado = String(aluno.id) === String(alunoLogadoId);
+
+      return {
+        ...aluno,
+        nome: ehUsuarioLogado ? `${aluno.nome} (você)` : aluno.nome
+      };
+    });
+
+    res.json(rankingFormatado);
+  } catch (e) {
+    console.error('[ranking] Erro:', e);
+    res.status(500).json({ error: 'Erro ao buscar ranking' });
+  }
+});
+
+router.get('/meu-progresso', verifyToken, async (req, res) => {
+  try {
+    const stats = await db.query(
+        'SELECT pontos_totais, questoes_respondidas, questoes_corretas FROM usuarios WHERE id = $1',
+        [req.usuario.id]
+    );
+
+    const rank = await db.query(`
+      SELECT COUNT(*) + 1 as posicao FROM usuarios 
+      WHERE perfil = 'aluno' AND pontos_totais > (SELECT pontos_totais FROM usuarios WHERE id = $1)
+    `, [req.usuario.id]);
+
+    res.json({
+      ...stats.rows[0],
+      posicao: parseInt(rank.rows[0].posicao)
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro ao buscar progresso' });
+  }
+});
 
 module.exports = router;

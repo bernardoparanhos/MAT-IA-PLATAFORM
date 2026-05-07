@@ -27,7 +27,7 @@ app.use(cors({
 // 3. Rate limit geral
 const limiterGeral = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500, // Era 100, agora 500
   message: { erro: 'Muitas requisições. Tente novamente em alguns minutos.' }
 });
 app.use(limiterGeral);
@@ -35,7 +35,7 @@ app.use(limiterGeral);
 // 4. Rate limit no login
 const limiterLogin = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 50, // Era 10, agora 50
   message: { erro: 'Muitas tentativas de login. Aguarde 15 minutos.' }
 });
 app.use('/auth/login', limiterLogin);
@@ -64,5 +64,22 @@ app.get('/', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ erro: 'Rota não encontrada.' });
 });
+
+// 9. Middleware Global de Erros (O "Pega-tudo")
+app.use((err, req, res, next) => {
+  console.error('🔥 Erro detectado no pipeline:', err.stack);
+
+  // Se for erro de CORS, damos um aviso amigável
+  if (err.message === 'Bloqueado pelo CORS') {
+    return res.status(403).json({ erro: 'Origem não permitida pelo CORS' });
+  }
+
+  res.status(500).json({
+    erro: 'Ocorreu um erro interno no servidor.',
+    mensagem: err.message
+  });
+});
+
+module.exports = app;
 
 module.exports = app;

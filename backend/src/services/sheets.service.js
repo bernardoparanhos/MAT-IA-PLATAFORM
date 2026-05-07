@@ -1,5 +1,18 @@
 const { google } = require('googleapis')
 
+const NOMES_BLOCOS = {
+    inteiros: 'Números Inteiros',
+    fracoes: 'Frações',
+    raizes: 'Raízes e Radicais',
+    potencias: 'Potenciação',
+    geometria: 'Geometria Básica',
+    equacao1: 'Equação 1º Grau',
+    equacao2: 'Equação 2º Grau',
+    modulo: 'Módulo/Absoluto',
+    exponencial: 'Exponencial/Logaritmo',
+    trigonometria: 'Trigonometria'
+};
+
 const auth = new google.auth.GoogleAuth({
   credentials: {
     type: 'service_account',
@@ -43,21 +56,45 @@ async function garantirCabecalhoFeedbacks(sheets) {
       range: 'Página1!A1',
     })
     const temCabecalho = res.data.values && res.data.values[0]?.[0] === 'Nome'
-    if (!temCabecalho) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_FEEDBACKS_ID,
-        range: 'Página1!A1',
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [[
-  'Nome', 'RA', 'Turma', 'Nota (0-10)', 'Comentário', 'Data e Hora'
-]]
-        }
-      })
-    }
+      if (!temCabecalho) {
+          await sheets.spreadsheets.values.update({
+              spreadsheetId: SPREADSHEET_FEEDBACKS_ID,
+              range: 'Página1!A1',
+              valueInputOption: 'RAW',
+              requestBody: {
+                  values: [[
+                      'Nome', 'RA', 'Turma', 'Nota (0-10)', 'Comentário', 'Data e Hora'
+                  ]]
+              }
+          })
+      }
   } catch (e) {
-    console.error('Erro ao garantir cabeçalho feedbacks:', e)
+      console.error('Erro ao garantir cabeçalho feedbacks:', e)
   }
+}
+
+async function garantirCabecalhoQuestoes(sheets) {
+    try {
+        const res = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Questões Respondidas!A1',
+        })
+        const temCabecalho = res.data.values && res.data.values[0]?.[0] === 'Nome'
+        if (!temCabecalho) {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId: SPREADSHEET_ID,
+                range: 'Questões Respondidas!A1',
+                valueInputOption: 'RAW',
+                requestBody: {
+                    values: [[
+                        'Nome', 'RA', 'Turma', 'Questão ID', 'Bloco', 'Resultado', 'Pontos', 'Tempo', 'Data/Hora'
+                    ]]
+                }
+            })
+        }
+    } catch (e) {
+        console.error('Erro ao garantir cabeçalho questões:', e)
+    }
 }
 
 async function registrarDiagnostico(dados) {
@@ -134,5 +171,80 @@ async function registrarFeedback(dados) {
     console.error('Erro ao enviar feedback para o Sheets:', e)
   }
 }
+async function registrarQuestaoRespondida(nome, ra, turma, questaoId, bloco, acertou) {
+    try {
+        const sheets = google.sheets({ version: 'v4', auth });
+        const nomeDaAba = turma;
 
-module.exports = { registrarDiagnostico, registrarFeedback }
+        // 1. TENTA CRIAR A ABA (Caso seja uma turma nova)
+        try {
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: SPREADSHEET_ID,
+                requestBody: {
+                    requests: [{ addSheet: { properties: { title: nomeDaAba } } }]
+                }
+            });
+        } catch (e) { /* Aba já existe */ }
+
+        // 2. GARANTE O CABEÇALHO (Se a aba estiver vazia, ele coloca os títulos)
+        const checkHeader = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${nomeDaAba}!A1:F1`,
+        });
+
+        if (!checkHeader.data.values || checkHeader.data.values.length === 0) {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${nomeDaAba}!A1:F1`,
+                valueInputOption: 'RAW',
+                requestBody: {
+                    values: [['Nome', 'RA', 'Turma', 'Matéria', 'Resultado', 'Data/Hora']]
+                }
+            });
+        }
+
+        // 3. LOGICA DE PULAR LINHA ENTRE ALUNOS DIFERENTES
+        const colNome = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${nomeDaAba}!A:A`,
+        });
+        const valoresNomes = colNome.data.values || [];
+        const ultimoNome = valoresNomes.length > 0 ? valoresNomes[valoresNomes.length - 1][0] : null;
+
+        // Se mudou o aluno, pula uma linha para organizar visualmente
+        if (ultimoNome && ultimoNome !== 'Nome' && ultimoNome !== nome) {
+            await sheets.spreadsheets.values.append({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${nomeDaAba}!A:F`,
+                valueInputOption: 'RAW',
+                requestBody: { values: [[]] }
+            });
+        }
+
+        // 4. INSERE OS DADOS ENXUTOS
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${nomeDaAba}!A:F`,
+            valueInputOption: 'RAW',
+            requestBody: {
+                values: [[
+                    nome,
+                    ra,
+                    turma,
+                    NOMES_BLOCOS[bloco] || bloco,
+                    acertou ? '✅ CORRETO' : '❌ INCORRETO',
+                    new Date().toLocaleString('pt-BR')
+                ]]
+            }
+        });
+
+    } catch (e) {
+        console.error('❌ Erro no Sheets:', e.message);
+    }
+}
+
+module.exports = {
+    registrarDiagnostico,
+    registrarFeedback,
+    registrarQuestaoRespondida
+}
