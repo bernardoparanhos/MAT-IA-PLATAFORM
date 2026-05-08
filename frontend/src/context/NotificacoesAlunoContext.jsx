@@ -4,11 +4,12 @@ const NotificacoesAlunoContext = createContext(null)
 
 export function NotificacoesAlunoProvider({ children }) {
   const [notificacoes, setNotificacoes] = useState([])
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
-  const buscar = useCallback(async () => {
-    if (!token) return
+const buscar = useCallback(async () => {
+  const token = localStorage.getItem('token')
+  const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
+  if (!token || !usuario || usuario.perfil !== 'aluno') return
     try {
       const res = await fetch(`${API}/auth/notificacoes/aluno`, {
         credentials: 'include',
@@ -19,7 +20,8 @@ export function NotificacoesAlunoProvider({ children }) {
     } catch (e) {
       console.error('Erro ao buscar notificações do aluno', e)
     }
-  }, [token, API])
+  }, [API])
+
 
   useEffect(() => {
     buscar()

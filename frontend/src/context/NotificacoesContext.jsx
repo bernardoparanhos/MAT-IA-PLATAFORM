@@ -6,9 +6,11 @@ export function NotificacoesProvider({ children }) {
   const [notificacoes, setNotificacoes] = useState([])
   const API = import.meta.env.VITE_API_URL
 
-const buscar = useCallback(async () => {
-  const token = localStorage.getItem('token')
-  if (!token) return
+  const buscar = useCallback(async () => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
+    if (!usuario || usuario.perfil !== 'professor') return
     try {
       const res = await fetch(`${API}/auth/notificacoes`, {
         credentials: 'include',
@@ -38,6 +40,7 @@ const buscar = useCallback(async () => {
   }
 
   async function marcarTodasLidas() {
+    const token = localStorage.getItem('token')
     await fetch(`${API}/auth/notificacoes/lida-todas`, {
       credentials: 'include',
       method: 'POST', headers: { Authorization: `Bearer ${token}` }
@@ -46,6 +49,7 @@ const buscar = useCallback(async () => {
   }
 
   async function apagarUma(id) {
+    const token = localStorage.getItem('token')
     await fetch(`${API}/auth/notificacoes/${id}`, {
       credentials: 'include',
       method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
@@ -54,6 +58,7 @@ const buscar = useCallback(async () => {
   }
 
   async function apagarTodas() {
+    const token = localStorage.getItem('token')
     await fetch(`${API}/auth/notificacoes`, {
       credentials: 'include',
       method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
