@@ -4,11 +4,11 @@ const NotificacoesContext = createContext(null)
 
 export function NotificacoesProvider({ children }) {
   const [notificacoes, setNotificacoes] = useState([])
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
-  const buscar = useCallback(async () => {
-    if (!token) return
+const buscar = useCallback(async () => {
+  const token = localStorage.getItem('token')
+  if (!token) return
     try {
       const res = await fetch(`${API}/auth/notificacoes`, {
         credentials: 'include',
@@ -19,7 +19,8 @@ export function NotificacoesProvider({ children }) {
     } catch (e) {
       console.error('Erro ao buscar notificações', e)
     }
-  }, [token, API])
+  }, [API])
+
 
   useEffect(() => {
     buscar()
@@ -28,6 +29,7 @@ export function NotificacoesProvider({ children }) {
   }, [buscar])
 
   async function marcarLida(id) {
+    const token = localStorage.getItem('token')
     await fetch(`${API}/auth/notificacoes/lida/${id}`, {
       credentials: 'include',
       method: 'POST', headers: { Authorization: `Bearer ${token}` }
