@@ -3,8 +3,8 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
-const app = express();
-app.set('trust proxy', 1);
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 // 1. Helmet
 app.use(helmet());

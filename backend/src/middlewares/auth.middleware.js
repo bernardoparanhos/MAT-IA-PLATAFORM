@@ -2,11 +2,13 @@ const jwt = require('jsonwebtoken');
 
 function verifyToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+const tokenHeader = authHeader && authHeader.split(' ')[1];
+const tokenCookie = req.cookies?.access_token;
+const token = tokenCookie || tokenHeader;
 
-  if (!token) {
-    return res.status(401).json({ message: 'Token não fornecido.' });
-  }
+if (!token) {
+  return res.status(401).json({ message: 'Token não fornecido.' });
+}
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET, {

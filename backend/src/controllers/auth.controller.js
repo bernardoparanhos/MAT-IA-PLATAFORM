@@ -53,6 +53,13 @@ async function register(req, res, perfil) {
       }
 
       const token = gerarToken({ id: userId, perfil: 'aluno' });
+      res.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? '.plataformamati.dev' : undefined,
+        maxAge: 8 * 60 * 60 * 1000
+      });
       return res.status(201).json({ message: 'Conta criada com sucesso!', token, usuario: { id: userId, nome, email, perfil: 'aluno' } });
     }
 
@@ -71,6 +78,13 @@ async function register(req, res, perfil) {
       const userId = resultado.rows[0].id;
 
       const token = gerarToken({ id: userId, perfil: 'professor' });
+      res.cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? '.plataformamati.dev' : undefined,
+        maxAge: 8 * 60 * 60 * 1000
+      });
       return res.status(201).json({ message: 'Conta criada com sucesso!', token, usuario: { id: userId, nome, email, perfil: 'professor' } });
     }
 
@@ -112,6 +126,13 @@ async function loginAluno(req, res) {
     }
 
     const token = gerarToken({ id: usuario.id, perfil: 'aluno' });
+    res.cookie('access_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      domain: process.env.NODE_ENV === 'production' ? '.plataformamati.dev' : undefined,
+      maxAge: 8 * 60 * 60 * 1000
+    });
     return res.status(200).json({ 
       token, 
       usuario: { 
@@ -120,7 +141,7 @@ async function loginAluno(req, res) {
         email: usuario.email, 
         perfil: 'aluno' 
       },
-      diagnostico_status: usuario.diagnostico_status // ← ADICIONA O STATUS NO RETORNO
+      diagnostico_status: usuario.diagnostico_status
     });
 
   } catch (error) {
@@ -149,6 +170,13 @@ async function loginProfessor(req, res) {
     if (!usuario || !senhaCorreta) return res.status(401).json({ message: 'SIAPE ou senha inválidos.' });
 
     const token = gerarToken({ id: usuario.id, perfil: 'professor' });
+    res.cookie('access_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      domain: process.env.NODE_ENV === 'production' ? '.plataformamati.dev' : undefined,
+      maxAge: 8 * 60 * 60 * 1000
+    });
     return res.status(200).json({ token, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, perfil: 'professor' } });
 
   } catch (error) {
