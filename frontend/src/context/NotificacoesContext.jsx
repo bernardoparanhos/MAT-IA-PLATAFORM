@@ -11,6 +11,7 @@ export function NotificacoesProvider({ children }) {
     if (!token) return
     try {
       const res = await fetch(`${API}/auth/notificacoes`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -28,6 +29,7 @@ export function NotificacoesProvider({ children }) {
 
   async function marcarLida(id) {
     await fetch(`${API}/auth/notificacoes/lida/${id}`, {
+      credentials: 'include',
       method: 'POST', headers: { Authorization: `Bearer ${token}` }
     })
     setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: 1 } : n))
@@ -35,6 +37,7 @@ export function NotificacoesProvider({ children }) {
 
   async function marcarTodasLidas() {
     await fetch(`${API}/auth/notificacoes/lida-todas`, {
+      credentials: 'include',
       method: 'POST', headers: { Authorization: `Bearer ${token}` }
     })
     setNotificacoes(prev => prev.map(n => ({ ...n, lida: 1 })))
@@ -42,6 +45,7 @@ export function NotificacoesProvider({ children }) {
 
   async function apagarUma(id) {
     await fetch(`${API}/auth/notificacoes/${id}`, {
+      credentials: 'include',
       method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
     })
     setNotificacoes(prev => prev.filter(n => n.id !== id))
@@ -49,6 +53,7 @@ export function NotificacoesProvider({ children }) {
 
   async function apagarTodas() {
     await fetch(`${API}/auth/notificacoes`, {
+      credentials: 'include',
       method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
     })
     setNotificacoes([])

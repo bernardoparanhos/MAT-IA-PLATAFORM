@@ -29,6 +29,7 @@ function MinhaTurma() {
   async function buscarTurma() {
     try {
       const res = await fetch(`${API}/auth/aluno/minha-turma`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()

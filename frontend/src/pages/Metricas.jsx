@@ -61,6 +61,7 @@ function Metricas() {
   async function buscarTurmas() {
     try {
       const res = await fetch(`${API}/auth/turmas/minhas`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -76,6 +77,7 @@ function Metricas() {
     setCarregando(true)
     try {
       const res = await fetch(`${API}/auth/turmas/${turmaId}/diagnosticos`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -106,6 +108,7 @@ function Metricas() {
     try {
       const res = await fetch(`${API}/auth/ia/analisar-turma`, {
         method: 'POST',
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ turmaId: turmaSelecionada })
       })
@@ -125,6 +128,7 @@ function Metricas() {
     try {
       const res = await fetch(`${API}/auth/ia/analisar-aluno`, {
         method: 'POST',
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ alunoId })
       })
@@ -146,6 +150,7 @@ function Metricas() {
     try {
       await fetch(`${API}/auth/diagnosticos/${alunoId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       buscarDados(turmaSelecionada)

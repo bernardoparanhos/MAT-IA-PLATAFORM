@@ -35,6 +35,7 @@ function ResultadoNivelamento() {
     try {
       // Busca resultado
       const res = await fetch(`${API}/auth/diagnostico/resultado`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -42,6 +43,7 @@ function ResultadoNivelamento() {
 
       // Verifica se já enviou feedback
       const resFeedback = await fetch(`${API}/auth/diagnostico/feedback-enviado`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const dataFeedback = await resFeedback.json()
@@ -67,6 +69,7 @@ function ResultadoNivelamento() {
     try {
       const res = await fetch(`${API}/auth/diagnostico/feedback`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'

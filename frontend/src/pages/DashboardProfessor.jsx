@@ -55,6 +55,7 @@ function DashboardProfessor() {
   async function buscarMinhasTurmas() {
     try {
       const res = await fetch(`${API}/auth/turmas/minhas`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()

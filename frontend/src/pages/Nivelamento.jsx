@@ -331,6 +331,7 @@ function Nivelamento({ modo = 'aluno' }) {
   async function carregarQuestoes() {
     try {
       const res = await fetch(`${API}/auth/diagnostico/questoes`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -344,6 +345,7 @@ function Nivelamento({ modo = 'aluno' }) {
     try {
       await fetch(`${API}/auth/diagnostico/pular`, {
         method: 'POST',
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       navigate('/dashboard')
@@ -413,6 +415,7 @@ function avancar(respostasAtuais, puladasAtuais = puladas) {
       try {
         await fetch(`${API}/auth/diagnostico/responder`, {
           method: 'POST',
+          credentials: 'include',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'

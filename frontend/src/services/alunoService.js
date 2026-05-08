@@ -6,6 +6,7 @@ function getToken() {
 
 export async function getPerfil() {
   const res = await fetch(`${API}/auth/aluno/perfil-completo`, {
+    credentials: 'include',
     headers: { Authorization: `Bearer ${getToken()}` }
   })
   return res.json()
@@ -14,6 +15,7 @@ export async function getPerfil() {
 export async function alterarSenha(senhaAtual, novaSenha) {
   const res = await fetch(`${API}/auth/aluno/alterar-senha`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${getToken()}`

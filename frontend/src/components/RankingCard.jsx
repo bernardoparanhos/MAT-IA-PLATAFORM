@@ -12,6 +12,7 @@ export default function RankingCard() {
                 const API = import.meta.env.VITE_API_URL;
 
                 const res = await fetch(`${API}/auth/ranking`, {
+                    credentials: 'include',
                     headers: { Authorization: `Bearer ${token}` }
                 });
 

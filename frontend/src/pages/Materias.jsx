@@ -46,9 +46,9 @@ function Materias() {
     async function carregar() {
       try {
         const [resBlocos, resStats, resFav] = await Promise.all([
-          fetch(`${API}/auth/materias/blocos`,    { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API}/auth/materias/stats`,     { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API}/auth/materias/favoritas`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API}/auth/materias/blocos`,    { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API}/auth/materias/stats`,     { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API}/auth/materias/favoritas`, { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
         ])
         const dataBlocos = await resBlocos.json()
         const dataStats  = await resStats.json()

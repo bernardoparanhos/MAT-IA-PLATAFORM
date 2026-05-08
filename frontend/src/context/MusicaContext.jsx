@@ -36,6 +36,7 @@ export function MusicaProvider({ children }) {
     async function carregarFavoritas() {
       try {
         const res = await fetch(`${API}/auth/musicas-favoritas`, {
+          credentials: 'include',
           headers: { Authorization: `Bearer ${token}` }
         })
         const data = await res.json()
@@ -55,6 +56,7 @@ export function MusicaProvider({ children }) {
     try {
       await fetch(`${API}/auth/musicas-favoritas`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'

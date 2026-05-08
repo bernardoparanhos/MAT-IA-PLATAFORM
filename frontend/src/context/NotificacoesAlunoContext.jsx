@@ -11,6 +11,7 @@ export function NotificacoesAlunoProvider({ children }) {
     if (!token) return
     try {
       const res = await fetch(`${API}/auth/notificacoes/aluno`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -28,6 +29,7 @@ export function NotificacoesAlunoProvider({ children }) {
 
   async function marcarLida(id) {
     await fetch(`${API}/auth/notificacoes/aluno/${id}/lida`, {
+      credentials: 'include',
       method: 'POST', headers: { Authorization: `Bearer ${token}` }
     })
     setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: 1 } : n))
@@ -35,6 +37,7 @@ export function NotificacoesAlunoProvider({ children }) {
 
   async function apagarUma(id) {
     await fetch(`${API}/auth/notificacoes/aluno/${id}`, {
+      credentials: 'include',
       method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
     })
     setNotificacoes(prev => prev.filter(n => n.id !== id))
@@ -42,6 +45,7 @@ export function NotificacoesAlunoProvider({ children }) {
 
   async function apagarTodas() {
     await fetch(`${API}/auth/notificacoes/aluno`, {
+      credentials: 'include',
       method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
     })
     setNotificacoes([])

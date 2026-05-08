@@ -56,8 +56,8 @@ function MateriaBloco() {
  const carregar = useCallback(async () => {
     try {
       const [resQuestoes, resFav] = await Promise.all([
-        fetch(`${API}/auth/materias/${bloco}/questoes`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/auth/materias/favoritas`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API}/auth/materias/${bloco}/questoes`, { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/auth/materias/favoritas`, { credentials: 'include', headers: { Authorization: `Bearer ${token}` } })
       ])
       if (!resQuestoes.ok) { navigate('/materias'); return }
       const data = await resQuestoes.json()
@@ -97,6 +97,7 @@ function MateriaBloco() {
       if (jáFav) {
         await fetch(`${API}/auth/materias/favoritar/${questaoId}`, {
           method: 'DELETE',
+          credentials: 'include',
           headers: { Authorization: `Bearer ${token}` }
         })
         setFavoritas(prev => { const s = new Set(prev); s.delete(questaoId); return s })
@@ -104,6 +105,7 @@ function MateriaBloco() {
       } else {
         await fetch(`${API}/auth/materias/favoritar`, {
           method: 'POST',
+          credentials: 'include',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ questaoId })
         })
@@ -131,6 +133,7 @@ function MateriaBloco() {
     try {
       const res = await fetch(`${API}/auth/materias/responder`, {
         method: 'POST',
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           questaoId: modalQuestao.id,

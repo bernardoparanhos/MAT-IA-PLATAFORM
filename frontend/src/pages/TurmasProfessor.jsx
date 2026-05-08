@@ -47,6 +47,7 @@ function TurmasProfessor() {
   async function buscarTurmas() {
     try {
       const res = await fetch(`${API}/auth/turmas/minhas`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -118,6 +119,7 @@ function TurmasProfessor() {
   async function abrirModal() {
     try {
       const res = await fetch(`${API}/auth/turmas/disponiveis`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -133,6 +135,7 @@ function TurmasProfessor() {
     try {
       const res = await fetch(`${API}/auth/turmas/associar`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ turmaId })
       })
@@ -156,6 +159,7 @@ function TurmasProfessor() {
     setCarregandoAlunos(prev => ({ ...prev, [turmaId]: true }))
     try {
       const res = await fetch(`${API}/auth/turmas/${turmaId}/alunos`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()

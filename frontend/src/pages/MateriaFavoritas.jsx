@@ -38,6 +38,7 @@ function MateriaFavoritas() {
   const carregar = useCallback(async () => {
     try {
       const res = await fetch(`${API}/auth/materias/favoritas`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -73,6 +74,7 @@ function MateriaFavoritas() {
     try {
       await fetch(`${API}/auth/materias/favoritar/${questaoId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       await carregar()
@@ -89,6 +91,7 @@ function MateriaFavoritas() {
     try {
       const res = await fetch(`${API}/auth/materias/responder`, {
         method: 'POST',
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ questaoId: modalQuestao.id, respostaDada: respostaModal })
       })
@@ -222,7 +225,7 @@ function MateriaFavoritas() {
                     ? <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(modalQuestao.enunciado) }} />
                     : modalQuestao.latex
                         ? <Formula tex={modalQuestao.enunciado} block={true} />
-                        : <span dangerouslySetInnerHTML={{ __html: modalQuestao.enunciado }} />}
+                        : <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(modalQuestao.enunciado) }} />}
               </div>
               <div className="space-y-2">
                 {Object.entries(modalQuestao.alternativas).map(([letra, texto]) => {

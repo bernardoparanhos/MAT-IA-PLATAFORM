@@ -43,6 +43,7 @@ function Dashboard() {
     try {
       const res = await fetch(`${API}/auth/feedback`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ tipo: feedbackTipo, mensagem: feedbackMensagem, permitirContato })
       })
@@ -74,6 +75,7 @@ function Dashboard() {
   async function verificarDiagnostico() {
     try {
       const res = await fetch(`${API}/auth/diagnostico/status`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -88,8 +90,8 @@ function Dashboard() {
 
       // Busca último acesso às matérias
       const [resAcesso, resStats] = await Promise.all([
-        fetch(`${API}/auth/materias/ultimo-acesso`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/auth/materias/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/auth/materias/ultimo-acesso`, { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/auth/materias/stats`, { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
       ])
       const dataAcesso = await resAcesso.json()
       const dataStats = await resStats.json()

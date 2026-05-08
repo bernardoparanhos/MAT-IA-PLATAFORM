@@ -33,6 +33,7 @@ function PerfilProfessor() {
         const data = await getPerfil()
         setPerfil(data.professor)
         const res = await fetch(`${API}/auth/turmas/minhas`, {
+          credentials: 'include',
           headers: { Authorization: `Bearer ${token}` }
         })
         const d = await res.json()
