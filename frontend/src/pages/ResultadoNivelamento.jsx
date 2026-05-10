@@ -27,7 +27,6 @@ function ResultadoNivelamento() {
   const [notaSelecionada, setNotaSelecionada] = useState(null)
   const [comentario, setComentario] = useState('')
   const [enviandoFeedback, setEnviandoFeedback] = useState(false)
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
@@ -36,7 +35,6 @@ function ResultadoNivelamento() {
       // Busca resultado
       const res = await fetch(`${API}/auth/diagnostico/resultado`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       if (res.ok) setResultado(data.resultado)
@@ -44,7 +42,6 @@ function ResultadoNivelamento() {
       // Verifica se já enviou feedback
       const resFeedback = await fetch(`${API}/auth/diagnostico/feedback-enviado`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const dataFeedback = await resFeedback.json()
       if (resFeedback.ok && dataFeedback.enviado) {
@@ -70,10 +67,7 @@ function ResultadoNivelamento() {
       const res = await fetch(`${API}/auth/diagnostico/feedback`, {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nota: notaSelecionada,
           comentario: comentario.trim() || null

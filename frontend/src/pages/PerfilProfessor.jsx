@@ -24,7 +24,6 @@ function PerfilProfessor() {
   const [erroDesassociar, setErroDesassociar] = useState('')
 
   const [turmas, setTurmas] = useState([])
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
@@ -34,7 +33,6 @@ function PerfilProfessor() {
         setPerfil(data.professor)
         const res = await fetch(`${API}/auth/turmas/minhas`, {
           credentials: 'include',
-          headers: { Authorization: `Bearer ${token}` }
         })
         const d = await res.json()
         setTurmas(d.turmas || [])

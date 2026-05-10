@@ -11,7 +11,6 @@ function MinhaTurma() {
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
@@ -30,7 +29,6 @@ function MinhaTurma() {
     try {
       const res = await fetch(`${API}/auth/aluno/minha-turma`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setDados(data)

@@ -39,16 +39,15 @@ function Materias() {
   const [totalFavoritas, setTotalFavoritas] = useState(0)
   const [carregando, setCarregando] = useState(true)
 
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
     async function carregar() {
       try {
         const [resBlocos, resStats, resFav] = await Promise.all([
-          fetch(`${API}/auth/materias/blocos`,    { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API}/auth/materias/stats`,     { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API}/auth/materias/favoritas`, { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API}/auth/materias/blocos`,    { credentials: 'include' }),
+          fetch(`${API}/auth/materias/stats`,     { credentials: 'include' }),
+          fetch(`${API}/auth/materias/favoritas`, { credentials: 'include' }),
         ])
         const dataBlocos = await resBlocos.json()
         const dataStats  = await resStats.json()

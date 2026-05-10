@@ -32,14 +32,12 @@ function MateriaFavoritas() {
   const [enviando, setEnviando] = useState(false)
   const [toast, setToast] = useState(null)
 
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   const carregar = useCallback(async () => {
     try {
       const res = await fetch(`${API}/auth/materias/favoritas`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setPorBloco(data.porBloco || {})
@@ -49,7 +47,7 @@ function MateriaFavoritas() {
     } finally {
       setCarregando(false)
     }
-  }, [API, token])
+  }, [API])
 
   useEffect(() => { carregar() }, [carregar])
 
@@ -75,7 +73,6 @@ function MateriaFavoritas() {
       await fetch(`${API}/auth/materias/favoritar/${questaoId}`, {
         method: 'DELETE',
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       await carregar()
       if (modalQuestao?.id === questaoId) fecharModal()
@@ -92,7 +89,7 @@ function MateriaFavoritas() {
       const res = await fetch(`${API}/auth/materias/responder`, {
         method: 'POST',
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questaoId: modalQuestao.id, respostaDada: respostaModal })
       })
       const data = await res.json()

@@ -6,14 +6,12 @@ export function NotificacoesAlunoProvider({ children }) {
   const [notificacoes, setNotificacoes] = useState([])
   const API = import.meta.env.VITE_API_URL
 
-const buscar = useCallback(async () => {
-  const token = localStorage.getItem('token')
-  const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
-  if (!token || !usuario || usuario.perfil !== 'aluno') return
+  const buscar = useCallback(async () => {
+    const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
+    if (!usuario || usuario.perfil !== 'aluno') return
     try {
       const res = await fetch(`${API}/auth/notificacoes/aluno`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setNotificacoes(data.notificacoes || [])
@@ -32,7 +30,7 @@ const buscar = useCallback(async () => {
   async function marcarLida(id) {
     await fetch(`${API}/auth/notificacoes/aluno/${id}/lida`, {
       credentials: 'include',
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
+      method: 'POST',
     })
     setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: 1 } : n))
   }
@@ -40,7 +38,7 @@ const buscar = useCallback(async () => {
   async function apagarUma(id) {
     await fetch(`${API}/auth/notificacoes/aluno/${id}`, {
       credentials: 'include',
-      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      method: 'DELETE',
     })
     setNotificacoes(prev => prev.filter(n => n.id !== id))
   }
@@ -48,7 +46,7 @@ const buscar = useCallback(async () => {
   async function apagarTodas() {
     await fetch(`${API}/auth/notificacoes/aluno`, {
       credentials: 'include',
-      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      method: 'DELETE',
     })
     setNotificacoes([])
   }

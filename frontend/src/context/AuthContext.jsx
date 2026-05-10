@@ -11,7 +11,6 @@ export function AuthProvider({ children }) {
   })
 
   function login(token, dadosUsuario) {
-    localStorage.setItem('token', token)
     localStorage.setItem('usuario', JSON.stringify(dadosUsuario))
     setUsuario(dadosUsuario)
 
@@ -23,8 +22,9 @@ export function AuthProvider({ children }) {
     }
   }
 
-  function logout() {
-    localStorage.removeItem('token')
+  async function logout() {
+    const API = import.meta.env.VITE_API_URL
+    await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' })
     localStorage.removeItem('usuario')
     setUsuario(null)
     navigate('/login')

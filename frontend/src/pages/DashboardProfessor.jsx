@@ -24,7 +24,6 @@ function DashboardProfessor() {
   const [painelNotif, setPainelNotif] = useState(false)
   const painelRef = useRef(null)
 
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
   const { notificacoes, naoLidas, marcarLida, marcarTodasLidas } = useNotificacoes()
 
@@ -56,7 +55,6 @@ function DashboardProfessor() {
     try {
       const res = await fetch(`${API}/auth/turmas/minhas`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setTurmas(data.turmas || [])

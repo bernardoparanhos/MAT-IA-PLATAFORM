@@ -7,14 +7,11 @@ export function NotificacoesProvider({ children }) {
   const API = import.meta.env.VITE_API_URL
 
   const buscar = useCallback(async () => {
-    const token = localStorage.getItem('token')
-    if (!token) return
     const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
     if (!usuario || usuario.perfil !== 'professor') return
     try {
       const res = await fetch(`${API}/auth/notificacoes`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setNotificacoes(data.notificacoes || [])
@@ -31,37 +28,33 @@ export function NotificacoesProvider({ children }) {
   }, [buscar])
 
   async function marcarLida(id) {
-    const token = localStorage.getItem('token')
     await fetch(`${API}/auth/notificacoes/lida/${id}`, {
       credentials: 'include',
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
+      method: 'POST',
     })
     setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: 1 } : n))
   }
 
   async function marcarTodasLidas() {
-    const token = localStorage.getItem('token')
     await fetch(`${API}/auth/notificacoes/lida-todas`, {
       credentials: 'include',
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }
+      method: 'POST',
     })
     setNotificacoes(prev => prev.map(n => ({ ...n, lida: 1 })))
   }
 
   async function apagarUma(id) {
-    const token = localStorage.getItem('token')
     await fetch(`${API}/auth/notificacoes/${id}`, {
       credentials: 'include',
-      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      method: 'DELETE',
     })
     setNotificacoes(prev => prev.filter(n => n.id !== id))
   }
 
   async function apagarTodas() {
-    const token = localStorage.getItem('token')
     await fetch(`${API}/auth/notificacoes`, {
       credentials: 'include',
-      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      method: 'DELETE',
     })
     setNotificacoes([])
   }

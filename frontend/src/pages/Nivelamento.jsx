@@ -316,7 +316,6 @@ function embaralharQuestao(q) {
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 function Nivelamento({ modo = 'aluno' }) {
   const navigate = useNavigate()
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   const [tela, setTela] = useState('boasVindas') // boasVindas | questao | analisando
@@ -332,7 +331,6 @@ function Nivelamento({ modo = 'aluno' }) {
     try {
       const res = await fetch(`${API}/auth/diagnostico/questoes`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setQuestoes((data.questoes || []).map(embaralharQuestao))
@@ -346,7 +344,6 @@ function Nivelamento({ modo = 'aluno' }) {
       await fetch(`${API}/auth/diagnostico/pular`, {
         method: 'POST',
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       navigate('/dashboard')
     } catch (e) {
@@ -416,10 +413,7 @@ function avancar(respostasAtuais, puladasAtuais = puladas) {
         await fetch(`${API}/auth/diagnostico/responder`, {
           method: 'POST',
           credentials: 'include',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             respostas: respostasFinais,
             usou_dicas: dicasUsadas,

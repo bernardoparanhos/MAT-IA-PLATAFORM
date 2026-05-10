@@ -8,11 +8,9 @@ export default function HUDAluno() {
 
     const buscarProgresso = useCallback(async () => {
         try {
-            const token = localStorage.getItem('token');
             const API = import.meta.env.VITE_API_URL;
             const res = await fetch(`${API}/auth/meu-progresso`, {
                 credentials: 'include',
-                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 const data = await res.json();

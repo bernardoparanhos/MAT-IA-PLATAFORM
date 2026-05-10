@@ -1,11 +1,10 @@
 import { Navigate } from 'react-router-dom'
 
 function ProtectedRoute({ children, perfil }) {
-  const token = localStorage.getItem('token')
   const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
 
   // Não autenticado
-  if (!token || !usuario) {
+  if (!usuario) {
     return <Navigate to="/login" replace />
   }
 

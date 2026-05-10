@@ -20,7 +20,6 @@ function TurmasProfessor() {
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [painelNotif, setPainelNotif] = useState(false)
   const painelRef = useRef(null)
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
   const { notificacoes, naoLidas, marcarTodasLidas } = useNotificacoes()
 
@@ -48,7 +47,6 @@ function TurmasProfessor() {
     try {
       const res = await fetch(`${API}/auth/turmas/minhas`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setTurmas(data.turmas || [])
@@ -120,7 +118,6 @@ function TurmasProfessor() {
     try {
       const res = await fetch(`${API}/auth/turmas/disponiveis`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setTurmasDisponiveis(data.turmas || [])
@@ -136,7 +133,7 @@ function TurmasProfessor() {
       const res = await fetch(`${API}/auth/turmas/associar`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ turmaId })
       })
       const data = await res.json()
@@ -160,7 +157,6 @@ function TurmasProfessor() {
     try {
       const res = await fetch(`${API}/auth/turmas/${turmaId}/alunos`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setAlunosPorTurma(prev => ({ ...prev, [turmaId]: data.alunos || [] }))

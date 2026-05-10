@@ -29,7 +29,6 @@ export function MusicaProvider({ children }) {
   const [progresso, setProgresso] = useState(0)
   const [duracao, setDuracao] = useState(0)
   const [favoritas, setFavoritas] = useState([])
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
@@ -37,7 +36,6 @@ export function MusicaProvider({ children }) {
       try {
         const res = await fetch(`${API}/auth/musicas-favoritas`, {
           credentials: 'include',
-          headers: { Authorization: `Bearer ${token}` }
         })
         const data = await res.json()
         setFavoritas(data.favoritas || [])
@@ -45,8 +43,8 @@ export function MusicaProvider({ children }) {
         console.error('Erro ao carregar favoritas de música', e)
       }
     }
-    if (token) carregarFavoritas()
-  }, [token, API])
+    carregarFavoritas()
+  }, [API])
 
   async function toggleFavoritaMusica(id) {
     const novas = favoritas.includes(id)
@@ -57,10 +55,7 @@ export function MusicaProvider({ children }) {
       await fetch(`${API}/auth/musicas-favoritas`, {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ favoritas: novas })
       })
     } catch (e) {

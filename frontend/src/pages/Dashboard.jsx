@@ -34,7 +34,6 @@ function Dashboard() {
   const [feedbackEnviado, setFeedbackEnviado] = useState(false)
   const [dropdownAberto, setDropdownAberto] = useState(false)
 
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
   const handleEnviarFeedback = async (e) => {
     e.preventDefault()
@@ -44,7 +43,7 @@ function Dashboard() {
       const res = await fetch(`${API}/auth/feedback`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo: feedbackTipo, mensagem: feedbackMensagem, permitirContato })
       })
       if (res.ok) {
@@ -76,7 +75,6 @@ function Dashboard() {
     try {
       const res = await fetch(`${API}/auth/diagnostico/status`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       
@@ -90,8 +88,8 @@ function Dashboard() {
 
       // Busca último acesso às matérias
       const [resAcesso, resStats] = await Promise.all([
-        fetch(`${API}/auth/materias/ultimo-acesso`, { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/auth/materias/stats`, { credentials: 'include', headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/auth/materias/ultimo-acesso`, { credentials: 'include' }),
+        fetch(`${API}/auth/materias/stats`, { credentials: 'include' }),
       ])
       const dataAcesso = await resAcesso.json()
       const dataStats = await resStats.json()
@@ -106,7 +104,7 @@ function Dashboard() {
   }
   
   verificarDiagnostico()
-}, [API, token, navigate])
+}, [API, navigate])
 
   useEffect(() => {
     function handleResize() {

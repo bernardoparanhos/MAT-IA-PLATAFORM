@@ -42,7 +42,6 @@ function Metricas() {
   const [carregandoIAAluno, setCarregandoIAAluno] = useState(null)
   const [sucessoIAAluno, setSucessoIAAluno] = useState(null)
 
-  const token = localStorage.getItem('token')
   const API = import.meta.env.VITE_API_URL
 
   useEffect(() => {
@@ -62,7 +61,6 @@ function Metricas() {
     try {
       const res = await fetch(`${API}/auth/turmas/minhas`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       const t = data.turmas || []
@@ -78,7 +76,6 @@ function Metricas() {
     try {
       const res = await fetch(`${API}/auth/turmas/${turmaId}/diagnosticos`, {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setDados(data)
@@ -109,7 +106,7 @@ function Metricas() {
       const res = await fetch(`${API}/auth/ia/analisar-turma`, {
         method: 'POST',
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ turmaId: turmaSelecionada })
       })
       const data = await res.json()
@@ -129,7 +126,7 @@ function Metricas() {
       const res = await fetch(`${API}/auth/ia/analisar-aluno`, {
         method: 'POST',
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alunoId })
       })
       const data = await res.json()
@@ -151,7 +148,6 @@ function Metricas() {
       await fetch(`${API}/auth/diagnosticos/${alunoId}`, {
         method: 'DELETE',
         credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` }
       })
       buscarDados(turmaSelecionada)
     } catch (e) {
