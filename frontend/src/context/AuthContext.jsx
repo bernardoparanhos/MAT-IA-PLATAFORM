@@ -1,5 +1,7 @@
 import { createContext, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAutoLogout } from '../hooks/useAutoLogout.jsx'
+import { AutoLogoutModal } from '../hooks/AutoLogoutModal.jsx'
 
 const AuthContext = createContext(null)
 
@@ -30,9 +32,16 @@ export function AuthProvider({ children }) {
     navigate('/login')
   }
 
+  const { modalAberto, segundos, continuarSessao } = useAutoLogout(usuario ? logout : null)
+
   return (
     <AuthContext.Provider value={{ usuario, login, logout }}>
       {children}
+      <AutoLogoutModal
+        modalAberto={modalAberto}
+        segundos={segundos}
+        continuarSessao={continuarSessao}
+      />
     </AuthContext.Provider>
   )
 }
