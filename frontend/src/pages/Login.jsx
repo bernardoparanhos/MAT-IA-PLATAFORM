@@ -127,10 +127,11 @@ function FAQPanel({ aberto, onFechar }) {
       : { siape: form.siape, senha: form.senha }
 
     const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+})
 
     const data = await res.json()
 

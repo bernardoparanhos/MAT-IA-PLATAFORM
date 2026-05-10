@@ -57,7 +57,6 @@ async function register(req, res, perfil) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? '.plataformamati.dev' : undefined,
         maxAge: 8 * 60 * 60 * 1000
       });
       return res.status(201).json({ message: 'Conta criada com sucesso!', token, usuario: { id: userId, nome, email, perfil: 'aluno' } });
@@ -82,7 +81,6 @@ async function register(req, res, perfil) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? '.plataformamati.dev' : undefined,
         maxAge: 8 * 60 * 60 * 1000
       });
       return res.status(201).json({ message: 'Conta criada com sucesso!', token, usuario: { id: userId, nome, email, perfil: 'professor' } });
@@ -130,7 +128,6 @@ async function loginAluno(req, res) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      domain: process.env.NODE_ENV === 'production' ? '.plataformamati.dev' : undefined,
       maxAge: 8 * 60 * 60 * 1000
     });
     return res.status(200).json({ 
@@ -174,7 +171,6 @@ async function loginProfessor(req, res) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      domain: process.env.NODE_ENV === 'production' ? '.plataformamati.dev' : undefined,
       maxAge: 8 * 60 * 60 * 1000
     });
     return res.status(200).json({ token, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, perfil: 'professor' } });

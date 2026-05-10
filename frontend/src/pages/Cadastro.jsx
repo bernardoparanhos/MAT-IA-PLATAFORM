@@ -124,10 +124,11 @@ function Cadastro() {
         ? `${API}/auth/register/aluno`
         : `${API}/auth/register/professor`
       const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, perfil }),
-      })
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ ...form, perfil }),
+})
       const data = await res.json()
       if (!res.ok) {
         setErro(data.errors?.[0]?.msg || data.message || 'Erro ao criar conta.')
