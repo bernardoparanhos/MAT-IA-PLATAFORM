@@ -62,7 +62,7 @@ function Materias() {
       }
     }
     carregar()
-  }, [API, token])
+  }, [API])
 
     const taxa = stats.feitas > 0 ? Math.round((stats.acertos / stats.feitas) * 100) : 0
 
