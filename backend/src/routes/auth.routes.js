@@ -26,7 +26,7 @@ async function enviarEmail({ to, subject, html }) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      sender: { name: 'MAT-IA', email: 'beparanhosborges@gmail.com' },
+      sender: { name: 'MAT-IA', email: process.env.EMAIL_FROM },
       to: [{ email: to }],
       subject,
       htmlContent: html
@@ -307,7 +307,7 @@ router.get('/aluno/perfil', verifyToken, requirePerfil('aluno'), async (req, res
 
 const alunoController = require('../controllers/aluno.controller');
 router.get('/aluno/perfil-completo', verifyToken, requirePerfil('aluno'), alunoController.getPerfil);
-router.post('/aluno/alterar-senha', verifyToken, requirePerfil('aluno'), alunoController.alterarSenha);
+router.post('/aluno/alterar-senha', limiterEsqueciSenha, verifyToken, requirePerfil('aluno'), alunoController.alterarSenha);
 
 // ─── ESQUECI SENHA — ALUNO ────────────────────────────────────────────────────
 router.post('/aluno/esqueci-senha', limiterEsqueciSenha, async (req, res) => {
@@ -374,7 +374,7 @@ router.post('/professor/esqueci-senha', limiterEsqueciSenha, async (req, res) =>
 });
 
 // ─── VALIDAR TOKEN ────────────────────────────────────────────────────────────
-router.get('/validar-token/:token', async (req, res) => {
+router.get('/validar-token/:token', limiterEsqueciSenha, async (req, res) => {
   try {
     const result = await db.query(`SELECT * FROM tokens_recuperacao WHERE token = $1 AND usado = 0`, [req.params.token]);
     if (result.rows.length === 0) return res.json({ valido: false });
@@ -1021,15 +1021,15 @@ router.post('/materias/responder', verifyToken, requirePerfil('aluno'), async (r
       return res.status(404).json({ message: 'Usuário não encontrado.' });
     }
 
-    // 1. Buscar a questão para validar a resposta
-    const questaoRes = await db.query(
-        'SELECT id, correta FROM questoes WHERE id = $1 AND ativa = true',
-        [questaoId]
-    );
+    // DEPOIS
+const questaoRes = await db.query(
+    'SELECT id, correta FROM questoes WHERE id = $1 AND bloco = $2 AND ativa = true',
+    [questaoId, bloco]
+);
 
-    if (questaoRes.rows.length === 0) {
-      return res.status(404).json({ message: 'Questão não encontrada.' });
-    }
+if (questaoRes.rows.length === 0) {
+  return res.status(400).json({ message: 'Questão inválida.' });
+}
 
     const correta = questaoRes.rows[0].correta;
     const acertou = correta.toUpperCase() === String(respostaDada).toUpperCase();
@@ -1243,7 +1243,7 @@ router.post('/feedback', verifyToken, requirePerfil('aluno'), async (req, res) =
 
     // 4. Enviar usando a função enviarEmail que já existe no topo do seu arquivo
     await enviarEmail({
-      to: process.env.FEEDBACK_EMAIL || 'beparanhosborges@gmail.com',
+      to: process.env.FEEDBACK_EMAIL,
       subject: `[Feedback MAT-IA] ${tipo}: ${nome}`,
       html: htmlEmail
     });
