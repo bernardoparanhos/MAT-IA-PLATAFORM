@@ -65,9 +65,12 @@ function ConfiguracoesAluno() {
 
             {/* Notificações */}
             <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6 lg:p-8">
-              <p className="text-slate-500 text-xs uppercase tracking-widest mb-6">Notificações</p>
-              <div className="space-y-5">
-                <div className="flex items-center justify-between">
+  <div className="flex items-center gap-3 mb-6">
+    <p className="text-slate-500 text-xs uppercase tracking-widest">Notificações</p>
+    <span className="text-xs bg-orange-500/10 border border-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full">Em breve</span>
+  </div>
+  <div className="space-y-5 opacity-40 pointer-events-none">
+    <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white text-sm font-light">Novidades da turma</p>
                     <p className="text-slate-500 text-xs mt-0.5">Receber notificações sobre atividades da turma</p>
