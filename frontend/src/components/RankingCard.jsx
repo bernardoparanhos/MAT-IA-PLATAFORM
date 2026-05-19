@@ -86,7 +86,7 @@ export default function RankingCard() {
                             ? `${partesNome[0]} ${partesNome[1]}`
                             : partesNome[0];
 
-                        const nomeExibicao = ehVoce ? `${nomeCurto} (você)` : nomeCurto;
+                            const nomeExibicao = nomeCurto;
 
                         return (
                             <div
@@ -104,12 +104,14 @@ export default function RankingCard() {
                                         {renderPosicao(posicao)}
                                     </div>
 
-                                    <div className="flex flex-col">
-                    <span className={`font-medium ${ehVoce ? 'text-orange-400' : isTop3 ? 'text-white' : 'text-slate-300'}`}>
-                        {nomeExibicao}
-                    </span>
-                                        {/* LINHA DO RA REMOVIDA DAQUI */}
-                                    </div>
+                                <div className="flex flex-col">
+    <span className={`font-medium ${ehVoce ? 'text-orange-400' : isTop3 ? 'text-white' : 'text-slate-300'}`}>
+        {nomeExibicao}
+    </span>
+    {ehVoce && (
+        <span className="text-[10px] text-orange-400/50 font-light leading-none mt-0.5">você</span>
+    )}
+</div>
                                 </div>
 
                                 <div className="flex flex-col items-end">
