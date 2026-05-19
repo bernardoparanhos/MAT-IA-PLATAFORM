@@ -1,4 +1,5 @@
 import katex from 'katex'
+import DOMPurify from 'dompurify'
 
 export default function Formula({ tex, block = false }) {
   if (!tex) return null
@@ -23,7 +24,7 @@ export default function Formula({ tex, block = false }) {
                 />
             )
           }
-          return <span key={i}>{parte}</span>
+            return <span key={i} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parte) }} />
         })}
       </span>
     )
