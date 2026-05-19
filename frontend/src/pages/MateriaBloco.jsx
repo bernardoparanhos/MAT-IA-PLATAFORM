@@ -336,7 +336,7 @@ function MateriaBloco() {
           className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget) fecharModal() }}
         >
-          <div className="bg-[#1e2d3d] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#1e2d3d] border border-white/10 rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
 
             {/* Header modal */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
@@ -382,7 +382,7 @@ function MateriaBloco() {
 
             {/* Enunciado */}
             <div className="px-5 py-5">
-              <div className="text-slate-200 text-sm font-light leading-relaxed mb-5">
+            <div className="text-slate-200 text-sm font-light leading-relaxed mb-5 [&_svg]:max-w-full [&_svg]:h-auto [&_div]:max-w-full">
                 {modalQuestao.enunciado.includes('<svg')
                     ? <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(modalQuestao.enunciado) }} />
                     : modalQuestao.latex
