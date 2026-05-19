@@ -222,7 +222,7 @@ function MateriaBloco() {
         <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0 relative">
 
           {/* HUD FLUTUANTE (só aparece se for aluno) */}
-          {!isProfessor && <HUDAluno />}
+          {!isProfessor && <HUDAluno oculto={!!modalQuestao} />}
 
           {/* Voltar */}
           <button onClick={() => navigate('/materias')} className="flex items-center gap-2 text-slate-500 hover:text-slate-300 text-sm font-light mb-6 transition-colors">

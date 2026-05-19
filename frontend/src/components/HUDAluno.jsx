@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Trophy, Star, TrendingUp } from 'lucide-react';
 
-export default function HUDAluno() {
+export default function HUDAluno({ oculto = false }) {
     const [progresso, setProgresso] = useState(null);
 
     const buscarProgresso = useCallback(async () => {
@@ -27,7 +27,7 @@ export default function HUDAluno() {
         return () => { delete window.atualizarHUD; };
     }, [buscarProgresso]);
 
-    if (!progresso || progresso.pontos_totais === 0) return null;
+    if (!progresso || progresso.pontos_totais === 0 || oculto) return null;
 
     return (
         <div className={`
