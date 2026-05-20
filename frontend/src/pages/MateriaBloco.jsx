@@ -411,9 +411,9 @@ function MateriaBloco() {
                       style={letra === respostaModal && !feedbackModal ? { borderColor: cfg.cor, background: `${cfg.cor}15` } : {}}
                     >
                       <span className="font-medium mr-2" style={{ color: letra === respostaModal && !feedbackModal ? cfg.cor : undefined }}>{letra}.</span>
-                      {(modalQuestao.latex && !modalQuestao.enunciado.includes('<svg')) || texto.includes('$')
+                      {texto.includes('$')
                           ? <Formula tex={texto} />
-                          : texto}
+                          : <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(texto) }} />}
                     </button>
                   )
                 })}
