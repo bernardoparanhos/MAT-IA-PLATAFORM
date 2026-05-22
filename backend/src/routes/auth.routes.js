@@ -16,6 +16,15 @@ const limiterEsqueciSenha = rateLimit({
   legacyHeaders: false,
 });
 
+const limiterIA = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.usuario?.id?.toString() || req.ip,
+  message: { message: 'Limite de análises atingido. Tente novamente em 1 hora.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 const router = express.Router();
 
 async function enviarEmail({ to, subject, html }) {
@@ -688,7 +697,7 @@ router.delete('/diagnosticos/:alunoId', verifyToken, requirePerfil('professor'),
 })
 
 // ─── IA — ANÁLISE DE TURMA ───────────────────────────────────────────────────
-router.post('/ia/analisar-turma', verifyToken, requirePerfil('professor'), async (req, res) => {
+router.post('/ia/analisar-turma', verifyToken, requirePerfil('professor'), limiterIA, async (req, res) => {
   try {
     const { turmaId } = req.body
     if (!turmaId) return res.status(400).json({ message: 'turmaId é obrigatório.' })
@@ -711,6 +720,16 @@ router.post('/ia/analisar-turma', verifyToken, requirePerfil('professor'), async
 
     if (result.rows.length === 0)
       return res.status(400).json({ message: 'Nenhum diagnóstico realizado ainda.' })
+
+    // Cache: não regera se análise foi gerada nas últimas 2 horas
+const analiseExistente = await db.query(
+  'SELECT analise_ia, analise_ia_gerada_em FROM turmas WHERE id = $1',
+  [turmaId]
+)
+const geradaEm = analiseExistente.rows[0]?.analise_ia_gerada_em
+if (geradaEm && (Date.now() - new Date(geradaEm).getTime()) < 2 * 60 * 60 * 1000) {
+  return res.json({ analise: analiseExistente.rows[0].analise_ia, cache: true })
+}
 
     const alunos = result.rows.map(r => ({
       nome: r.nome,
@@ -784,7 +803,7 @@ INSTRUÇÕES:
 })
 
 // ─── IA — ANÁLISE INDIVIDUAL ─────────────────────────────────────────────────
-router.post('/ia/analisar-aluno', verifyToken, requirePerfil('professor'), async (req, res) => {
+router.post('/ia/analisar-aluno', verifyToken, requirePerfil('professor'), limiterIA, async (req, res) => {
   try {
     const { alunoId } = req.body
     if (!alunoId) return res.status(400).json({ message: 'alunoId é obrigatório.' })
@@ -806,6 +825,16 @@ router.post('/ia/analisar-aluno', verifyToken, requirePerfil('professor'), async
 
     if (result.rows.length === 0)
       return res.status(400).json({ message: 'Diagnóstico não encontrado.' })
+
+    // Cache: não regera se análise foi gerada nas últimas 2 horas
+const diagnosticoCache = await db.query(
+  'SELECT analise_ia, analise_ia_gerada_em FROM diagnosticos WHERE aluno_id = $1',
+  [alunoId]
+)
+const geradaEmAluno = diagnosticoCache.rows[0]?.analise_ia_gerada_em
+if (geradaEmAluno && (Date.now() - new Date(geradaEmAluno).getTime()) < 2 * 60 * 60 * 1000) {
+  return res.json({ analise: diagnosticoCache.rows[0].analise_ia, cache: true })
+}
 
     const { nome, resultado_json } = result.rows[0]
     const { nivel, pontuacao, blocos, usou_dicas, pulou, tempo_segundos } = JSON.parse(resultado_json)
