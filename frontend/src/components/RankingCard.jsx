@@ -82,9 +82,9 @@ export default function RankingCard() {
 
                         // Regra: Pega os dois primeiros nomes (Nome + Sobrenome)
                         const partesNome = aluno.nome.replace(' (você)', '').split(' ');
-                        const nomeCurto = partesNome.length > 1
-                            ? `${partesNome[0]} ${partesNome[1]}`
-                            : partesNome[0];
+                        const CONECTORES = new Set(['de', 'da', 'do', 'dos', 'das', 'e'])
+                        const sobrenome = partesNome.slice(1).find(p => !CONECTORES.has(p.toLowerCase()))
+                        const nomeCurto = sobrenome ? `${partesNome[0]} ${sobrenome}` : partesNome[0]
 
                             const nomeExibicao = nomeCurto;
 
