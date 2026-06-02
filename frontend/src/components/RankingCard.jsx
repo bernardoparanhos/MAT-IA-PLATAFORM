@@ -4,7 +4,9 @@ import { Trophy, Medal, Award, Crown } from 'lucide-react';
 export default function RankingCard() {
     const [ranking, setRanking] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [minimizado, setMinimizado] = useState(false);
+    const [minimizado, setMinimizado] = useState(() => {
+        return localStorage.getItem('ranking_minimizado') === 'true'
+    });
 
     useEffect(() => {
         const buscarRanking = async () => {
@@ -68,7 +70,7 @@ export default function RankingCard() {
                         <p className="text-xs text-slate-400 font-light">Os melhores do MAT-IA</p>
                     </div>
                 </div>
-                <button onClick={() => setMinimizado(v => !v)} className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-white/5">
+                <button onClick={() => setMinimizado(v => { const novo = !v; localStorage.setItem('ranking_minimizado', novo); return novo; })} className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-white/5">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-4 h-4 transition-transform duration-200 ${minimizado ? 'rotate-180' : ''}`}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
                     </svg>

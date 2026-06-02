@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
     const API = import.meta.env.VITE_API_URL
     await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' })
     localStorage.removeItem('usuario')
+    localStorage.removeItem('ranking_minimizado')
     setUsuario(null)
     navigate('/login')
   }
