@@ -4,6 +4,7 @@ import { Trophy, Medal, Award, Crown } from 'lucide-react';
 export default function RankingCard() {
     const [ranking, setRanking] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [minimizado, setMinimizado] = useState(false);
 
     useEffect(() => {
         const buscarRanking = async () => {
@@ -55,19 +56,26 @@ export default function RankingCard() {
 
     return (
         <div className="bg-[#1e2d3d] rounded-2xl p-6 border border-white/5 shadow-lg">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center">
-                    <Crown className="w-5 h-5 text-orange-400" strokeWidth="1.5" />
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center">
+                        <Crown className="w-5 h-5 text-orange-400" strokeWidth="1.5" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-medium text-white uppercase tracking-wider text-sm">
+                            Ranking Global
+                        </h2>
+                        <p className="text-xs text-slate-400 font-light">Os melhores do MAT-IA</p>
+                    </div>
                 </div>
-                <div>
-                    <h2 className="text-lg font-medium text-white uppercase tracking-wider text-sm">
-                        Ranking Global
-                    </h2>
-                    <p className="text-xs text-slate-400 font-light">Os melhores do MAT-IA</p>
-                </div>
+                <button onClick={() => setMinimizado(v => !v)} className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-white/5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-4 h-4 transition-transform duration-200 ${minimizado ? 'rotate-180' : ''}`}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+                    </svg>
+                </button>
             </div>
 
-            {ranking.length === 0 ? (
+                        {!minimizado && (ranking.length === 0 ? (
                 <div className="text-center py-8 border border-dashed border-slate-700 rounded-xl">
                     <p className="text-slate-400 font-light text-sm">
                         Ninguém pontuou ainda.<br/>Seja o primeiro a resolver questões!
@@ -124,7 +132,7 @@ export default function RankingCard() {
                         );
                     })}
                 </div>
-            )}
+                       ))}
         </div>
     );
 }
