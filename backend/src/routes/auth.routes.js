@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const { register, loginAluno, loginProfessor } = require('../controllers/auth.controller');
 const sheetsService = require('../services/sheets.service');
+const { analisarTurma, analisarAluno } = require('../services/openai.service')
 const { verifyToken, requirePerfil } = require('../middlewares/auth.middleware');
 const db = require('../config/database');
 const crypto = require('crypto');
@@ -768,27 +769,13 @@ INSTRUÇÕES:
 - NÃO use bullet points, escreva em parágrafo corrido
 `
 
-    const iaRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 300,
-        messages: [{ role: 'user', content: contexto }]
-      })
-    })
-
-    if (!iaRes.ok) {
-      const err = await iaRes.text()
-      console.error('[ia/analisar-turma] Erro API:', err)
-      return res.status(500).json({ message: 'Erro ao consultar IA.' })
-    }
-
-    const iaData = await iaRes.json()
-    const analise = iaData.choices?.[0]?.message?.content || 'Não foi possível gerar análise.'
+    const analise = await analisarTurma({
+      nomeTurma: turma.rows[0].nome,
+      totalAlunos,
+      niveis,
+      mediaGeral,
+      mediasBlocos
+    }) || 'Não foi possível gerar análise.'
 
     await db.query(
       'UPDATE turmas SET analise_ia = $1, analise_ia_gerada_em = NOW() WHERE id = $2',
@@ -868,27 +855,15 @@ INSTRUÇÕES:
 - NÃO use bullet points, escreva em parágrafo corrido
 `
 
-    const iaRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: contexto }]
-      })
-    })
-
-    if (!iaRes.ok) {
-      const err = await iaRes.text()
-      console.error('[ia/analisar-aluno] Erro API:', err)
-      return res.status(500).json({ message: 'Erro ao consultar IA.' })
-    }
-
-    const iaData = await iaRes.json()
-    const analise = iaData.choices?.[0]?.message?.content || 'Não foi possível gerar análise.'
+    const analise = await analisarAluno({
+      nome,
+      nivel,
+      pontuacao,
+      blocos,
+      usou_dicas,
+      pulou,
+      tempo_segundos
+    }) || 'Não foi possível gerar análise.'
 
     await db.query(
       'UPDATE diagnosticos SET analise_ia = $1, analise_ia_gerada_em = NOW() WHERE aluno_id = $2',
