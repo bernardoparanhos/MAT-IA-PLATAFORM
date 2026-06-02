@@ -19,7 +19,6 @@ const limiterEsqueciSenha = rateLimit({
 const limiterIA = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
-  keyGenerator: (req) => req.usuario?.id?.toString() || req.ip,
   message: { message: 'Limite de análises atingido. Tente novamente em 1 hora.' },
   standardHeaders: true,
   legacyHeaders: false,

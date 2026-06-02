@@ -150,8 +150,11 @@ async function initDB() {
     );
 
     CREATE TABLE IF NOT EXISTS questoes (
-  id SERIAL PRIMARY KEY,
-  bloco TEXT NOT NULL CHECK(bloco IN ('inteiros','fracoes','raizes','potencias','geometria')),
+                                          id SERIAL PRIMARY KEY,
+                                          bloco TEXT NOT NULL CHECK(bloco IN (
+                                          'inteiros','fracoes','raizes','potencias','geometria',
+                                          'equacao1','equacao2','modulo','exponencial','trigonometria'
+    )),
   enunciado TEXT NOT NULL,
   alternativas JSONB NOT NULL,
   correta TEXT NOT NULL CHECK(correta IN ('A','B','C','D')),
@@ -171,6 +174,71 @@ CREATE TABLE IF NOT EXISTS questoes_historico (
   respondido_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
   `)
+
+  // ─── COLUNAS ADICIONADAS PÓS-DEPLOY ──────────────────────────────────────
+  await pool.query(`
+    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS boas_vindas_enviada BOOLEAN DEFAULT FALSE;
+    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS musicas_favoritas JSONB;
+    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS pontos_totais INTEGER DEFAULT 0;
+    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS questoes_respondidas INTEGER DEFAULT 0;
+    ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS questoes_corretas INTEGER DEFAULT 0;
+
+    ALTER TABLE turmas ADD COLUMN IF NOT EXISTS analise_ia TEXT;
+    ALTER TABLE turmas ADD COLUMN IF NOT EXISTS analise_ia_gerada_em TIMESTAMP;
+
+    ALTER TABLE diagnosticos ADD COLUMN IF NOT EXISTS analise_ia TEXT;
+    ALTER TABLE diagnosticos ADD COLUMN IF NOT EXISTS analise_ia_gerada_em TIMESTAMP;
+
+    ALTER TABLE questoes_historico ADD COLUMN IF NOT EXISTS tempo_segundos INTEGER;
+    ALTER TABLE questoes_historico ADD COLUMN IF NOT EXISTS pontos_ganhos INTEGER;
+  `)
+
+  // ─── NOVAS TABELAS — SISTEMA DE EXERCÍCIOS AVALIADOS POR IA ──────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS listas_exercicios (
+      id SERIAL PRIMARY KEY,
+      professor_id INTEGER REFERENCES usuarios(id),
+      turma_id INTEGER REFERENCES turmas(id),
+      titulo TEXT NOT NULL,
+      descricao TEXT,
+      data_entrega TIMESTAMP NOT NULL,
+      ativa BOOLEAN DEFAULT true,
+      criado_em TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS lista_questoes (
+      id SERIAL PRIMARY KEY,
+      lista_id INTEGER REFERENCES listas_exercicios(id) ON DELETE CASCADE,
+      questao_id INTEGER REFERENCES questoes(id),
+      numero INTEGER NOT NULL,
+      peso NUMERIC(4,2) DEFAULT 1.0,
+      criterios_ia TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS submissoes_exercicio (
+      id SERIAL PRIMARY KEY,
+      lista_id INTEGER REFERENCES listas_exercicios(id),
+      questao_id INTEGER REFERENCES lista_questoes(id),
+      aluno_id INTEGER REFERENCES usuarios(id),
+      imagem_url TEXT NOT NULL,
+      imagem_cloudinary_id TEXT NOT NULL,
+      status TEXT DEFAULT 'pendente',
+      nota_ia NUMERIC(4,2),
+      nota_final NUMERIC(4,2),
+      feedback_ia TEXT,
+      erros_identificados JSONB,
+      resposta_ia_raw TEXT,
+      tentativa INTEGER DEFAULT 1,
+      questao_identificada BOOLEAN,
+      metodo_correto BOOLEAN,
+      nota_alterada_por INTEGER REFERENCES usuarios(id),
+      nota_alterada_em TIMESTAMP,
+      enviado_em TIMESTAMP DEFAULT NOW(),
+      corrigido_em TIMESTAMP,
+      deletado_em TIMESTAMP
+    );
+  `)
+
   console.log('✅ Banco de dados PostgreSQL conectado e tabelas criadas!')
 }
 
