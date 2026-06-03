@@ -243,8 +243,67 @@ async function registrarQuestaoRespondida(nome, ra, turma, questaoId, bloco, ace
     }
 }
 
+async function registrarPartidaJogo(dados) {
+    try {
+        const sheets = google.sheets({ version: 'v4', auth })
+        const nomeDaAba = 'Jogos'
+
+        // Cria aba se não existir
+        try {
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: SPREADSHEET_ID,
+                requestBody: {
+                    requests: [{ addSheet: { properties: { title: nomeDaAba } } }]
+                }
+            })
+        } catch (e) { /* aba já existe */ }
+
+        // Garante cabeçalho
+        const checkHeader = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${nomeDaAba}!A1:J1`,
+        })
+
+        if (!checkHeader.data.values || checkHeader.data.values.length === 0) {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${nomeDaAba}!A1:J1`,
+                valueInputOption: 'RAW',
+                requestBody: {
+                    values: [['Data', 'Fase', 'Operação', 'Pontuação', 'Acertos', 'Erros', 'Aproveitamento (%)', 'Tempo (s)', 'Concluiu', 'Operações Erradas']]
+                }
+            })
+        }
+
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${nomeDaAba}!A:J`,
+            valueInputOption: 'RAW',
+            requestBody: {
+                values: [[
+                    new Date().toLocaleString('pt-BR'),
+                    dados.fase,
+                    dados.operacao || '-',
+                    dados.pontuacao,
+                    dados.acertos,
+                    dados.erros,
+                    dados.aproveitamento,
+                    dados.tempo_total,
+                    dados.concluiu_fase ? 'Sim' : 'Não',
+                    (dados.operacoes_erradas || []).join(' | ')
+                ]]
+            }
+        })
+
+        console.log('✅ Partida registrada no Sheets')
+    } catch (e) {
+        console.error('❌ Erro ao registrar partida:', e.message)
+    }
+}
+
 module.exports = {
     registrarDiagnostico,
     registrarFeedback,
-    registrarQuestaoRespondida
+    registrarQuestaoRespondida,
+    registrarPartidaJogo
 }

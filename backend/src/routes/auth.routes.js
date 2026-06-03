@@ -1324,6 +1324,44 @@ router.get('/meu-progresso', verifyToken, requirePerfil('aluno'), async (req, re
   }
 });
 
+
+// ─── JOGOS — PARTIDA EXTERNA ─────────────────────────────────────────────────
+router.post('/jogos/partida', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization']
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Chave de API ausente.' })
+    }
+
+    const chave = authHeader.split(' ')[1]
+    if (chave !== process.env.JOGOS_API_KEY) {
+      return res.status(403).json({ message: 'Chave de API inválida.' })
+    }
+
+    const { fase, pontuacao, acertos, erros, aproveitamento, tempo_total, operacoes_erradas, concluiu_fase } = req.body
+
+    if (fase === undefined || pontuacao === undefined) {
+      return res.status(400).json({ message: 'Campos obrigatórios: fase, pontuacao.' })
+    }
+
+    sheetsService.registrarPartidaJogo({
+      fase,
+      pontuacao,
+      acertos: acertos || 0,
+      erros: erros || 0,
+      aproveitamento: aproveitamento || 0,
+      tempo_total: tempo_total || 0,
+      operacoes_erradas: operacoes_erradas || [],
+      concluiu_fase: !!concluiu_fase
+    }).catch(e => console.error('[jogos/partida] Erro Sheets:', e))
+
+    return res.status(200).json({ ok: true, message: 'Partida registrada com sucesso.' })
+  } catch (e) {
+    console.error('[jogos/partida] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 // ─── LOGOUT ──────────────────────────────────────────────────────────────────
 router.post('/logout', (req, res) => {
   res.clearCookie('access_token', {
