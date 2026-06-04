@@ -23,6 +23,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Materias from './pages/Materias'
 import MateriaBloco from './pages/MateriaBloco'
 import MateriaFavoritas from './pages/MateriaFavoritas'
+import Jogos from './pages/Jogos'
+
 
 function App() {
   const location = useLocation()
@@ -115,6 +117,12 @@ function App() {
           <Route path="/materias" element={<Materias />} />
           <Route path="/materias/:bloco" element={<MateriaBloco />} />
           <Route path="/materias/favoritas" element={<MateriaFavoritas />} />
+
+          <Route path="/jogos" element={
+            <ProtectedRoute perfil="aluno">
+              <Jogos />
+            </ProtectedRoute>
+          } />
 
           {/* Redirects */}
           <Route path="/" element={<Navigate to="/login" replace />} />

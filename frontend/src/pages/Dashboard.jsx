@@ -428,7 +428,7 @@ function Dashboard() {
                 </button>
 
                 {/* Jogos */}
-                <button className="bg-[#1e2d3d] border border-white/5 hover:border-orange-500/30 rounded-2xl p-5 lg:p-6 text-left transition-all group hover:bg-orange-500/5">
+                <button onClick={() => navigate('/jogos')} className="bg-[#1e2d3d] border border-white/5 hover:border-orange-500/30 rounded-2xl p-5 lg:p-6 text-left transition-all group hover:bg-orange-500/5">
                   <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4 group-hover:bg-orange-500/20 transition-colors">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-orange-400">
                       <rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4m-2-2v4m7-2h.01M15 12h.01"/>
@@ -436,8 +436,8 @@ function Dashboard() {
                   </div>
                   <p className="text-white font-medium text-sm mb-1">Jogos</p>
                   <p className="text-slate-500 text-xs font-light">Pratique matemática de forma divertida</p>
-                  <p className="text-orange-400/60 text-xs mt-3 font-light group-hover:text-orange-400 transition-colors">Em breve</p>
-                </button>
+                                    <p className="text-orange-400 text-xs mt-3 font-light group-hover:text-orange-300 transition-colors">Jogar agora</p>
+                                </button>
               </div>
             </div>
 

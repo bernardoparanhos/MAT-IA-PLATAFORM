@@ -54,10 +54,6 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg>
   },
   { 
-    label: 'Jogos', 
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4m-2-2v4m7-2h.01M15 12h.01"/></svg>
-  },
-  { 
     label: 'Fórum', 
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
   },
@@ -69,6 +65,19 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
     <span>{item.label}</span>
   </div>
 ))}
+
+         <button
+          onClick={() => { navigate('/jogos'); onClick?.() }}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
+            isActive('/jogos')
+              ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
+              : 'text-slate-400 hover:bg-white/5 hover:text-white'
+          }`}>
+          <span className={isActive('/jogos') ? 'text-orange-400' : 'text-slate-500'}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4m-2-2v4m7-2h.01M15 12h.01"/></svg>
+          </span>
+          <span>Jogos</span>
+        </button>
 
         <div className="border-t border-white/10 my-4" />
         <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 px-3">Minha Conta</p>
