@@ -281,14 +281,14 @@ async function registrarPartidaJogo(dados) {
             valueInputOption: 'RAW',
             requestBody: {
                 values: [[
-                    new Date().toLocaleString('pt-BR'),
+                    new Date().toLocaleDateString('pt-BR'),
                     dados.fase,
                     dados.operacao || '-',
                     dados.pontuacao,
                     dados.acertos,
                     dados.erros,
                     dados.aproveitamento,
-                    dados.tempo_total,
+                    dados.tempo_total < 60 ? `${dados.tempo_total}s` : `${Math.floor(dados.tempo_total / 60)}min ${dados.tempo_total % 60}s`,
                     dados.concluiu_fase ? 'Sim' : 'Não',
                     (dados.operacoes_erradas || []).join(' | ')
                 ]]
