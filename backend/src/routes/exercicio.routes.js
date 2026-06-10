@@ -128,7 +128,7 @@ router.get('/listas/minhas', verifyToken, requirePerfil('professor'), async (req
 router.get('/listas/turma/:turmaId', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const turma = await db.query(
-      'SELECT id FROM turma_alunos WHERE turma_id = $1 AND aluno_id = $2',
+      'SELECT turma_id FROM turma_alunos WHERE turma_id = $1 AND aluno_id = $2',
       [req.params.turmaId, req.usuario.id]
     )
     if (turma.rows.length === 0)
