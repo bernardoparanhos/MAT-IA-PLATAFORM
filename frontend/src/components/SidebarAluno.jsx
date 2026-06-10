@@ -66,6 +66,14 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
   </div>
 ))}
 
+         {/* Atividades */}
+          <div className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 cursor-not-allowed text-sm font-light opacity-50">
+            <span className="text-slate-600">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6m-6 4h4"/></svg>
+            </span>
+            <span>Atividades</span>
+          </div>
+
          <button
           onClick={() => { navigate('/jogos'); onClick?.() }}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${

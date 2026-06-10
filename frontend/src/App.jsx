@@ -24,6 +24,8 @@ import Materias from './pages/Materias'
 import MateriaBloco from './pages/MateriaBloco'
 import MateriaFavoritas from './pages/MateriaFavoritas'
 import Jogos from './pages/Jogos'
+import AtividadesProfessor from './pages/AtividadesProfessor'
+import AtividadesProfessorDetalhe from './pages/AtividadesProfessorDetalhe'
 
 
 function App() {
@@ -65,6 +67,21 @@ function App() {
           <Route path="/turmas-professor" element={
             <ProtectedRoute perfil="professor">
               <TurmasProfessor />
+            </ProtectedRoute>
+          } />
+          <Route path="/atividades-professor" element={
+            <ProtectedRoute perfil="professor">
+              <AtividadesProfessor />
+            </ProtectedRoute>
+          } />
+          <Route path="/atividades-professor/:id/montar" element={
+            <ProtectedRoute perfil="professor">
+              <AtividadesProfessorDetalhe />
+            </ProtectedRoute>
+          } />
+          <Route path="/atividades-professor/:id" element={
+            <ProtectedRoute perfil="professor">
+              <AtividadesProfessorDetalhe />
             </ProtectedRoute>
           } />
           <Route path="/metricas" element={
