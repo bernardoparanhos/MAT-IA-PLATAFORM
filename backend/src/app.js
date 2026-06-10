@@ -51,9 +51,11 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 // 6. Rotas
 const authRoutes = require('./routes/auth.routes');
 const professorRoutes = require('./routes/professor.routes'); // ← novo
+const exerciciosRoutes = require('./routes/exercicio.routes');
 
 app.use('/auth', authRoutes);
 app.use('/professor', professorRoutes); // ← novo
+app.use('/exercicios', exerciciosRoutes);
 
 // 7. Rota de teste
 app.get('/', (req, res) => {

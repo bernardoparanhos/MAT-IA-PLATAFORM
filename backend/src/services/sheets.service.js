@@ -301,9 +301,68 @@ async function registrarPartidaJogo(dados) {
     }
 }
 
+async function registrarCorrecaoExercicio(dados) {
+    try {
+        const sheets = google.sheets({ version: 'v4', auth })
+        const nomeDaAba = `Exercicios_${dados.turma}`
+
+        // Cria aba se não existir
+        try {
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: process.env.GOOGLE_SPREADSHEET_EXERCICIOS_ID,
+                requestBody: {
+                    requests: [{ addSheet: { properties: { title: nomeDaAba } } }]
+                }
+            })
+        } catch (e) { /* aba já existe */ }
+
+        // Garante cabeçalho
+        const checkHeader = await sheets.spreadsheets.values.get({
+            spreadsheetId: process.env.GOOGLE_SPREADSHEET_EXERCICIOS_ID,
+            range: `${nomeDaAba}!A1:J1`,
+        })
+
+        if (!checkHeader.data.values || checkHeader.data.values.length === 0) {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId: process.env.GOOGLE_SPREADSHEET_EXERCICIOS_ID,
+                range: `${nomeDaAba}!A1:J1`,
+                valueInputOption: 'RAW',
+                requestBody: {
+                    values: [['Data', 'Nome', 'RA', 'Turma', 'Lista', 'Questão', 'Nota IA', 'Nota Final', 'Feedback IA', 'Tempo (s)']]
+                }
+            })
+        }
+
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: process.env.GOOGLE_SPREADSHEET_EXERCICIOS_ID,
+            range: `${nomeDaAba}!A:J`,
+            valueInputOption: 'RAW',
+            requestBody: {
+                values: [[
+                    new Date().toLocaleDateString('pt-BR'),
+                    dados.nome,
+                    dados.ra,
+                    dados.turma,
+                    dados.lista,
+                    dados.questao,
+                    dados.nota_ia,
+                    dados.nota_final,
+                    dados.feedback_ia || '-',
+                    dados.tempo_segundos || '-'
+                ]]
+            }
+        })
+
+        console.log('✅ Correção registrada no Sheets')
+    } catch (e) {
+        console.error('❌ Erro ao registrar correção:', e.message)
+    }
+}
+
 module.exports = {
     registrarDiagnostico,
     registrarFeedback,
     registrarQuestaoRespondida,
-    registrarPartidaJogo
+    registrarPartidaJogo,
+    registrarCorrecaoExercicio
 }
