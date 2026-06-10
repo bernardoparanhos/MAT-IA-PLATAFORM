@@ -183,6 +183,14 @@ router.post('/submissoes', verifyToken, requirePerfil('aluno'), limiterUpload, u
     if (new Date() > new Date(lista.rows[0].data_entrega))
       return res.status(400).json({ message: 'Prazo encerrado.' })
 
+    // Valida que listaquestaoId pertence à lista
+    const lqCheck = await db.query(
+      'SELECT id FROM lista_questoes WHERE id = $1 AND lista_id = $2',
+      [listaquestaoId, listaId]
+    )
+    if (lqCheck.rows.length === 0)
+      return res.status(403).json({ message: 'Questão não pertence a esta lista.' })
+
     // Verifica limite de tentativas
     const tentativas = await db.query(
       'SELECT COUNT(*) FROM submissoes_exercicio WHERE lista_id = $1 AND questao_id = $2 AND aluno_id = $3',
@@ -213,7 +221,7 @@ router.post('/submissoes', verifyToken, requirePerfil('aluno'), limiterUpload, u
         (lista_id, questao_id, aluno_id, imagem_url, imagem_cloudinary_id, status, tentativa)
       VALUES ($1, $2, $3, $4, $5, 'processando', $6)
       RETURNING id
-    `, [listaId, listaquestaoId, req.usuario.id, url, `${publicId}_${hash.slice(0, 16)}`, numeroTentativa])
+        `, [listaId, listaquestaoId, req.usuario.id, url, `${publicId}:::${hash.slice(0, 16)}`, numeroTentativa])
 
     const submissaoId = submissao.rows[0].id
 
@@ -385,7 +393,7 @@ router.post('/submissoes/:id/recorrigir', verifyToken, requirePerfil('professor'
         `, [s.questao_id])
 
         const { enunciado, criterios_ia } = lq.rows[0]
-        const publicId = s.imagem_cloudinary_id.split('_')[0]
+                const publicId = s.imagem_cloudinary_id.split(':::')[0]
         const imagemAssinada = await gerarUrlAssinada(publicId)
 
         const resultado = await corrigirResolucaoFoto({
@@ -425,8 +433,9 @@ router.post('/submissoes/:id/recorrigir', verifyToken, requirePerfil('professor'
 router.patch('/submissoes/:id/nota', verifyToken, requirePerfil('professor'), async (req, res) => {
   try {
     const { nota } = req.body
-    if (nota === undefined || nota < 0 || nota > 10)
-      return res.status(400).json({ message: 'Nota deve estar entre 0 e 10.' })
+    const notaNum = Number(nota)
+    if (!Number.isFinite(notaNum) || notaNum < 0 || notaNum > 10)
+      return res.status(400).json({ message: 'Nota deve ser um número entre 0 e 10.' })
 
     const submissao = await db.query(`
       SELECT se.id FROM submissoes_exercicio se
@@ -443,7 +452,7 @@ router.patch('/submissoes/:id/nota', verifyToken, requirePerfil('professor'), as
         nota_alterada_por = $2,
         nota_alterada_em = NOW()
       WHERE id = $3
-    `, [nota, req.usuario.id, req.params.id])
+    `, [notaNum, req.usuario.id, req.params.id])
 
     return res.json({ ok: true })
   } catch (e) {
@@ -474,7 +483,7 @@ router.get('/submissoes/:id/imagem', verifyToken, requirePerfil('aluno', 'profes
     if (submissao.rows.length === 0)
       return res.status(403).json({ message: 'Sem permissão.' })
 
-    const publicId = submissao.rows[0].imagem_cloudinary_id.split('_')[0]
+        const publicId = submissao.rows[0].imagem_cloudinary_id.split(':::')[0]
     const url = await gerarUrlAssinada(publicId)
 
     return res.json({ url })

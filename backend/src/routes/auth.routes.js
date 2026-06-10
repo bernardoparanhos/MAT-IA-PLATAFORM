@@ -109,9 +109,12 @@ router.get('/turmas/disponiveis', verifyToken, requirePerfil('professor'), async
 router.post('/turmas/associar', verifyToken, requirePerfil('professor'), async (req, res) => {
   const { turmaId } = req.body;
   if (!turmaId) return res.status(400).json({ message: 'turmaId é obrigatório' });
-  const turma = await db.query('SELECT id FROM turmas WHERE id = $1', [turmaId]);
-  if (turma.rows.length === 0) return res.status(404).json({ message: 'Turma não encontrada' });
-  await db.query('UPDATE turmas SET professor_id = $1 WHERE id = $2', [req.usuario.id, turmaId]);
+  const result = await db.query(
+    'UPDATE turmas SET professor_id = $1 WHERE id = $2 AND professor_id IS NULL RETURNING id',
+    [req.usuario.id, turmaId]
+  );
+  if (result.rowCount === 0)
+    return res.status(409).json({ message: 'Turma não encontrada ou já associada a outro professor.' });
   return res.json({ message: 'Turma associada com sucesso!' });
 });
 
