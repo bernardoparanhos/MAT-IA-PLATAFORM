@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
     return JSON.parse(localStorage.getItem('usuario') || 'null')
   })
 
-  function login(token, dadosUsuario) {
+  function login(dadosUsuario) {
     localStorage.setItem('usuario', JSON.stringify(dadosUsuario))
     setUsuario(dadosUsuario)
 

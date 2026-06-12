@@ -59,7 +59,7 @@ async function register(req, res, perfil) {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 8 * 60 * 60 * 1000
       });
-      return res.status(201).json({ message: 'Conta criada com sucesso!', token, usuario: { id: userId, nome, email, perfil: 'aluno' } });
+      return res.status(201).json({ message: 'Conta criada com sucesso!', usuario: { id: userId, nome, email, perfil: 'aluno' } });
     }
 
     if (perfil === 'professor') {
@@ -83,7 +83,7 @@ async function register(req, res, perfil) {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 8 * 60 * 60 * 1000
       });
-      return res.status(201).json({ message: 'Conta criada com sucesso!', token, usuario: { id: userId, nome, email, perfil: 'professor' } });
+      return res.status(201).json({ message: 'Conta criada com sucesso!', usuario: { id: userId, nome, email, perfil: 'professor' } });
     }
 
   } catch (error) {
@@ -130,13 +130,12 @@ async function loginAluno(req, res) {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 8 * 60 * 60 * 1000
     });
-    return res.status(200).json({ 
-      token, 
-      usuario: { 
-        id: usuario.id, 
-        nome: usuario.nome, 
-        email: usuario.email, 
-        perfil: 'aluno' 
+    return res.status(200).json({
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        perfil: 'aluno'
       },
       diagnostico_status: usuario.diagnostico_status
     });
@@ -173,7 +172,7 @@ async function loginProfessor(req, res) {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 8 * 60 * 60 * 1000
     });
-    return res.status(200).json({ token, usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, perfil: 'professor' } });
+    return res.status(200).json({ usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email, perfil: 'professor' } });
 
   } catch (error) {
     console.error('[loginProfessor] Erro:', error);

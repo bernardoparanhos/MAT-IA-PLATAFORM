@@ -140,7 +140,7 @@ function FAQPanel({ aberto, onFechar }) {
       return
     }
 
-    login(data.token, data.usuario)
+    login(data.usuario)
     
     // ← ADICIONA LÓGICA DE REDIRECIONAMENTO BASEADO NO STATUS
     if (perfil === 'aluno' && data.diagnostico_status === 'pendente') {

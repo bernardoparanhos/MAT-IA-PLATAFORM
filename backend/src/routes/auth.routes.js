@@ -292,8 +292,8 @@ router.post('/musicas-favoritas', verifyToken, requirePerfil('aluno'), async (re
 
 
 // ─── REGISTER / LOGIN ─────────────────────────────────────────────────────────
-router.post('/register/aluno', registerAlunoValidation, (req, res) => register(req, res, 'aluno'));
-router.post('/register/professor', registerProfessorValidation, (req, res) => register(req, res, 'professor'));
+router.post('/register/aluno', limiterEsqueciSenha, registerAlunoValidation, (req, res) => register(req, res, 'aluno'));
+router.post('/register/professor', limiterEsqueciSenha, registerProfessorValidation, (req, res) => register(req, res, 'professor'));
 router.post('/login/aluno', loginAlunoValidation, loginAluno);
 router.post('/login/professor', loginProfessorValidation, loginProfessor);
 
