@@ -29,7 +29,7 @@ const MENU_ITEMS = [
 const GESTAO_ITEMS = [
   { label: 'Métricas', path: '/metricas', icon: icons.metricas },
   { label: 'Turmas', path: '/turmas-professor', icon: icons.turmas },
-  { label: 'Atividades', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6m-6 4h4"/></svg> },
+    { label: 'Atividades', path: '/atividades-professor', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6m-6 4h4"/></svg> },
   { label: 'Notificações', path: '/notificacoes-professor', icon: icons.notificacoes, hasBadge: true },
   { label: 'Perfil', path: '/perfil-professor', icon: icons.perfil },
 ]

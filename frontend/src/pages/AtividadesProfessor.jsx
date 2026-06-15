@@ -16,6 +16,7 @@ function AtividadesProfessor() {
   const [form, setForm] = useState({ turmaId: '', titulo: '', descricao: '', data_entrega: '' })
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const [deletando, setDeletando] = useState(null) // id da lista a deletar
 
   useEffect(() => {
     buscarListas()
@@ -41,6 +42,20 @@ function AtividadesProfessor() {
       setTurmas(data.turmas || [])
     } catch (e) {
       console.error('Erro ao buscar turmas', e)
+    }
+  }
+
+  async function deletarLista(id) {
+    try {
+      const res = await fetch(`${API}/exercicios/listas/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (!res.ok) return
+      setListas(prev => prev.filter(l => l.id !== id))
+      setDeletando(null)
+    } catch (e) {
+      console.error('Erro ao deletar lista', e)
     }
   }
 
@@ -122,9 +137,8 @@ function AtividadesProfessor() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {listas.map(lista => (
-                <button
+                <div
                   key={lista.id}
-                  onClick={() => navigate(`/atividades-professor/${lista.id}`)}
                   className="bg-[#1e2d3d] border border-white/5 hover:border-orange-500/20 rounded-2xl p-5 text-left transition-all group"
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -141,17 +155,75 @@ function AtividadesProfessor() {
                     </span>
                   </div>
                   {lista.descricao && <p className="text-slate-400 text-sm font-light mb-3 line-clamp-2">{lista.descricao}</p>}
-                  <div className="flex items-center gap-4 text-xs text-slate-500 font-light">
-                    <span>{lista.total_questoes} questão{lista.total_questoes != 1 ? 'ões' : ''}</span>
-                    <span>•</span>
-                    <span>Prazo: {formatarData(lista.data_entrega)}</span>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-4 text-xs text-slate-500 font-light">
+                      <span>{lista.total_questoes} {lista.total_questoes == 1 ? 'questão' : 'questões'}</span>
+                      <span>•</span>
+                      <span>Prazo: {formatarData(lista.data_entrega)}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {parseInt(lista.total_questoes) === 0 ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => navigate(`/atividades-professor/${lista.id}/montar`)}
+                            className="text-xs px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20 rounded-lg transition-colors font-medium"
+                          >
+                            Montar Lista
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeletando(lista.id) }}
+                            className="text-xs px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg transition-colors"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                         <button
+                            onClick={(e) => { e.stopPropagation(); setDeletando(lista.id) }}
+                            className="text-xs px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg transition-colors"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                          </button>
+                          <button
+                            onClick={() => navigate(`/atividades-professor/${lista.id}/montar`)}
+                            className="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10 rounded-lg transition-colors"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => navigate(`/atividades-professor/${lista.id}/submissoes`)}
+                            className="text-xs px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors font-medium"
+                          >
+                            Ver Submissões
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}
         </main>
       </div>
+
+      {/* Modal confirmar exclusão */}
+      {deletando && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1e2d3d] rounded-2xl w-full max-w-sm border border-white/10 shadow-2xl p-6">
+            <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6 text-red-400"><path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            </div>
+            <h3 className="text-white font-medium text-center mb-2">Excluir lista?</h3>
+            <p className="text-slate-400 text-sm font-light text-center mb-6">Esta ação não pode ser desfeita. A lista e todas as questões associadas serão removidas.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeletando(null)} className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl font-medium transition-colors text-sm">Cancelar</button>
+              <button onClick={() => deletarLista(deletando)} className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors text-sm">Excluir</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal criar lista */}
       {modalAberto && (

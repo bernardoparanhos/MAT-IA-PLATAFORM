@@ -493,4 +493,24 @@ router.get('/submissoes/:id/imagem', verifyToken, requirePerfil('aluno', 'profes
   }
 })
 
+// ─── PROFESSOR: DELETA LISTA ──────────────────────────────────────────────────
+router.delete('/listas/:id', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const lista = await db.query(
+      'SELECT id FROM listas_exercicios WHERE id = $1 AND professor_id = $2',
+      [req.params.id, req.usuario.id]
+    )
+    if (lista.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    await db.query('DELETE FROM lista_questoes WHERE lista_id = $1', [req.params.id])
+    await db.query('DELETE FROM listas_exercicios WHERE id = $1', [req.params.id])
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('[exercicios/listas DELETE] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 module.exports = router

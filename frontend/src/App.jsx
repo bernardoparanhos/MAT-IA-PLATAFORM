@@ -26,6 +26,7 @@ import MateriaFavoritas from './pages/MateriaFavoritas'
 import Jogos from './pages/Jogos'
 import AtividadesProfessor from './pages/AtividadesProfessor'
 import AtividadesProfessorDetalhe from './pages/AtividadesProfessorDetalhe'
+import AtividadesProfessorSubmissoes from './pages/AtividadesProfessorSubmissoes'
 
 
 function App() {
@@ -72,6 +73,11 @@ function App() {
           <Route path="/atividades-professor" element={
             <ProtectedRoute perfil="professor">
               <AtividadesProfessor />
+            </ProtectedRoute>
+          } />
+          <Route path="/atividades-professor/:id/submissoes" element={
+            <ProtectedRoute perfil="professor">
+              <AtividadesProfessorSubmissoes />
             </ProtectedRoute>
           } />
           <Route path="/atividades-professor/:id/montar" element={
