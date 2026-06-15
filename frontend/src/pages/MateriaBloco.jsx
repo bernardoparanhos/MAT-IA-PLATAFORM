@@ -176,12 +176,21 @@ function MateriaBloco() {
         }
       })
 
-      // Mantém o modal aberto por um tempo extra para o aluno ver o feedback e os pontos antes de fechar
-      setTimeout(() => { fecharModal() }, 2500)
     } catch (e) {
       console.error('Erro ao responder questão', e)
     } finally {
       setEnviando(false)
+    }
+  }
+
+  function irParaProxima() {
+    const idx = questoes.findIndex(q => q.id === modalQuestao.id)
+    if (idx < questoes.length - 1) {
+      setModalQuestao(questoes[idx + 1])
+      setRespostaModal(null)
+      setFeedbackModal(null)
+    } else {
+      fecharModal()
     }
   }
 
@@ -457,8 +466,41 @@ function MateriaBloco() {
                         </div>
                     )}
                   </div>
-              ) : (
-                isProfessor ? (
+              ) : null}
+
+              {feedbackModal && (
+                feedbackModal.acertou ? (
+                  <button
+                    onClick={irParaProxima}
+                    className="w-full mt-3 py-3 rounded-xl text-sm font-medium transition-all text-white"
+                    style={{ background: cfg.cor }}
+                  >
+                    {questoes.findIndex(q => q.id === modalQuestao.id) >= questoes.length - 1
+                      ? 'Concluído'
+                      : 'Próxima questão →'}
+                  </button>
+                ) : (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => { setRespostaModal(null); setFeedbackModal(null) }}
+                      className="flex-1 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 bg-white/5"
+                    >
+                      Refazer
+                    </button>
+                    <button
+                      onClick={irParaProxima}
+                      className="flex-1 py-3 rounded-xl text-sm font-medium transition-all text-white"
+                      style={{ background: '#334155' }}
+                    >
+                      {questoes.findIndex(q => q.id === modalQuestao.id) >= questoes.length - 1
+                        ? 'Concluído'
+                        : 'Tentar outra questão →'}
+                    </button>
+                  </div>
+                )
+              )}
+
+              {!feedbackModal && (isProfessor ? (
                   <div className="w-full py-3 rounded-xl text-sm font-light text-center text-slate-500 bg-white/5">
                     Modo visualização — respostas não são registradas
                   </div>
@@ -471,8 +513,7 @@ function MateriaBloco() {
                   >
                     {enviando ? 'Enviando...' : 'Confirmar resposta'}
                   </button>
-                )
-              )}
+                ))}
             </div>
 
           </div>
