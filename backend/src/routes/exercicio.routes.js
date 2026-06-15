@@ -124,6 +124,62 @@ router.get('/listas/minhas', verifyToken, requirePerfil('professor'), async (req
   }
 })
 
+// ─── PROFESSOR: VÊ QUESTÕES DA PRÓPRIA LISTA ─────────────────────────────────
+router.get('/listas/:id/questoes-professor', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const acesso = await db.query(`
+      SELECT le.id FROM listas_exercicios le
+      INNER JOIN turmas t ON t.id = le.turma_id
+      WHERE le.id = $1 AND t.professor_id = $2
+    `, [req.params.id, req.usuario.id])
+    if (acesso.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    const result = await db.query(`
+      SELECT lq.id as lista_questao_id, lq.numero, lq.peso,
+             q.id as questao_id, q.enunciado, q.alternativas, q.latex, q.bloco as bloco_nome,
+             q.dificuldade
+      FROM lista_questoes lq
+      INNER JOIN questoes q ON q.id = lq.questao_id
+      WHERE lq.lista_id = $1
+      ORDER BY lq.numero ASC
+    `, [req.params.id])
+
+    return res.json({ questoes: result.rows })
+  } catch (e) {
+    console.error('[exercicios/listas/:id/questoes-professor GET] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── ALUNO: VÊ QUESTÕES DE UMA LISTA ─────────────────────────────────────────
+router.get('/listas/:id/questoes-aluno', verifyToken, requirePerfil('aluno'), async (req, res) => {
+  try {
+    // Verifica se aluno pertence à turma da lista
+    const acesso = await db.query(`
+      SELECT le.id FROM listas_exercicios le
+      INNER JOIN turma_alunos ta ON ta.turma_id = le.turma_id
+      WHERE le.id = $1 AND ta.aluno_id = $2 AND le.ativa = true
+    `, [req.params.id, req.usuario.id])
+    if (acesso.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    const result = await db.query(`
+      SELECT lq.id as lista_questao_id, lq.numero, lq.peso,
+             q.id as questao_id, q.enunciado, q.alternativas, q.latex, q.bloco as bloco_nome
+      FROM lista_questoes lq
+      INNER JOIN questoes q ON q.id = lq.questao_id
+      WHERE lq.lista_id = $1
+      ORDER BY lq.numero ASC
+    `, [req.params.id])
+
+    return res.json({ questoes: result.rows })
+  } catch (e) {
+    console.error('[exercicios/listas/:id/questoes-aluno GET] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 // ─── ALUNO: VÊ LISTAS DA TURMA ───────────────────────────────────────────────
 router.get('/listas/turma/:turmaId', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {

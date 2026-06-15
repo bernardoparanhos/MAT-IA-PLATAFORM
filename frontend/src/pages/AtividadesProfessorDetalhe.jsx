@@ -54,13 +54,24 @@ function AtividadesProfessorDetalhe() {
 
  async function buscarDados() {
     try {
-      const [resLista, resQuestoes] = await Promise.all([
+      const [resLista, resQuestoes, resQuestoesDaLista] = await Promise.all([
         fetch(`${API}/exercicios/listas/minhas`, { credentials: 'include' }),
-        fetch(`${API}/auth/materias/blocos`, { credentials: 'include' })
+        fetch(`${API}/auth/materias/blocos`, { credentials: 'include' }),
+        fetch(`${API}/exercicios/listas/${id}/questoes-professor`, { credentials: 'include' })
       ])
       const dataListas = await resLista.json()
       const listaAtual = (dataListas.listas || []).find(l => String(l.id) === String(id))
       setLista(listaAtual || { id, titulo: '...', turma: '...', data_entrega: null, descricao: '' })
+
+      const dataQuestoesDaLista = await resQuestoesDaLista.json()
+      const questoesCarregadas = (dataQuestoesDaLista.questoes || []).map(q => ({
+        questaoId: q.questao_id,
+        numero: q.numero,
+        enunciado: q.enunciado,
+        bloco: q.bloco,
+        dificuldade: q.dificuldade
+      }))
+      setQuestoesDaLista(questoesCarregadas)
 
       // Busca questões de todos os blocos
       const blocos = ['inteiros','fracoes','raizes','potencias','geometria','equacao1','equacao2','modulo','exponencial','trigonometria']
@@ -285,11 +296,23 @@ function AtividadesProfessorDetalhe() {
                         <div key={q.questaoId} className="rounded-xl border p-3" style={{ background: cor.bg, borderColor: cor.border }}>
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <span className="text-slate-400 text-xs font-light">Q{q.numero}</span>
-                            <button onClick={() => removerQuestao(q.questaoId)} className="text-slate-500 hover:text-red-400 transition-colors flex-shrink-0">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                            </button>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <button
+                                onClick={() => { const found = todasQuestoes.find(tq => String(tq.id) === String(q.questaoId)); if (found) setQuestaoAberta(found) }}
+                                className="text-slate-500 hover:text-blue-400 transition-colors"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                              </button>
+                              <button onClick={() => removerQuestao(q.questaoId)} className="text-slate-500 hover:text-red-400 transition-colors">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                              </button>
+                            </div>
                           </div>
-                          <p className="text-slate-300 text-xs font-light leading-relaxed line-clamp-2 mb-2">{q.latex ? <Formula tex={q.enunciado} /> : q.enunciado}</p>
+                          <div className="text-slate-300 text-xs font-light leading-relaxed line-clamp-2 mb-2">
+                            {(q.enunciado.includes('<svg') || q.enunciado.trimStart().startsWith('<div'))
+                              ? <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(q.enunciado) }} />
+                              : <Formula tex={q.enunciado} />}
+                          </div>
                           <input
                             type="text"
                             value={criterios[q.questaoId] || ''}

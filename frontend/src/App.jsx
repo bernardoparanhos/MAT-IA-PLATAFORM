@@ -27,6 +27,8 @@ import Jogos from './pages/Jogos'
 import AtividadesProfessor from './pages/AtividadesProfessor'
 import AtividadesProfessorDetalhe from './pages/AtividadesProfessorDetalhe'
 import AtividadesProfessorSubmissoes from './pages/AtividadesProfessorSubmissoes'
+import Atividades from './pages/Atividades'
+import AtividadesAluno from './pages/AtividadesAluno'
 
 
 function App() {
@@ -140,6 +142,18 @@ function App() {
           <Route path="/materias" element={<Materias />} />
           <Route path="/materias/:bloco" element={<MateriaBloco />} />
           <Route path="/materias/favoritas" element={<MateriaFavoritas />} />
+
+          <Route path="/atividades" element={
+            <ProtectedRoute perfil="aluno">
+              <Atividades />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/atividades/:id" element={
+            <ProtectedRoute perfil="aluno">
+              <AtividadesAluno />
+            </ProtectedRoute>
+          } />
 
           <Route path="/jogos" element={
             <ProtectedRoute perfil="aluno">
