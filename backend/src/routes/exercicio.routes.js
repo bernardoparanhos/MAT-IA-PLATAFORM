@@ -192,13 +192,15 @@ router.get('/listas/turma/:turmaId', verifyToken, requirePerfil('aluno'), async 
 
     const result = await db.query(`
       SELECT le.id, le.titulo, le.descricao, le.data_entrega, le.ativa,
-             COUNT(lq.id) as total_questoes
+             COUNT(DISTINCT lq.id) as total_questoes,
+             COUNT(DISTINCT se.id) FILTER (WHERE se.aluno_id = $2) as questoes_enviadas
       FROM listas_exercicios le
       LEFT JOIN lista_questoes lq ON lq.lista_id = le.id
+      LEFT JOIN submissoes_exercicio se ON se.lista_id = le.id AND se.aluno_id = $2
       WHERE le.turma_id = $1 AND le.ativa = true
       GROUP BY le.id
       ORDER BY le.data_entrega ASC
-    `, [req.params.turmaId])
+    `, [req.params.turmaId, req.usuario.id])
 
     return res.json({ listas: result.rows })
   } catch (e) {
@@ -252,7 +254,7 @@ router.post('/submissoes', verifyToken, requirePerfil('aluno'), limiterUpload, u
       'SELECT COUNT(*) FROM submissoes_exercicio WHERE lista_id = $1 AND questao_id = $2 AND aluno_id = $3',
       [listaId, listaquestaoId, req.usuario.id]
     )
-    if (parseInt(tentativas.rows[0].count) >= 3)
+        if (parseInt(tentativas.rows[0].count) >= 1)
       return res.status(400).json({ message: 'Limite de 3 tentativas atingido.' })
 
     // Idempotência — hash do buffer
@@ -324,11 +326,21 @@ router.post('/submissoes', verifyToken, requirePerfil('aluno'), limiterUpload, u
           submissaoId
         ])
 
-        // Notifica aluno
-        await db.query(`
-          INSERT INTO notificacoes_aluno (aluno_id, tipo, mensagem)
-          VALUES ($1, 'correcao_exercicio', $2)
-        `, [req.usuario.id, `Sua resolução foi corrigida. Nota: ${resultado.nota}/10`])
+        // Notifica aluno apenas quando todas as questões da lista estiverem corrigidas
+        const totalQuestoes = await db.query(
+          'SELECT COUNT(*) FROM lista_questoes WHERE lista_id = $1',
+          [listaId]
+        )
+        const totalCorrigidas = await db.query(
+          "SELECT COUNT(*) FROM submissoes_exercicio WHERE lista_id = $1 AND aluno_id = $2 AND status = 'corrigido'",
+          [listaId, req.usuario.id]
+        )
+        if (parseInt(totalCorrigidas.rows[0].count) === parseInt(totalQuestoes.rows[0].count)) {
+          await db.query(`
+            INSERT INTO notificacoes_aluno (aluno_id, tipo, mensagem)
+            VALUES ($1, 'correcao_exercicio', $2)
+          `, [req.usuario.id, 'Sua atividade foi corrigida pela IA. Acesse Atividades para ver o resultado.'])
+        }
 
         // Sheets fire-and-forget
         const dadosAluno = await db.query(
@@ -401,7 +413,7 @@ router.get('/submissoes/lista/:listaId', verifyToken, requirePerfil('professor')
 router.get('/submissoes/minhas', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT se.id, se.status, se.nota_ia, se.nota_final, se.feedback_ia,
+      SELECT se.id, se.lista_id, se.status, se.nota_ia, se.nota_final, se.feedback_ia,
              se.tentativa, se.enviado_em, se.corrigido_em,
              le.titulo as lista,
              q.enunciado

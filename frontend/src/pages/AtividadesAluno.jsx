@@ -21,11 +21,51 @@ function AtividadesAluno() {
   const [preview, setPreview] = useState(null)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
-  const inputRef = useRef()
+  const [navegacaoPendente, setNavegacaoPendente] = useState(null)
+  const [mostrarAvisoSaida, setMostrarAvisoSaida] = useState(false)
+    const imagemSelecionadaRef = useRef(null)
+      const inputRef = useRef()
 
   useEffect(() => {
     buscarDados()
   }, [id])
+
+  // Avisa antes de fechar a aba/navegador com imagem selecionada e não enviada
+  useEffect(() => {
+    function handleBeforeUnload(e) {
+      if (imagemSelecionada) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [imagemSelecionada])
+
+  // Intercepta navegação interna (sidebar, botão "Voltar") quando há imagem selecionada
+  function tentarNavegar(path) {
+    if (imagemSelecionadaRef.current) {
+      setNavegacaoPendente(path)
+      setMostrarAvisoSaida(true)
+    } else {
+      navigate(path)
+    }
+  }
+
+  function continuarRespondendo() {
+    setMostrarAvisoSaida(false)
+    setNavegacaoPendente(null)
+  }
+
+  function sairMesmoAssim() {
+    const path = navegacaoPendente
+    setMostrarAvisoSaida(false)
+    setNavegacaoPendente(null)
+    imagemSelecionadaRef.current = null
+    setImagemSelecionada(null)
+    setPreview(null)
+    if (path) navigate(path)
+  }
 
   async function buscarDados() {
     try {
@@ -66,6 +106,7 @@ function AtividadesAluno() {
   function selecionarImagem(e) {
     const file = e.target.files[0]
     if (!file) return
+    imagemSelecionadaRef.current = file
     setImagemSelecionada(file)
     setPreview(URL.createObjectURL(file))
     setErro('')
@@ -94,10 +135,11 @@ function AtividadesAluno() {
       if (!res.ok) { setErro(data.message || 'Erro ao enviar.'); return }
 
       setSubmissoes(prev => ({ ...prev, [questaoAtual.questao_id]: 'processando' }))
+      imagemSelecionadaRef.current = null
       setImagemSelecionada(null)
       setPreview(null)
 
-      // Vai pra próxima automaticamente se não for a última
+      // Vai pra próxima automaticamente
       if (indexAtual < questoes.length - 1) {
         setTimeout(() => setIndexAtual(i => i + 1), 800)
       }
@@ -132,7 +174,7 @@ function AtividadesAluno() {
       <SidebarAluno
         sidebarAberta={sidebarAberta}
         setSidebarAberta={setSidebarAberta}
-        navigate={navigate}
+        navigate={tentarNavegar}
         logout={logout}
       />
 
@@ -147,7 +189,7 @@ function AtividadesAluno() {
         <main className="flex-1 p-6 lg:p-10 mt-14 lg:mt-0 max-w-3xl mx-auto w-full">
           {/* Header */}
           <div className="mb-6">
-            <button onClick={() => navigate('/atividades')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4 text-sm font-light">
+                        <button onClick={() => tentarNavegar('/atividades')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4 text-sm font-light">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M19 12H5m7-7l-7 7 7 7"/></svg>
               Voltar para Atividades
             </button>
@@ -161,6 +203,12 @@ function AtividadesAluno() {
                   Prazo: {lista?.data_entrega ? new Date(lista.data_entrega).toLocaleDateString('pt-BR') : '...'}
                 </span>
               </div>
+              {!todasRespondidas && (
+                <div className="mt-3 flex items-start gap-2 bg-yellow-500/5 border border-yellow-500/15 rounded-xl px-4 py-3">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                  <p className="text-yellow-400/80 text-xs font-light leading-relaxed">As fotos anexadas não são salvas se você sair da página. Ao voltar, será necessário anexar novamente.</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -209,7 +257,7 @@ function AtividadesAluno() {
               </div>
               <p className="text-white font-medium text-lg mb-2">Todas as questões enviadas!</p>
               <p className="text-slate-400 text-sm font-light mb-6">A IA já está corrigindo suas resoluções. Você será notificado quando terminar.</p>
-              <button onClick={() => navigate('/atividades')} className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition-colors">
+              <button onClick={() => tentarNavegar('/atividades')} className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition-colors">
                 Voltar para Atividades
               </button>
             </div>
@@ -253,7 +301,7 @@ function AtividadesAluno() {
                       <div className="mb-4 relative">
                         <img src={preview} alt="Preview" className="w-full max-h-64 object-contain rounded-xl border border-white/10" />
                         <button
-                          onClick={() => { setImagemSelecionada(null); setPreview(null) }}
+                                    onClick={() => { imagemSelecionadaRef.current = null; setImagemSelecionada(null); setPreview(null) }}
                           className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors"
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M6 18L18 6M6 6l12 12"/></svg>
@@ -302,6 +350,29 @@ function AtividadesAluno() {
           )}
         </main>
       </div>
+
+      {mostrarAvisoSaida && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4">
+          <div className="bg-[#1e2d3d] border border-white/10 rounded-2xl p-6 max-w-sm w-full">
+            <h3 className="text-white font-semibold text-lg mb-2">Tem certeza que deseja sair?</h3>
+            <p className="text-slate-400 text-sm font-light mb-6">Você selecionou uma foto mas ainda não enviou. Ao sair você perderá a imagem selecionada.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={continuarRespondendo}
+                className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-slate-300 rounded-xl text-sm font-medium transition-colors"
+              >
+                Continuar respondendo
+              </button>
+              <button
+                onClick={sairMesmoAssim}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-medium transition-colors"
+              >
+                Sair mesmo assim
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

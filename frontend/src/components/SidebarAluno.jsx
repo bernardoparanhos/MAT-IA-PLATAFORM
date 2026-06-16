@@ -1,24 +1,17 @@
 import { useLocation } from 'react-router-dom'
 import { useNotificacoesAluno } from '../context/NotificacoesAlunoContext'
 import { useMusica } from '../context/MusicaContext'
-
-function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
-  const location = useLocation()
-  const { naoLidas } = useNotificacoesAluno()
-  const { pararMusica } = useMusica()
-
-  const isActive = (path) => location.pathname === path
-
-  const NavItems = ({ onClick }) => (
+function NavItems({ navigate, onClick, isActive, naoLidas, pararMusica, logout }) {
+  return (
     <>
       <nav className="p-4 space-y-1">
         <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 px-3">Menu</p>
-        
+
         {/* Início */}
-        <button 
+        <button
           onClick={() => { navigate('/dashboard'); onClick?.() }}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
-            isActive('/dashboard') 
+            isActive('/dashboard')
               ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
               : 'text-slate-400 hover:bg-white/5 hover:text-white'
           }`}>
@@ -35,11 +28,11 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
         <button
             onClick={() => { navigate('/materias'); onClick?.() }}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
-                isActive('/materias') || location.pathname.startsWith('/materias/')
+                isActive('/materias')
                     ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
                     : 'text-slate-400 hover:bg-white/5 hover:text-white'
             }`}>
-  <span className={isActive('/materias') || location.pathname.startsWith('/materias/') ? 'text-orange-400' : 'text-slate-500'}>
+  <span className={isActive('/materias') ? 'text-orange-400' : 'text-slate-500'}>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
       <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/>
     </svg>
@@ -49,16 +42,16 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
 
 {/* DESABILITADOS - Em construção */}
 {[
-  { 
-    label: 'Tutor IA', 
+  {
+    label: 'Tutor IA',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 16v-4m0-4h.01"/></svg>
   },
-  { 
-    label: 'Fórum', 
+  {
+    label: 'Fórum',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
   },
 ].map(item => (
-  <div 
+  <div
     key={item.label}
     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 cursor-not-allowed text-sm font-light opacity-50">
     <span className="text-slate-600">{item.icon}</span>
@@ -66,7 +59,7 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
   </div>
 ))}
 
-         {/* Atividades */}
+       {/* Atividades */}
           <div className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 cursor-not-allowed text-sm font-light opacity-50">
             <span className="text-slate-600">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6m-6 4h4"/></svg>
@@ -91,7 +84,7 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
         <p className="text-slate-500 text-xs uppercase tracking-widest mb-3 px-3">Minha Conta</p>
 
         {/* Minha Turma */}
-        <button 
+        <button
           onClick={() => { navigate('/minha-turma'); onClick?.() }}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
             isActive('/minha-turma')
@@ -107,8 +100,7 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
         </button>
 
      {/* Notificações - ATIVO */}
-       {/* Notificações - ATIVO */}
-<button 
+<button
   onClick={() => { navigate('/notificacoes-aluno'); onClick?.() }}
   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
     isActive('/notificacoes-aluno')
@@ -130,9 +122,9 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
     </span>
   )}
 </button>
-        
+
         {/* Perfil */}
-        <button 
+        <button
           onClick={() => { navigate('/perfil-aluno'); onClick?.() }}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
             isActive('/perfil-aluno')
@@ -150,7 +142,7 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
 
       <div className="p-4 border-t border-white/10 space-y-1">
         {/* Configurações */}
-        <button 
+        <button
           onClick={() => { navigate('/configuracoes-aluno'); onClick?.() }}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-light transition-colors ${
             isActive('/configuracoes-aluno')
@@ -164,7 +156,7 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
         </button>
 
         {/* Sair */}
-        <button 
+        <button
           onClick={() => { pararMusica(); logout() }}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-colors text-sm font-light">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
@@ -175,6 +167,14 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
       </div>
     </>
   )
+}
+
+function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
+  const location = useLocation()
+  const { naoLidas } = useNotificacoesAluno()
+  const { pararMusica } = useMusica()
+
+  const isActive = (path) => location.pathname === path || (path === '/materias' && location.pathname.startsWith('/materias/'))
 
   return (
     <>
@@ -184,7 +184,7 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
           <h1 className="text-2xl font-bold text-orange-400">MAT<span className="text-white">-IA</span></h1>
           <p className="text-slate-400 text-xs mt-1 font-light">Painel do Aluno</p>
         </div>
-        <NavItems />
+        <NavItems navigate={navigate} isActive={isActive} naoLidas={naoLidas} pararMusica={pararMusica} logout={logout} />
       </aside>
 
       {/* Sidebar mobile */}
@@ -198,7 +198,7 @@ function SidebarAluno({ sidebarAberta, setSidebarAberta, navigate, logout }) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <NavItems onClick={() => setSidebarAberta(false)} />
+        <NavItems navigate={navigate} onClick={() => setSidebarAberta(false)} isActive={isActive} naoLidas={naoLidas} pararMusica={pararMusica} logout={logout} />
       </aside>
     </>
   )

@@ -87,28 +87,49 @@ function Atividades() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {listas.map(lista => (
-                <button
+                <div
                   key={lista.id}
-                  onClick={() => navigate(`/atividades/${lista.id}`)}
-                  className="bg-[#1e2d3d] border border-white/5 hover:border-orange-500/20 rounded-2xl p-5 text-left transition-all group"
+                  onClick={() => {
+                    if (parseInt(lista.questoes_enviadas) >= parseInt(lista.total_questoes) && parseInt(lista.total_questoes) > 0) return
+                    navigate(`/atividades/${lista.id}`)
+                  }}
+                  className={`border rounded-2xl p-5 text-left transition-all group w-full ${
+                    parseInt(lista.questoes_enviadas) >= parseInt(lista.total_questoes) && parseInt(lista.total_questoes) > 0
+                      ? 'bg-green-500/5 border-green-500/15 cursor-not-allowed'
+                      : 'bg-[#1e2d3d] border-white/5 hover:border-orange-500/20 cursor-pointer'
+                  }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="text-white font-medium text-base group-hover:text-orange-400 transition-colors flex-1">{lista.titulo}</h3>
                     <span className={`text-[10px] uppercase tracking-wider font-medium px-2 py-1 rounded-full border ml-3 flex-shrink-0 ${
-                      prazoExpirado(lista.data_entrega)
-                        ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                        : 'bg-green-500/10 text-green-400 border-green-500/20'
+                      parseInt(lista.questoes_enviadas) >= parseInt(lista.total_questoes) && parseInt(lista.total_questoes) > 0
+                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                        : prazoExpirado(lista.data_entrega)
+                          ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                          : 'bg-orange-500/10 text-orange-400 border-orange-500/20'
                     }`}>
-                      {prazoExpirado(lista.data_entrega) ? 'Encerrada' : 'Disponível'}
+                      {parseInt(lista.questoes_enviadas) >= parseInt(lista.total_questoes) && parseInt(lista.total_questoes) > 0
+                        ? 'Concluída'
+                        : prazoExpirado(lista.data_entrega) ? 'Encerrada' : 'Disponível'}
                     </span>
                   </div>
                   {lista.descricao && <p className="text-slate-400 text-sm font-light mb-3 line-clamp-2">{lista.descricao}</p>}
-                  <div className="flex items-center gap-4 text-xs text-slate-500 font-light">
-                    <span>{lista.total_questoes} questão{lista.total_questoes != 1 ? 'ões' : ''}</span>
-                    <span>•</span>
-                    <span>Prazo: {formatarData(lista.data_entrega)}</span>
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-xs text-slate-500 font-light">
+                      <span>{lista.questoes_enviadas || 0}/{lista.total_questoes} questões</span>
+                      <span>•</span>
+                      <span>Prazo: {formatarData(lista.data_entrega)}</span>
+                    </div>
+                    {parseInt(lista.questoes_enviadas) >= parseInt(lista.total_questoes) && parseInt(lista.total_questoes) > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); navigate(`/atividades/${lista.id}/resultado`) }}
+                        className="text-xs px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-lg transition-colors font-medium"
+                      >
+                        Ver resultado
+                      </button>
+                    )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}

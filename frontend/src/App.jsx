@@ -29,6 +29,7 @@ import AtividadesProfessorDetalhe from './pages/AtividadesProfessorDetalhe'
 import AtividadesProfessorSubmissoes from './pages/AtividadesProfessorSubmissoes'
 import Atividades from './pages/Atividades'
 import AtividadesAluno from './pages/AtividadesAluno'
+import AtividadesAlunoResultado from './pages/AtividadesAlunoResultado'
 
 
 function App() {
@@ -146,6 +147,12 @@ function App() {
           <Route path="/atividades" element={
             <ProtectedRoute perfil="aluno">
               <Atividades />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/atividades/:id/resultado" element={
+            <ProtectedRoute perfil="aluno">
+              <AtividadesAlunoResultado />
             </ProtectedRoute>
           } />
 
