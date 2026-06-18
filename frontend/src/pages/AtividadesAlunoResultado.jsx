@@ -141,7 +141,13 @@ function AtividadesAlunoResultado() {
                 {s.status === 'corrigido' && s.feedback_ia && (
                   <div className="px-5 py-4">
                     <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Feedback da IA</p>
-                    <p className="text-slate-300 text-sm font-light leading-relaxed">{s.feedback_ia}</p>
+                   {(() => {
+                      const texto = s.feedback_ia.replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/\\\[/g, '$$').replace(/\\\]/g, '$$')
+                      const temLatex = texto.includes('$') || texto.includes('\\')
+                      return temLatex
+                        ? <p className="text-slate-300 text-sm font-light leading-relaxed [&_.katex]:text-slate-300 [&_.katex]:text-sm"><Formula tex={texto} /></p>
+                        : <p className="text-slate-300 text-sm font-light leading-relaxed">{texto}</p>
+                    })()}
                   </div>
                 )}
 

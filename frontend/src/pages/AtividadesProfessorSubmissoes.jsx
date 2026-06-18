@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import SidebarProfessor from '../components/SidebarProfessor'
+import Formula from '../components/Formula'
+import DOMPurify from 'dompurify'
 
 const API = import.meta.env.VITE_API_URL
 
@@ -16,6 +18,7 @@ function AtividadesProfessorSubmissoes() {
   const [carregandoImagem, setCarregandoImagem] = useState(false)
   const [notaEditando, setNotaEditando] = useState('')
   const [salvandoNota, setSalvandoNota] = useState(false)
+  const [imagemExpandida, setImagemExpandida] = useState(null)
 
   useEffect(() => {
     buscarDados()
@@ -177,8 +180,19 @@ function AtividadesProfessorSubmissoes() {
                       <p className="text-white text-sm font-medium">{aluno.nome}</p>
                       <p className="text-slate-500 text-xs font-light">{aluno.ra}</p>
                     </div>
-                    <div className="ml-auto text-xs text-slate-500 font-light">
-                      {aluno.submissoes.length} resposta{aluno.submissoes.length !== 1 ? 's' : ''}
+                    <div className="ml-auto flex items-center gap-3">
+                      {(() => {
+                        const corrigidas = aluno.submissoes.filter(s => s.status === 'corrigido' && s.nota_final !== null && s.nota_final !== undefined)
+                        if (corrigidas.length === 0) return <span className="text-xs text-slate-500 font-light">{aluno.submissoes.length} resposta{aluno.submissoes.length !== 1 ? 's' : ''}</span>
+                        const media = (corrigidas.reduce((acc, s) => acc + parseFloat(s.nota_final), 0) / corrigidas.length).toFixed(1)
+                        const cor = parseFloat(media) >= 7 ? 'text-green-400' : parseFloat(media) >= 5 ? 'text-yellow-400' : 'text-red-400'
+                        return (
+                          <>
+                            <span className="text-xs text-slate-500 font-light">{aluno.submissoes.length} resposta{aluno.submissoes.length !== 1 ? 's' : ''}</span>
+                            <span className={`text-sm font-medium ${cor}`}>{media}<span className="text-slate-500 text-xs">/10</span></span>
+                          </>
+                        )
+                      })()}
                     </div>
                   </div>
                   <div className="divide-y divide-white/5">
@@ -191,8 +205,10 @@ function AtividadesProfessorSubmissoes() {
                           className="w-full px-5 py-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-left"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-slate-300 text-sm font-light line-clamp-1">{s.enunciado}</p>
-                            <p className="text-slate-500 text-xs mt-0.5">Tentativa {s.tentativa} · {new Date(s.enviado_em).toLocaleDateString('pt-BR')}</p>
+<div className="text-slate-300 text-sm font-light line-clamp-2">
+                              {s.enunciado?.includes('<svg') || s.enunciado?.startsWith('<div')
+                                ? <span dangerouslySetInnerHTML={{ __html: s.enunciado }} />
+: <Formula tex={s.enunciado?.replace(/\\\(/g, '$').replace(/\\\)/g, '$') || ''} />}                            </div>                            <p className="text-slate-500 text-xs mt-0.5">Tentativa {s.tentativa} · {new Date(s.enviado_em).toLocaleDateString('pt-BR')}</p>
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">
                             {s.nota_final !== null && s.nota_final !== undefined && (
@@ -230,8 +246,11 @@ function AtividadesProfessorSubmissoes() {
               {/* Enunciado */}
               <div>
                 <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Questão</p>
-                <p className="text-slate-300 text-sm font-light leading-relaxed">{submissaoAberta.enunciado}</p>
-              </div>
+<div className="text-slate-300 text-sm font-light leading-relaxed">
+                  {submissaoAberta.enunciado?.includes('<svg') || submissaoAberta.enunciado?.startsWith('<div')
+                    ? <span dangerouslySetInnerHTML={{ __html: submissaoAberta.enunciado }} />
+                    : <Formula tex={submissaoAberta.enunciado?.replace(/\\\(/g, '$').replace(/\\\)/g, '$') || ''} />}
+                </div>              </div>
 
               {/* Imagem */}
               <div>
@@ -241,7 +260,13 @@ function AtividadesProfessorSubmissoes() {
                     <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : imagemUrl ? (
-                  <img src={imagemUrl} alt="Resolução" className="w-full rounded-xl border border-white/10 object-contain max-h-80" />
+<div className="relative group cursor-zoom-in" onClick={() => setImagemExpandida(imagemUrl)}>                    <img src={imagemUrl} alt="Resolução" className="w-full rounded-xl border border-white/10 object-contain max-h-80" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 rounded-xl transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs px-3 py-1.5 rounded-full">
+                        Clique para expandir
+                      </span>
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex items-center justify-center h-48 bg-black/20 rounded-xl">
                     <p className="text-slate-500 text-sm">Imagem não disponível</p>
@@ -253,8 +278,13 @@ function AtividadesProfessorSubmissoes() {
               {submissaoAberta.feedback_ia && (
                 <div className="bg-orange-500/5 border border-orange-500/10 rounded-xl p-4">
                   <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Análise da IA</p>
-                  <p className="text-slate-300 text-sm font-light leading-relaxed">{submissaoAberta.feedback_ia}</p>
-                </div>
+{(() => {
+                    const texto = (submissaoAberta.feedback_ia || '').replace(/\\\(/g, '$').replace(/\\\)/g, '$')
+                    const temLatex = texto.includes('$') || texto.includes('\\')
+                    return temLatex
+                      ? <p className="text-slate-300 text-sm font-light leading-relaxed [&_.katex]:text-slate-300 [&_.katex]:text-sm"><Formula tex={texto} /></p>
+                      : <p className="text-slate-300 text-sm font-light leading-relaxed">{texto}</p>
+                  })()}                </div>
               )}
 
               {/* Nota */}
@@ -288,6 +318,14 @@ function AtividadesProfessorSubmissoes() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+    {imagemExpandida && (
+        <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4" onClick={() => setImagemExpandida(null)}>
+          <img src={imagemExpandida} alt="Resolução expandida" className="max-w-full max-h-full object-contain rounded-xl" />
+          <button onClick={() => setImagemExpandida(null)} className="absolute top-4 right-4 text-white/70 hover:text-white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><path d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
         </div>
       )}
     </div>

@@ -214,7 +214,7 @@ function AtividadesProfessorDetalhe() {
                 <select
                   value={filtroBloco}
                   onChange={e => setFiltroBloco(e.target.value)}
-                  className="bg-[#1e2d3d] text-white text-sm rounded-xl px-3 py-2 border border-white/10 focus:border-orange-500 focus:outline-none font-light"
+                  className="bg-[#1e2d3d] text-white text-sm rounded-xl px-3 py-2 pr-8 border border-white/10 focus:border-orange-500 focus:outline-none font-light"
                 >
                   <option value="">Todos os blocos</option>
                   {Object.entries(NOMES_BLOCOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -223,8 +223,7 @@ function AtividadesProfessorDetalhe() {
                 <select
                   value={filtroDificuldade}
                   onChange={e => setFiltroDificuldade(e.target.value)}
-                  className="bg-[#1e2d3d] text-white text-sm rounded-xl px-3 py-2 border border-white/10 focus:border-orange-500 focus:outline-none font-light"
-                >
+className="bg-[#1e2d3d] text-white text-sm rounded-xl px-3 py-2 pr-8 border border-white/10 focus:border-orange-500 focus:outline-none font-light"                >
                   <option value="">Todas as dificuldades</option>
                   <option value="basico">Básico</option>
                   <option value="intermediario">Intermediário</option>

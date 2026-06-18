@@ -244,8 +244,7 @@ function AtividadesProfessor() {
                   value={form.turmaId}
                   onChange={e => setForm(f => ({ ...f, turmaId: e.target.value }))}
                   required
-                  className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 border border-white/10 focus:border-orange-500 focus:outline-none font-light"
-                >
+className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 pr-8 border border-white/10 focus:border-orange-500 focus:outline-none font-light"                >
                   <option value="">Selecione uma turma</option>
                   {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
                 </select>
