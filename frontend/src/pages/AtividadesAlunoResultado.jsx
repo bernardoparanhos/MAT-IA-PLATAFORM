@@ -138,11 +138,17 @@ function AtividadesAlunoResultado() {
                   )}
                 </div>
 
-                {s.status === 'corrigido' && s.feedback_ia && (
+               {s.status === 'corrigido' && s.feedback_ia && (
                   <div className="px-5 py-4">
-                    <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Feedback da IA</p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-slate-500 text-xs uppercase tracking-wider">Feedback</p>
+                      {s.feedback_editado && (
+                        <span className="text-[10px] uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">Editado pelo professor</span>
+                      )}
+                    </div>
                    {(() => {
-                      const texto = s.feedback_ia.replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/\\\[/g, '$$').replace(/\\\]/g, '$$')
+                      const textoFinal = s.feedback_professor || s.feedback_ia
+                      const texto = textoFinal.replace(/\\\(/g, '$').replace(/\\\)/g, '$').replace(/\\\[/g, '$$').replace(/\\\]/g, '$$')
                       const temLatex = texto.includes('$') || texto.includes('\\')
                       return temLatex
                         ? <p className="text-slate-300 text-sm font-light leading-relaxed [&_.katex]:text-slate-300 [&_.katex]:text-sm"><Formula tex={texto} /></p>

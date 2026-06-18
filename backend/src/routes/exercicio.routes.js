@@ -390,6 +390,7 @@ router.get('/submissoes/lista/:listaId', verifyToken, requirePerfil('professor')
 
     const result = await db.query(`
       SELECT se.id, se.status, se.nota_ia, se.nota_final, se.feedback_ia,
+             se.feedback_professor, se.feedback_editado,
              se.tentativa, se.enviado_em, se.corrigido_em, se.questao_identificada,
              se.metodo_correto, se.nota_alterada_em,
              u.nome, u.ra,
@@ -414,6 +415,7 @@ router.get('/submissoes/minhas', verifyToken, requirePerfil('aluno'), async (req
   try {
     const result = await db.query(`
       SELECT se.id, se.lista_id, se.status, se.nota_ia, se.nota_final, se.feedback_ia,
+             se.feedback_professor, se.feedback_editado,
              se.tentativa, se.enviado_em, se.corrigido_em,
              le.titulo as lista,
              q.enunciado
@@ -581,5 +583,36 @@ router.delete('/listas/:id', verifyToken, requirePerfil('professor'), async (req
     return res.status(500).json({ message: 'Erro interno.' })
   }
 })
+
+// ─── PROFESSOR: EDITA FEEDBACK ────────────────────────────────────────────────
+router.patch('/submissoes/:id/feedback', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const { feedback } = req.body
+    if (!feedback || typeof feedback !== 'string')
+      return res.status(400).json({ message: 'Feedback inválido.' })
+
+    const check = await db.query(`
+      SELECT se.id FROM submissoes_exercicio se
+      INNER JOIN listas_exercicios le ON le.id = se.lista_id
+      INNER JOIN turmas t ON t.id = le.turma_id
+      WHERE se.id = $1 AND t.professor_id = $2 AND se.deletado_em IS NULL
+    `, [req.params.id, req.usuario.id])
+    if (check.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    await db.query(`
+      UPDATE submissoes_exercicio
+      SET feedback_professor = $1, feedback_editado = true
+      WHERE id = $2
+    `, [feedback.slice(0, 2000), req.params.id])
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('[exercicios/feedback PATCH] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+module.exports = router
 
 module.exports = router

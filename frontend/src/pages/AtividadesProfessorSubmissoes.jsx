@@ -19,6 +19,9 @@ function AtividadesProfessorSubmissoes() {
   const [notaEditando, setNotaEditando] = useState('')
   const [salvandoNota, setSalvandoNota] = useState(false)
   const [imagemExpandida, setImagemExpandida] = useState(null)
+  const [editandoFeedback, setEditandoFeedback] = useState(false)
+  const [feedbackEditando, setFeedbackEditando] = useState('')
+  const [salvandoFeedback, setSalvandoFeedback] = useState(false)
 
   useEffect(() => {
     buscarDados()
@@ -95,6 +98,28 @@ function AtividadesProfessorSubmissoes() {
       console.error('Erro ao recorrigir', e)
     }
   }
+
+  async function salvarFeedback() {
+  if (!feedbackEditando.trim()) return
+  setSalvandoFeedback(true)
+  try {
+    await fetch(`${API}/exercicios/submissoes/${submissaoAberta.id}/feedback`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ feedback: feedbackEditando })
+    })
+    setSubmissoes(prev => prev.map(s =>
+      s.id === submissaoAberta.id ? { ...s, feedback_professor: feedbackEditando, feedback_editado: true } : s
+    ))
+    setSubmissaoAberta(prev => ({ ...prev, feedback_professor: feedbackEditando, feedback_editado: true }))
+    setEditandoFeedback(false)
+  } catch (e) {
+    console.error('Erro ao salvar feedback', e)
+  } finally {
+    setSalvandoFeedback(false)
+  }
+}
 
   const statusLabel = (s) => {
     if (s.status === 'processando') return { label: 'Processando', cor: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' }
@@ -277,14 +302,58 @@ function AtividadesProfessorSubmissoes() {
               {/* Feedback IA */}
               {submissaoAberta.feedback_ia && (
                 <div className="bg-orange-500/5 border border-orange-500/10 rounded-xl p-4">
-                  <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Análise da IA</p>
-{(() => {
-                    const texto = (submissaoAberta.feedback_ia || '').replace(/\\\(/g, '$').replace(/\\\)/g, '$')
-                    const temLatex = texto.includes('$') || texto.includes('\\')
-                    return temLatex
-                      ? <p className="text-slate-300 text-sm font-light leading-relaxed [&_.katex]:text-slate-300 [&_.katex]:text-sm"><Formula tex={texto} /></p>
-                      : <p className="text-slate-300 text-sm font-light leading-relaxed">{texto}</p>
-                  })()}                </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <p className="text-slate-500 text-xs uppercase tracking-wider">Análise da IA</p>
+                      {submissaoAberta.feedback_editado && (
+                        <span className="text-[10px] uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">Editado pelo professor</span>
+                      )}
+                    </div>
+                    {!editandoFeedback && (
+                      <button
+                        onClick={() => { setEditandoFeedback(true); setFeedbackEditando(submissaoAberta.feedback_professor || submissaoAberta.feedback_ia) }}
+                        className="text-slate-500 hover:text-orange-400 transition-colors"
+                        title="Editar feedback"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    )}
+                  </div>
+                  {editandoFeedback ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={feedbackEditando}
+                        onChange={e => setFeedbackEditando(e.target.value)}
+                        rows={4}
+                        className="w-full bg-[#0f172a] text-white text-sm rounded-xl px-3 py-2.5 border border-white/10 focus:border-orange-500 focus:outline-none font-light resize-none"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={salvarFeedback}
+                          disabled={salvandoFeedback}
+                          className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-lg text-xs font-medium transition-colors"
+                        >
+                          {salvandoFeedback ? 'Salvando...' : 'Salvar'}
+                        </button>
+                        <button
+                          onClick={() => setEditandoFeedback(false)}
+                          className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-lg text-xs transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    (() => {
+                      const textoFinal = submissaoAberta.feedback_professor || submissaoAberta.feedback_ia
+                      const texto = textoFinal.replace(/\\\(/g, '$').replace(/\\\)/g, '$')
+                      const temLatex = texto.includes('$') || texto.includes('\\')
+                      return temLatex
+                        ? <p className="text-slate-300 text-sm font-light leading-relaxed [&_.katex]:text-slate-300 [&_.katex]:text-sm"><Formula tex={texto} /></p>
+                        : <p className="text-slate-300 text-sm font-light leading-relaxed">{texto}</p>
+                    })()
+                  )}
+                </div>
               )}
 
               {/* Nota */}
@@ -307,12 +376,6 @@ function AtividadesProfessorSubmissoes() {
                     className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-colors"
                   >
                     {salvandoNota ? 'Salvando...' : 'Salvar nota'}
-                  </button>
-                  <button
-                    onClick={recorrigir}
-                    className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl text-sm transition-colors"
-                  >
-                    Recorrigir com IA
                   </button>
                 </div>
               </div>
