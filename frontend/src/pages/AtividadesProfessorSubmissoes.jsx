@@ -289,7 +289,7 @@ function AtividadesProfessorSubmissoes() {
 
               {/* Nota */}
               <div>
-                <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Nota final</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Nota final <span className="text-orange-400/60 normal-case tracking-normal font-light">— editável</span></p>
                 <div className="flex items-center gap-3">
                   <input
                     type="number"
