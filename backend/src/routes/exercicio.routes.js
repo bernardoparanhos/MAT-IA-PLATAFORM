@@ -571,6 +571,7 @@ router.delete('/listas/:id', verifyToken, requirePerfil('professor'), async (req
     if (lista.rows.length === 0)
       return res.status(403).json({ message: 'Sem permissão.' })
 
+   await db.query('DELETE FROM submissoes_exercicio WHERE lista_id = $1', [req.params.id])
     await db.query('DELETE FROM lista_questoes WHERE lista_id = $1', [req.params.id])
     await db.query('DELETE FROM listas_exercicios WHERE id = $1', [req.params.id])
 
