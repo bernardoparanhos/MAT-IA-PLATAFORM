@@ -23,7 +23,7 @@ app.use(cors({
       callback(new Error('Bloqueado pelo CORS'))
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
@@ -45,8 +45,8 @@ const limiterLogin = rateLimit({
 app.use('/auth/login', limiterLogin);
 
 // 5. Body parser
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 6. Rotas
 const authRoutes = require('./routes/auth.routes');
