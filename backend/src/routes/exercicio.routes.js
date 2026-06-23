@@ -400,7 +400,8 @@ router.get('/submissoes/lista/:listaId', verifyToken, requirePerfil('professor')
              se.tentativa, se.enviado_em, se.corrigido_em, se.questao_identificada,
              se.metodo_correto, se.nota_alterada_em,
              u.nome, u.ra,
-             q.enunciado
+             q.enunciado,
+             lq.imagem_modelo_cloudinary_id
       FROM submissoes_exercicio se
       INNER JOIN usuarios u ON u.id = se.aluno_id
       INNER JOIN lista_questoes lq ON lq.id = se.questao_id
@@ -752,6 +753,26 @@ router.patch('/submissoes/:id/feedback', verifyToken, requirePerfil('professor')
   }
 })
 
-module.exports = router
+// ─── PROFESSOR: VÊ IMAGEM MODELO DA SUBMISSÃO ────────────────────────────────
+router.get('/submissoes/:id/imagem-modelo', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT lq.imagem_modelo_cloudinary_id FROM submissoes_exercicio se
+      INNER JOIN lista_questoes lq ON lq.id = se.questao_id
+      INNER JOIN listas_exercicios le ON le.id = se.lista_id
+      INNER JOIN turmas t ON t.id = le.turma_id
+      WHERE se.id = $1 AND t.professor_id = $2 AND se.deletado_em IS NULL
+    `, [req.params.id, req.usuario.id])
+
+    if (result.rows.length === 0 || !result.rows[0].imagem_modelo_cloudinary_id)
+      return res.status(404).json({ message: 'Imagem modelo não encontrada.' })
+
+    const url = await gerarUrlAssinada(result.rows[0].imagem_modelo_cloudinary_id)
+    return res.json({ url })
+  } catch (e) {
+    console.error('[exercicios/imagem-modelo GET] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
 
 module.exports = router

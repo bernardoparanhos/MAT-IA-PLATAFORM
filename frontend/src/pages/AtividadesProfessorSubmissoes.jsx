@@ -22,6 +22,8 @@ function AtividadesProfessorSubmissoes() {
   const [editandoFeedback, setEditandoFeedback] = useState(false)
   const [feedbackEditando, setFeedbackEditando] = useState('')
   const [salvandoFeedback, setSalvandoFeedback] = useState(false)
+  const [imagemModeloUrl, setImagemModeloUrl] = useState(null)
+  const [carregandoModelo, setCarregandoModelo] = useState(false)
 
   useEffect(() => {
     buscarDados()
@@ -59,6 +61,21 @@ function AtividadesProfessorSubmissoes() {
       console.error('Erro ao buscar imagem', e)
     } finally {
       setCarregandoImagem(false)
+    }
+  }
+
+  async function verImagemModelo() {
+    if (!submissaoAberta?.imagem_modelo_cloudinary_id) return
+    setCarregandoModelo(true)
+    try {
+      const res = await fetch(`${API}/exercicios/submissoes/${submissaoAberta.id}/imagem-modelo`, { credentials: 'include' })
+      const data = await res.json()
+      setImagemModeloUrl(data.url)
+      setImagemExpandida(data.url)
+    } catch (e) {
+      console.error('Erro ao buscar imagem modelo', e)
+    } finally {
+      setCarregandoModelo(false)
     }
   }
 
@@ -277,9 +294,25 @@ function AtividadesProfessorSubmissoes() {
                     : <Formula tex={submissaoAberta.enunciado?.replace(/\\\(/g, '$').replace(/\\\)/g, '$') || ''} />}
                 </div>              </div>
 
-              {/* Imagem */}
+             {/* Imagem */}
               <div>
-                <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Resolução do aluno</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-slate-500 text-xs uppercase tracking-wider">Resolução do aluno</p>
+                  {submissaoAberta.imagem_modelo_cloudinary_id && (
+                    <button
+                      onClick={verImagemModelo}
+                      disabled={carregandoModelo}
+                      className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {carregandoModelo ? (
+                        <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      )}
+                      Ver modelo do professor
+                    </button>
+                  )}
+                </div>
                 {carregandoImagem ? (
                   <div className="flex items-center justify-center h-48 bg-black/20 rounded-xl">
                     <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
