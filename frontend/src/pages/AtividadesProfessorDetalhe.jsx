@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SidebarProfessor from '../components/SidebarProfessor'
@@ -48,6 +48,9 @@ function AtividadesProfessorDetalhe() {
 
   const [salvando, setSalvando] = useState(false)
 
+  const [imagensModelo, setImagensModelo] = useState({})
+  const debounceTimers = useRef({})
+
   useEffect(() => {
     buscarDados()
   }, [id])
@@ -66,6 +69,7 @@ function AtividadesProfessorDetalhe() {
       const dataQuestoesDaLista = await resQuestoesDaLista.json()
       const questoesCarregadas = (dataQuestoesDaLista.questoes || []).map(q => ({
         questaoId: q.questao_id,
+        listaquestaoId: q.lista_questao_id,
         numero: q.numero,
         enunciado: q.enunciado,
         bloco: q.bloco,
@@ -111,43 +115,100 @@ function AtividadesProfessorDetalhe() {
     }
   }
 
-  function adicionarQuestao(q) {
+  async function adicionarQuestao(q) {
     if (jaAdicionada(q.id)) return
     if (questoesDaLista.length >= 12) return
-    setQuestoesDaLista(prev => [...prev, {
-      questaoId: q.id,
-      numero: prev.length + 1,
-      enunciado: q.enunciado,
-      bloco: q.bloco,
-      dificuldade: q.dificuldade,
-      latex: q.latex
-    }])
+    const numero = questoesDaLista.length + 1
+    try {
+      const res = await fetch(`${API}/exercicios/listas/${id}/questoes`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questaoId: q.id, numero, peso: 1.0, criterios_ia: null })
+      })
+      const data = await res.json()
+      if (!res.ok) return
+      setQuestoesDaLista(prev => [...prev, {
+        questaoId: q.id,
+        listaquestaoId: data.id,
+        numero,
+        enunciado: q.enunciado,
+        bloco: q.bloco,
+        dificuldade: q.dificuldade,
+        latex: q.latex
+      }])
+    } catch (e) {
+      console.error('Erro ao adicionar questão', e)
+    }
   }
 
-  function removerQuestao(questaoId) {
-    setQuestoesDaLista(prev =>
-      prev.filter(q => q.questaoId !== questaoId).map((q, i) => ({ ...q, numero: i + 1 }))
-    )
+  async function removerQuestao(questaoId) {
+    const questao = questoesDaLista.find(q => q.questaoId === questaoId)
+    if (!questao?.listaquestaoId) return
+    try {
+      const res = await fetch(`${API}/exercicios/listas/${id}/questoes/${questao.listaquestaoId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (!res.ok) return
+      setQuestoesDaLista(prev =>
+        prev.filter(q => q.questaoId !== questaoId).map((q, i) => ({ ...q, numero: i + 1 }))
+      )
+    } catch (e) {
+      console.error('Erro ao remover questão', e)
+    }
+  }
+
+  function handleCriterioChange(questaoId, listaquestaoId, valor) {
+    setCriterios(prev => ({ ...prev, [questaoId]: valor }))
+    clearTimeout(debounceTimers.current[questaoId])
+    debounceTimers.current[questaoId] = setTimeout(async () => {
+      try {
+        await fetch(`${API}/exercicios/listas/${id}/questoes/${listaquestaoId}/criterio`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ criterios_ia: valor || null })
+        })
+      } catch (e) {
+        console.error('Erro ao salvar critério', e)
+      }
+    }, 800)
+  }
+
+
+  async function uploadImagemModelo(questaoId, listaquestaoId, file) {
+    if (!file) return
+    setImagensModelo(prev => ({ ...prev, [questaoId]: { uploading: true } }))
+    try {
+      const formData = new FormData()
+      formData.append('imagem', file)
+      const res = await fetch(`${API}/exercicios/listas/${id}/questoes/${listaquestaoId}/imagem-modelo`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setImagensModelo(prev => ({ ...prev, [questaoId]: { uploading: false, publicId: data.publicId } }))
+      } else {
+        setImagensModelo(prev => ({ ...prev, [questaoId]: { uploading: false } }))
+      }
+    } catch (e) {
+      console.error('Erro ao fazer upload da imagem modelo', e)
+      setImagensModelo(prev => ({ ...prev, [questaoId]: { uploading: false } }))
+    }
   }
 
   async function publicarLista() {
     if (questoesDaLista.length === 0) return
     setSalvando(true)
     try {
-      for (const q of questoesDaLista) {
-        await fetch(`${API}/exercicios/listas/${id}/questoes`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            questaoId: q.questaoId,
-            numero: q.numero,
-            peso: 1.0,
-            criterios_ia: criterios[q.questaoId] || null
-          })
-        })
-      }
-      navigate('/atividades-professor')
+      const res = await fetch(`${API}/exercicios/listas/${id}/ativar`, {
+        method: 'PATCH',
+        credentials: 'include'
+      })
+      if (res.ok) navigate('/atividades-professor')
     } catch (e) {
       console.error('Erro ao publicar', e)
     } finally {
@@ -315,10 +376,44 @@ className="bg-[#1e2d3d] text-white text-sm rounded-xl px-3 py-2 pr-8 border bord
                           <input
                             type="text"
                             value={criterios[q.questaoId] || ''}
-                            onChange={e => setCriterios(prev => ({ ...prev, [q.questaoId]: e.target.value }))}
+                            onChange={e => handleCriterioChange(q.questaoId, q.listaquestaoId, e.target.value)}
                             placeholder="Critério para IA (opcional)"
                             className="w-full bg-black/20 text-white text-xs rounded-lg px-2 py-1.5 border border-white/10 focus:border-orange-500 focus:outline-none font-light"
                           />
+                          <div className="mt-1.5">
+                            <label className="flex items-center gap-1.5 cursor-pointer group">
+                              <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs transition-colors ${
+                                imagensModelo[q.questaoId]?.publicId
+                                  ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                                  : 'bg-black/20 border-white/10 text-slate-500 group-hover:border-orange-500/30 group-hover:text-slate-400'
+                              }`}>
+                                {imagensModelo[q.questaoId]?.uploading ? (
+                                  <div className="w-3 h-3 border border-orange-500 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
+                                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                  </svg>
+                                )}
+                                <span>
+                                  {imagensModelo[q.questaoId]?.publicId
+                                    ? 'Modelo enviado ✓'
+                                    : imagensModelo[q.questaoId]?.uploading
+                                      ? 'Enviando...'
+                                      : 'Resolução modelo (opcional)'}
+                                </span>
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                className="hidden"
+                                onChange={e => {
+                                  const file = e.target.files[0]
+                                  if (file && q.listaquestaoId) uploadImagemModelo(q.questaoId, q.listaquestaoId, file)
+                                }}
+                              />
+                            </label>
+                          </div>
                         </div>
                       )
                     })}

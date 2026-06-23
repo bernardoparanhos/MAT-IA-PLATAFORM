@@ -47,10 +47,10 @@ async function chamarOpenAI(messages, maxTokens = 1000, temperature = 0.7, tenta
     }
 }
 
-async function corrigirResolucaoFoto({ enunciado, criterios, imagemUrl }) {
+async function corrigirResolucaoFoto({ enunciado, criterios, imagemUrl, imagemModeloUrl }) {
     const criteriosTruncados = (criterios || '').slice(0, 500)
 
-    const prompt = `Você é um professor de matemática rigoroso, porém justo, corrigindo uma resolução manuscrita. Siga o processo em camadas.
+    const prompt = `Você é um professor de matemática rigoroso, corrigindo uma resolução manuscrita. Aplique os critérios abaixo em ordem de prioridade, sem exceções.
 
 QUESTÃO PROPOSTA:
 ${enunciado}
@@ -58,32 +58,53 @@ ${enunciado}
 CRITÉRIOS DO PROFESSOR (gabarito de referência):
 '''${criteriosTruncados}'''
 
+${imagemModeloUrl ? `─── RESOLUÇÃO MODELO DO PROFESSOR ───
+O professor forneceu uma resolução de referência (segunda imagem enviada). Esta resolução tem PRIORIDADE MÁXIMA sobre qualquer outro critério.
+Use-a como gabarito absoluto de método, organização e encadeamento de passos.
+Avalie o aluno comparando:
+1. Se o método usado é compatível com o da resolução modelo
+2. Se o nível de organização é equivalente ao modelo
+3. Se o encadeamento de passos segue a mesma lógica do modelo
+4. Se o resultado final coincide com o do modelo
+Qualquer desvio significativo do método do modelo deve ser penalizado, mesmo que o resultado esteja correto.` : ''}
+
 SISTEMA DE VERIFICAÇÃO:
-1. Resolva a questão por conta própria primeiro para ter o gabarito exato.
-2. Leia a resolução da imagem. Seja tolerante com CALIGRAFIA feia ou desorganizada.
-3. ATENÇÃO: Tolerância visual NÃO significa tolerância matemática. Se o aluno escrever uma operação matematicamente falsa (ex: 11x11=144), isso é um erro grave, não um pequeno erro de conta.
+1. Resolva a questão por conta própria para ter o gabarito exato.
+2. Leia a resolução da imagem com atenção.
+3. Aplique os critérios abaixo em ordem — erros eliminatórios primeiro, depois qualidade.
 
-INSTRUÇÕES ANTI-ALUCINAÇÃO:
-- Se a matemática estiver correta, a nota DEVE ser 10.0. NUNCA desconte pontos por falta de organização ou caligrafia.
-- Só marque metodo_correto: false se a fórmula ou o caminho escolhido estiverem conceitualmente errados.
-- Um erro de tabuada básica que corrompe o resultado final deve jogar a nota para a faixa de 0.0 a 4.5.
+─── ERROS ELIMINATÓRIOS (nota = 0.0 imediato, sem exceção) ───
+- Erro de tabuada básica (ex: 3×4=13, 7×8=54, 11×11=144)
+- Erro de sinal (ex: resultado negativo quando deveria ser positivo, troca de + por −)
+- Fórmula ou método conceitualmente errado
+- Resultado final incorreto
+- Resolução em branco ou ilegível
 
-CRITÉRIOS DE NOTA (SISTEMA BINÁRIO RIGOROSO):
-A avaliação deve focar no método correto e no resultado final. Na grande maioria dos casos, a nota será 10.0 ou 0.0.
+─── PENALIDADE DE ORGANIZAÇÃO (obrigatória se não houver erro eliminatório) ───
+Organização é um requisito, não um bônus. Se a resolução estiver desorganizada, confusa ou sem estrutura visual clara, desconte no mínimo 30% da nota base (ex: nota base 10.0 → máximo 7.0). Seja objetivo: passos espalhados, sem sequência ou sem separação clara caracterizam desorganização.
 
-- 10.0: O aluno demonstrou um método matematicamente válido (mesmo que diferente do gabarito) e chegou ao resultado correto. Ignore caligrafia feia, falta de organização estética ou passos intermediários fora de ordem.
-- 0.0: O aluno usou fórmula errada, cometeu erro matemático que corrompe a lógica da questão (ex: afirmar que 11×11=144), não chegou ao resultado esperado, ou a resolução está em branco.
-- 5.0 (CASO RARO — use com extrema parcimônia): APENAS se o aluno demonstrou raciocínio e método completamente corretos e cometeu um único erro de desatenção na última linha (ex: esqueceu um sinal negativo no resultado final, erro de adição simples no último passo). Não use para erros no meio do processo.
+─── CRITÉRIOS DE QUALIDADE (avaliar após confirmar ausência de erros eliminatórios) ───
+a) Desenvolvimento e conclusão: deve haver início, passo a passo explícito e conclusão clara.
+b) Encadeamento lógico: cada etapa deve decorrer coerentemente da anterior.
+c) Fundamentação teórica: o aluno deve indicar o método ou técnica usada, não apenas o resultado.
+d) Clareza e objetividade: a resolução deve ser compreensível, sem ambiguidade.
+e) Domínio de conteúdo (APENAS para questões dissertativas/abertas): avalie se o aluno demonstra conhecimento teórico da área. Para questões de cálculo direto, ignore este critério.
 
-ATENÇÃO: Se os critérios do professor estiverem preenchidos e especificarem um método obrigatório, verifique também se o método usado pelo aluno corresponde ao exigido.
+─── TABELA DE NOTAS ───
+- 10.0: Sem erros eliminatórios + organizado + todos os critérios de qualidade atendidos.
+- 7.0: Correto matematicamente e com boa qualidade, mas com penalidade de organização (-30%).
+- 5.0 (RARO): Método e raciocínio 100% corretos, resolução organizada, porém com único erro de desatenção na última linha (ex: esqueceu sinal no resultado final, erro de adição simples no passo final). Não use para erros no meio do processo.
+- 0.0: Qualquer erro eliminatório presente, ou resolução em branco.
+
+ATENÇÃO: Se os critérios do professor especificarem um método obrigatório, verifique se o método do aluno corresponde ao exigido.
 
 Responda SOMENTE com JSON válido neste formato exato. O campo "raciocinio_analitico" DEVE vir primeiro:
 {
-  "raciocinio_analitico": "Escreva aqui seu passo a passo resolvendo a questão, lendo a imagem e comparando os dois. Seja breve.",
+  "raciocinio_analitico": "Passo a passo: resolva a questão, leia a imagem, verifique erros eliminatórios, avalie organização e cada critério de qualidade, então calcule a nota justificando.",
   "questao_identificada": true,
   "nota": 0.0,
-  "feedback": "Máximo 3 frases diretas ao aluno. Comece elogiando o que acertou, aponte o erro exato (se houver), e dê uma dica.",
-  "erros": ["lista de erros matemáticos específicos, se houver"],
+  "feedback": "Máximo 3 frases diretas ao aluno. Aponte o que acertou, o erro exato (se houver) e uma dica concreta de melhoria.",
+  "erros": ["lista de erros específicos encontrados, se houver"],
   "metodo_correto": true
 }`
 
@@ -110,7 +131,12 @@ Responda SOMENTE com JSON válido neste formato exato. O campo "raciocinio_anali
                         role: 'user',
                         content: [
                             { type: 'text', text: enunciado },
-                            { type: 'image_url', image_url: { url: imagemUrl, detail: 'high' } }
+                            { type: 'text', text: 'Resolução do aluno:' },
+                            { type: 'image_url', image_url: { url: imagemUrl, detail: 'high' } },
+                            ...(imagemModeloUrl ? [
+                                { type: 'text', text: 'Resolução modelo do professor (gabarito de referência):' },
+                                { type: 'image_url', image_url: { url: imagemModeloUrl, detail: 'high' } }
+                            ] : [])
                         ]
                     }
                 ],

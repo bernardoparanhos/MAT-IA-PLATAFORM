@@ -287,7 +287,7 @@ router.post('/submissoes', verifyToken, requirePerfil('aluno'), limiterUpload, u
     setImmediate(async () => {
       try {
         const lq = await db.query(`
-          SELECT lq.criterios_ia, q.enunciado
+          SELECT lq.criterios_ia, lq.imagem_modelo_cloudinary_id, q.enunciado
           FROM lista_questoes lq
           INNER JOIN questoes q ON q.id = lq.questao_id
           WHERE lq.id = $1
@@ -295,13 +295,19 @@ router.post('/submissoes', verifyToken, requirePerfil('aluno'), limiterUpload, u
 
         if (lq.rows.length === 0) throw new Error('Questão não encontrada')
 
-        const { enunciado, criterios_ia } = lq.rows[0]
+        const { enunciado, criterios_ia, imagem_modelo_cloudinary_id } = lq.rows[0]
         const imagemAssinada = await gerarUrlAssinada(publicId)
+
+        let imagemModeloAssinada = null
+        if (imagem_modelo_cloudinary_id) {
+          imagemModeloAssinada = await gerarUrlAssinada(imagem_modelo_cloudinary_id)
+        }
 
         const resultado = await corrigirResolucaoFoto({
           enunciado,
           criterios: criterios_ia,
-          imagemUrl: imagemAssinada
+          imagemUrl: imagemAssinada,
+          imagemModeloUrl: imagemModeloAssinada
         })
 
         await db.query(`
@@ -563,6 +569,54 @@ router.get('/submissoes/:id/imagem', verifyToken, requirePerfil('aluno', 'profes
   }
 })
 
+// ─── PROFESSOR: UPLOAD IMAGEM MODELO DA QUESTÃO ──────────────────────────────
+router.post('/listas/:id/questoes/:listaquestaoId/imagem-modelo', verifyToken, requirePerfil('professor'), upload.single('imagem'), async (req, res) => {
+  try {
+    if (!req.file)
+      return res.status(400).json({ message: 'Imagem é obrigatória.' })
+
+    // Valida magic bytes
+    const buffer = req.file.buffer
+    const isJpeg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF
+    const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47
+    if (!isJpeg && !isPng)
+      return res.status(415).json({ message: 'Formato de imagem inválido.' })
+
+    // Verifica se a lista pertence ao professor
+    const lista = await db.query(`
+      SELECT le.id FROM listas_exercicios le
+      INNER JOIN turmas t ON t.id = le.turma_id
+      WHERE le.id = $1 AND t.professor_id = $2
+    `, [req.params.id, req.usuario.id])
+    if (lista.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    // Verifica se a lista_questao pertence à lista
+    const lq = await db.query(
+      'SELECT id FROM lista_questoes WHERE id = $1 AND lista_id = $2',
+      [req.params.listaquestaoId, req.params.id]
+    )
+    if (lq.rows.length === 0)
+      return res.status(403).json({ message: 'Questão não pertence a esta lista.' })
+
+    // Upload Cloudinary na pasta de modelos do professor
+    const pasta = `mat-ia/modelos-professor/${req.usuario.id}/${req.params.id}`
+    const { url, publicId } = await uploadImagem(buffer, req.file.mimetype, pasta)
+
+    // Salva no banco
+    await db.query(`
+      UPDATE lista_questoes
+      SET imagem_modelo_cloudinary_id = $1, imagem_modelo_url = $2
+      WHERE id = $3
+    `, [publicId, url, req.params.listaquestaoId])
+
+    return res.json({ ok: true, publicId })
+  } catch (e) {
+    console.error('[exercicios/imagem-modelo POST] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 // ─── PROFESSOR: DELETA LISTA ──────────────────────────────────────────────────
 router.delete('/listas/:id', verifyToken, requirePerfil('professor'), async (req, res) => {
   try {
@@ -580,6 +634,91 @@ router.delete('/listas/:id', verifyToken, requirePerfil('professor'), async (req
     return res.json({ ok: true })
   } catch (e) {
     console.error('[exercicios/listas DELETE] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── PROFESSOR: REMOVE QUESTÃO DA LISTA ──────────────────────────────────────
+router.delete('/listas/:id/questoes/:listaquestaoId', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const lista = await db.query(`
+      SELECT le.id FROM listas_exercicios le
+      INNER JOIN turmas t ON t.id = le.turma_id
+      WHERE le.id = $1 AND t.professor_id = $2
+    `, [req.params.id, req.usuario.id])
+    if (lista.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    await db.query(
+      'DELETE FROM submissoes_exercicio WHERE questao_id = $1',
+      [req.params.listaquestaoId]
+    )
+    await db.query(
+      'DELETE FROM lista_questoes WHERE id = $1 AND lista_id = $2',
+      [req.params.listaquestaoId, req.params.id]
+    )
+
+    // Renumera as questões restantes
+    const restantes = await db.query(
+      'SELECT id FROM lista_questoes WHERE lista_id = $1 ORDER BY numero ASC',
+      [req.params.id]
+    )
+    for (let i = 0; i < restantes.rows.length; i++) {
+      await db.query(
+        'UPDATE lista_questoes SET numero = $1 WHERE id = $2',
+        [i + 1, restantes.rows[i].id]
+      )
+    }
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('[exercicios/listas/:id/questoes DELETE] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── PROFESSOR: ATUALIZA CRITÉRIO DA QUESTÃO ─────────────────────────────────
+router.patch('/listas/:id/questoes/:listaquestaoId/criterio', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const lista = await db.query(`
+      SELECT le.id FROM listas_exercicios le
+      INNER JOIN turmas t ON t.id = le.turma_id
+      WHERE le.id = $1 AND t.professor_id = $2
+    `, [req.params.id, req.usuario.id])
+    if (lista.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    await db.query(
+      'UPDATE lista_questoes SET criterios_ia = $1 WHERE id = $2 AND lista_id = $3',
+      [req.body.criterios_ia || null, req.params.listaquestaoId, req.params.id]
+    )
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('[exercicios/listas/:id/questoes/criterio PATCH] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── PROFESSOR: ATIVA LISTA ───────────────────────────────────────────────────
+router.patch('/listas/:id/ativar', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const lista = await db.query(`
+      SELECT le.id FROM listas_exercicios le
+      INNER JOIN turmas t ON t.id = le.turma_id
+      WHERE le.id = $1 AND t.professor_id = $2
+    `, [req.params.id, req.usuario.id])
+    if (lista.rows.length === 0)
+      return res.status(403).json({ message: 'Sem permissão.' })
+
+    await db.query(
+      'UPDATE listas_exercicios SET ativa = true WHERE id = $1',
+      [req.params.id]
+    )
+
+    return res.json({ ok: true })
+  } catch (e) {
+    console.error('[exercicios/listas/:id/ativar PATCH] Erro:', e)
     return res.status(500).json({ message: 'Erro interno.' })
   }
 })
