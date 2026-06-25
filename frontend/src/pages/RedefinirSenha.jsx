@@ -13,7 +13,11 @@ function RedefinirSenha() {
 
   useEffect(() => {
     if (!token) { setTokenValido(false); return }
-    fetch(`${API}/auth/validar-token/${token}`)
+    fetch(`${API}/auth/validar-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    })
       .then(r => r.json())
       .then(data => setTokenValido(data.valido))
       .catch(() => setTokenValido(false))

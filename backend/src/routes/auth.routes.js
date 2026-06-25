@@ -25,6 +25,14 @@ const limiterIA = rateLimit({
   legacyHeaders: false,
 })
 
+const limiterTurmasPublicas = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { message: 'Muitas requisições. Aguarde 1 minuto.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 const router = express.Router();
 
 async function enviarEmail({ to, subject, html }) {
@@ -41,8 +49,10 @@ async function enviarEmail({ to, subject, html }) {
       htmlContent: html
     })
   })
-  if (!res.ok) throw new Error(`Brevo error: ${res.status}`)
-}
+if (!res.ok) {
+  const errBody = await res.text()
+  throw new Error(`Brevo error: ${res.status} — ${errBody}`)
+}}
 
 const registerAlunoValidation = [
   body('nome').trim().notEmpty().withMessage('Nome é obrigatório')
@@ -67,7 +77,7 @@ const registerProfessorValidation = [
   body('email').trim().notEmpty().withMessage('Email é obrigatório')
     .isEmail().withMessage('Email inválido')
     .custom(val => {
-      if (!val.endsWith('@utfpr.edu.br')) throw new Error('Email deve ser do domínio @utfpr.edu.br')
+      if (!/^[^@]+@utfpr\.edu\.br$/.test(val)) throw new Error('Email deve ser do domínio @utfpr.edu.br')
       return true
     }),
   body('siape').trim().notEmpty().withMessage('SIAPE é obrigatório')
@@ -118,7 +128,7 @@ router.post('/turmas/associar', verifyToken, requirePerfil('professor'), async (
   return res.json({ message: 'Turma associada com sucesso!' });
 });
 
-router.get('/turmas/publicas', async (req, res) => {
+router.get('/turmas/publicas', limiterTurmasPublicas, verifyToken, async (req, res) => {
   const result = await db.query(`SELECT id, nome FROM turmas WHERE professor_id IS NOT NULL`);
   return res.json({ turmas: result.rows });
 });
@@ -151,7 +161,7 @@ router.get('/turmas/:id/alunos', verifyToken, requirePerfil('professor'), async 
 // ─── MINHA TURMA — ALUNO ──────────────────────────────────────────────────────
 router.get('/aluno/minha-turma', verifyToken, requirePerfil('aluno'), async (req, res) => {
   const turmaResult = await db.query(`
-    SELECT t.id, t.nome, t.codigo_acesso, t.criado_em
+    SELECT t.id, t.nome, t.criado_em
     FROM turmas t
     INNER JOIN turma_alunos ta ON ta.turma_id = t.id
     WHERE ta.aluno_id = $1
@@ -386,9 +396,11 @@ router.post('/professor/esqueci-senha', limiterEsqueciSenha, async (req, res) =>
 });
 
 // ─── VALIDAR TOKEN ────────────────────────────────────────────────────────────
-router.get('/validar-token/:token', limiterEsqueciSenha, async (req, res) => {
+router.post('/validar-token', limiterEsqueciSenha, async (req, res) => {
   try {
-    const result = await db.query(`SELECT * FROM tokens_recuperacao WHERE token = $1 AND usado = 0`, [req.params.token]);
+    const { token } = req.body;
+    if (!token) return res.json({ valido: false });
+    const result = await db.query(`SELECT * FROM tokens_recuperacao WHERE token = $1 AND usado = 0`, [token]);
     if (result.rows.length === 0) return res.json({ valido: false });
     const expirou = new Date(result.rows[0].expira_em) < new Date();
     if (expirou) return res.json({ valido: false });
@@ -399,7 +411,7 @@ router.get('/validar-token/:token', limiterEsqueciSenha, async (req, res) => {
 });
 
 // ─── REDEFINIR SENHA ──────────────────────────────────────────────────────────
-router.post('/redefinir-senha', async (req, res) => {
+router.post('/redefinir-senha', limiterEsqueciSenha, async (req, res) => {
   const { token, novaSenha, confirmarSenha } = req.body;
   if (!token || !novaSenha || !confirmarSenha)
     return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
@@ -517,7 +529,10 @@ router.post('/diagnostico/feedback', verifyToken, requirePerfil('aluno'), async 
     
     if (nota === undefined || nota === null)
       return res.status(400).json({ message: 'Nota é obrigatória.' })
-    
+
+    if (typeof nota !== 'number' || !Number.isFinite(nota))
+      return res.status(400).json({ message: 'Nota inválida.' })
+
     if (nota < 0 || nota > 10)
       return res.status(400).json({ message: 'Nota deve estar entre 0 e 10.' })
 
@@ -1337,7 +1352,10 @@ router.post('/jogos/partida', async (req, res) => {
     }
 
     const chave = authHeader.split(' ')[1]
-    if (chave !== process.env.JOGOS_API_KEY) {
+    const { timingSafeEqual } = require('crypto')
+    const a = Buffer.from(chave || '')
+    const b = Buffer.from(process.env.JOGOS_API_KEY || '')
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
       return res.status(403).json({ message: 'Chave de API inválida.' })
     }
 

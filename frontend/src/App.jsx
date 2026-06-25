@@ -32,9 +32,18 @@ import AtividadesAluno from './pages/AtividadesAluno'
 import AtividadesAlunoResultado from './pages/AtividadesAlunoResultado'
 
 
+const EM_MANUTENCAO = true
+
 function App() {
   const location = useLocation()
   const mostrarPlayer = location.pathname.startsWith('/materias')
+
+  if (EM_MANUTENCAO) return (
+    <div style={{ fontFamily: 'Outfit, sans-serif', background: '#0f172a', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
+      <h1 style={{ color: '#f97316', fontSize: '2rem', fontWeight: 'bold' }}>MAT<span style={{ color: 'white' }}>-IA</span></h1>
+      <p style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: '300' }}>Plataforma em manutenção. Voltamos em breve.</p>
+    </div>
+  )
 
   return (
       <>
