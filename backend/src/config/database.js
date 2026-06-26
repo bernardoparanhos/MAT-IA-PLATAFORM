@@ -239,6 +239,32 @@ CREATE TABLE IF NOT EXISTS questoes_historico (
     );
   `)
 
+  // ─── PROFESSORES EXTERNOS — SOLICITAÇÕES E TIPO DE TESTE ─────────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS solicitacoes_professor (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL,
+      instituicao TEXT NOT NULL,
+      tipo_instituicao TEXT NOT NULL CHECK(tipo_instituicao IN ('universitario', 'medio', 'fundamental')),
+      mensagem TEXT,
+      status TEXT NOT NULL DEFAULT 'pendente' CHECK(status IN ('pendente', 'aprovado', 'rejeitado')),
+      criado_em TIMESTAMP DEFAULT NOW()
+    );
+
+    ALTER TABLE turmas ADD COLUMN IF NOT EXISTS tipo_teste TEXT DEFAULT 'universitario'
+      CHECK(tipo_teste IN ('universitario', 'medio', 'fundamental'));
+
+    CREATE TABLE IF NOT EXISTS solicitacoes_aluno (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      ra TEXT NOT NULL,
+      turma_id INTEGER NOT NULL REFERENCES turmas(id),
+      status TEXT NOT NULL DEFAULT 'pendente' CHECK(status IN ('pendente', 'aprovado', 'rejeitado')),
+      criado_em TIMESTAMP DEFAULT NOW()
+    );
+  `)
+
   console.log('✅ Banco de dados PostgreSQL conectado e tabelas criadas!')
 }
 

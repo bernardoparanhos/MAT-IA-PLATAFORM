@@ -1383,6 +1383,377 @@ router.post('/jogos/partida', async (req, res) => {
   }
 })
 
+// ─── SOLICITAÇÃO DE PROFESSOR ─────────────────────────────────────────────────
+router.post('/solicitar-professor', limiterEsqueciSenha, async (req, res) => {
+  try {
+    const { nome, email, instituicao, tipo_instituicao, mensagem } = req.body
+
+    if (!nome || !email || !instituicao || !tipo_instituicao)
+      return res.status(400).json({ message: 'Nome, email, instituição e tipo são obrigatórios.' })
+
+    if (!['universitario', 'medio', 'fundamental'].includes(tipo_instituicao))
+      return res.status(400).json({ message: 'Tipo de instituição inválido.' })
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return res.status(400).json({ message: 'Email inválido.' })
+
+    const existente = await db.query(
+      "SELECT id FROM solicitacoes_professor WHERE email = $1 AND status = 'pendente'",
+      [email]
+    )
+    if (existente.rows.length > 0)
+      return res.status(409).json({ message: 'Já existe uma solicitação pendente para este email.' })
+
+    await db.query(`
+      INSERT INTO solicitacoes_professor (nome, email, instituicao, tipo_instituicao, mensagem)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [nome, email, instituicao, tipo_instituicao, mensagem || null])
+
+    await enviarEmail({
+      to: process.env.FEEDBACK_EMAIL,
+      subject: '[MAT-IA] Nova solicitação de professor',
+      html: `<div style="font-family:Arial,sans-serif;padding:24px;background:#0f172a;color:#fff;border-radius:12px;">
+        <h2 style="color:#f97316;">Nova solicitação de professor</h2>
+        <p><strong>Nome:</strong> ${nome}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Instituição:</strong> ${instituicao}</p>
+        <p><strong>Tipo:</strong> ${tipo_instituicao}</p>
+        ${mensagem ? `<p><strong>Mensagem:</strong> ${mensagem}</p>` : ''}
+        <p style="color:#94a3b8;font-size:12px;">Acesse o painel admin para aprovar ou rejeitar.</p>
+      </div>`
+    })
+
+    return res.json({ message: 'Solicitação enviada com sucesso! Entraremos em contato em breve.' })
+  } catch (e) {
+    console.error('[solicitar-professor] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── PAINEL ADMIN ─────────────────────────────────────────────────────────────
+const limiterAdmin = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 3,
+  message: { message: 'Muitas tentativas. Aguarde 5 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+function verificarAdmin(req, res, next) {
+  const secret = req.headers['x-admin-secret']
+  if (!secret) return res.status(403).json({ message: 'Sem permissão.' })
+  const { timingSafeEqual } = require('crypto')
+  try {
+    const a = Buffer.from(secret)
+    const b = Buffer.from(process.env.ADMIN_SECRET || '')
+    if (a.length !== b.length || !timingSafeEqual(a, b))
+      return res.status(403).json({ message: 'Sem permissão.' })
+  } catch {
+    return res.status(403).json({ message: 'Sem permissão.' })
+  }
+  next()
+}
+
+router.get('/admin/solicitacoes-professor', limiterAdmin, verificarAdmin, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT id, nome, email, instituicao, tipo_instituicao, mensagem, status, criado_em
+      FROM solicitacoes_professor
+      ORDER BY criado_em DESC
+    `)
+    return res.json({ solicitacoes: result.rows })
+  } catch (e) {
+    console.error('[admin/solicitacoes-professor] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.patch('/admin/solicitacoes-professor/:id/aprovar', limiterAdmin, verificarAdmin, async (req, res) => {
+  try {
+    const sol = await db.query(
+      "SELECT * FROM solicitacoes_professor WHERE id = $1 AND status = 'pendente'",
+      [req.params.id]
+    )
+    if (sol.rows.length === 0)
+      return res.status(404).json({ message: 'Solicitação não encontrada ou já processada.' })
+
+    const { nome, email, tipo_instituicao } = sol.rows[0]
+
+    const senhaTemp = crypto.randomBytes(6).toString('hex').toUpperCase()
+    const senhaHash = await bcrypt.hash(senhaTemp, 12)
+
+    const codigoTurma = crypto.randomBytes(4).toString('hex').toUpperCase()
+
+    const professor = await db.query(`
+      INSERT INTO usuarios (nome, email, senha, perfil)
+      VALUES ($1, $2, $3, 'professor')
+      RETURNING id
+    `, [nome, email, senhaHash])
+
+    await db.query(`
+      INSERT INTO turmas (nome, codigo_acesso, professor_id, tipo_teste)
+      VALUES ($1, $2, $3, $4)
+    `, [`Turma de ${nome}`, codigoTurma, professor.rows[0].id, tipo_instituicao])
+
+    await db.query(
+      "UPDATE solicitacoes_professor SET status = 'aprovado' WHERE id = $1",
+      [req.params.id]
+    )
+
+    await enviarEmail({
+      to: email,
+      subject: 'MAT-IA — Acesso aprovado!',
+      html: `<div style="font-family:Arial,sans-serif;padding:24px;background:#0f172a;color:#fff;border-radius:12px;">
+        <h1 style="color:#f97316;">MAT<span style="color:#fff;">-IA</span></h1>
+        <h2>Bem-vindo(a), ${nome}!</h2>
+        <p style="color:#94a3b8;">Seu acesso foi aprovado. Aqui estão suas credenciais:</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Senha temporária:</strong> <span style="color:#f97316;font-size:1.2em;">${senhaTemp}</span></p>
+        <p><strong>Código da sua turma:</strong> <span style="color:#f97316;font-size:1.2em;">${codigoTurma}</span></p>
+        <p style="color:#94a3b8;font-size:12px;">Por segurança, altere sua senha no primeiro acesso.</p>
+        <a href="${process.env.FRONTEND_URL}/login" style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;margin-top:16px;">Acessar plataforma</a>
+      </div>`
+    })
+
+    return res.json({ message: 'Professor aprovado e credenciais enviadas.' })
+  } catch (e) {
+    console.error('[admin/aprovar-professor] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.patch('/admin/solicitacoes-professor/:id/rejeitar', limiterAdmin, verificarAdmin, async (req, res) => {
+  try {
+    const result = await db.query(
+      "UPDATE solicitacoes_professor SET status = 'rejeitado' WHERE id = $1 AND status = 'pendente' RETURNING email, nome",
+      [req.params.id]
+    )
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: 'Solicitação não encontrada ou já processada.' })
+
+    await enviarEmail({
+      to: result.rows[0].email,
+      subject: 'MAT-IA — Solicitação de acesso',
+      html: `<div style="font-family:Arial,sans-serif;padding:24px;background:#0f172a;color:#fff;border-radius:12px;">
+        <h1 style="color:#f97316;">MAT<span style="color:#fff;">-IA</span></h1>
+        <p>Olá, ${result.rows[0].nome}.</p>
+        <p style="color:#94a3b8;">Infelizmente não foi possível aprovar sua solicitação de acesso no momento. Entre em contato para mais informações.</p>
+      </div>`
+    })
+
+    return res.json({ message: 'Solicitação rejeitada.' })
+  } catch (e) {
+    console.error('[admin/rejeitar-professor] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── SOLICITAÇÃO DE ALUNO ─────────────────────────────────────────────────────
+router.post('/solicitar-acesso', limiterEsqueciSenha, async (req, res) => {
+  try {
+    const { nome, ra, codigoTurma } = req.body
+
+    if (!nome || !ra || !codigoTurma)
+      return res.status(400).json({ message: 'Nome, RA e código da turma são obrigatórios.' })
+
+    const turma = await db.query(
+      'SELECT id, nome FROM turmas WHERE codigo_acesso = $1',
+      [codigoTurma.toUpperCase()]
+    )
+    if (turma.rows.length === 0)
+      return res.status(404).json({ message: 'Código de turma inválido.' })
+
+    const turmaId = turma.rows[0].id
+
+    const existente = await db.query(
+      "SELECT id FROM solicitacoes_aluno WHERE ra = $1 AND turma_id = $2 AND status = 'pendente'",
+      [ra, turmaId]
+    )
+    if (existente.rows.length > 0)
+      return res.status(409).json({ message: 'Já existe uma solicitação pendente para este RA nessa turma.' })
+
+    const jaAluno = await db.query(`
+      SELECT u.id FROM usuarios u
+      INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+      WHERE u.ra = $1 AND ta.turma_id = $2
+    `, [ra, turmaId])
+    if (jaAluno.rows.length > 0)
+      return res.status(409).json({ message: 'Este RA já está cadastrado nessa turma.' })
+
+    await db.query(`
+      INSERT INTO solicitacoes_aluno (nome, ra, turma_id)
+      VALUES ($1, $2, $3)
+    `, [nome, ra, turmaId])
+
+    return res.json({ message: 'Solicitação enviada! Aguarde a aprovação do professor.' })
+  } catch (e) {
+    console.error('[solicitar-acesso] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── PROFESSOR: VÊ SOLICITAÇÕES DA TURMA ─────────────────────────────────────
+router.get('/professor/solicitacoes', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT sa.id, sa.nome, sa.ra, sa.status, sa.criado_em, t.nome as turma
+      FROM solicitacoes_aluno sa
+      INNER JOIN turmas t ON t.id = sa.turma_id
+      WHERE t.professor_id = $1
+      ORDER BY sa.criado_em DESC
+    `, [req.usuario.id])
+
+    return res.json({ solicitacoes: result.rows })
+  } catch (e) {
+    console.error('[professor/solicitacoes] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── PROFESSOR: APROVA ALUNO ──────────────────────────────────────────────────
+router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const sol = await db.query(`
+      SELECT sa.* FROM solicitacoes_aluno sa
+      INNER JOIN turmas t ON t.id = sa.turma_id
+      WHERE sa.id = $1 AND t.professor_id = $2 AND sa.status = 'pendente'
+    `, [req.params.id, req.usuario.id])
+
+    if (sol.rows.length === 0)
+      return res.status(404).json({ message: 'Solicitação não encontrada ou já processada.' })
+
+    const { nome, ra, turma_id } = sol.rows[0]
+
+    let alunoId
+    const usuarioExistente = await db.query(
+      'SELECT id FROM usuarios WHERE ra = $1',
+      [ra]
+    )
+
+    if (usuarioExistente.rows.length > 0) {
+      alunoId = usuarioExistente.rows[0].id
+    } else {
+      const senhaHash = await bcrypt.hash(ra, 12)
+      const novoAluno = await db.query(`
+        INSERT INTO usuarios (nome, ra, senha, perfil, email)
+        VALUES ($1, $2, $3, 'aluno', $4)
+        RETURNING id
+      `, [nome, ra, senhaHash, `${ra}@aluno.mat-ia`])
+      alunoId = novoAluno.rows[0].id
+    }
+
+    await db.query(`
+      INSERT INTO turma_alunos (turma_id, aluno_id)
+      VALUES ($1, $2)
+      ON CONFLICT DO NOTHING
+    `, [turma_id, alunoId])
+
+    await db.query(
+      "UPDATE solicitacoes_aluno SET status = 'aprovado' WHERE id = $1",
+      [req.params.id]
+    )
+
+    return res.json({ message: 'Aluno aprovado com sucesso.' })
+  } catch (e) {
+    console.error('[professor/aprovar-aluno] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── PROFESSOR: REJEITA ALUNO ─────────────────────────────────────────────────
+router.patch('/professor/solicitacoes/:id/rejeitar', verifyToken, requirePerfil('professor'), async (req, res) => {
+  try {
+    const result = await db.query(`
+      UPDATE solicitacoes_aluno SET status = 'rejeitado'
+      WHERE id = $1 AND status = 'pendente'
+      AND turma_id IN (SELECT id FROM turmas WHERE professor_id = $2)
+      RETURNING id
+    `, [req.params.id, req.usuario.id])
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: 'Solicitação não encontrada ou já processada.' })
+
+    return res.json({ message: 'Solicitação rejeitada.' })
+  } catch (e) {
+    console.error('[professor/rejeitar-aluno] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── LOGIN ALUNO — RA + CÓDIGO DA TURMA ──────────────────────────────────────
+const limiterLoginAluno = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Muitas tentativas de login. Aguarde 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+router.post('/login/aluno-turma', limiterLoginAluno, async (req, res) => {
+  try {
+    const { ra, codigoTurma } = req.body
+
+    if (!ra || !codigoTurma)
+      return res.status(400).json({ message: 'RA e código da turma são obrigatórios.' })
+
+    const turma = await db.query(
+      'SELECT id FROM turmas WHERE codigo_acesso = $1',
+      [codigoTurma.toUpperCase()]
+    )
+    if (turma.rows.length === 0)
+      return res.status(401).json({ message: 'RA ou código de turma inválido.' })
+
+    const turmaId = turma.rows[0].id
+
+    const result = await db.query(`
+      SELECT u.id, u.nome, u.ra, u.perfil, u.diagnostico_status
+      FROM usuarios u
+      INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+      WHERE u.ra = $1 AND ta.turma_id = $2 AND u.perfil = 'aluno'
+    `, [ra, turmaId])
+
+    if (result.rows.length === 0) {
+      const solicitacao = await db.query(
+        "SELECT status FROM solicitacoes_aluno WHERE ra = $1 AND turma_id = $2",
+        [ra, turmaId]
+      )
+      if (solicitacao.rows.length > 0 && solicitacao.rows[0].status === 'pendente')
+        return res.status(403).json({ message: 'Sua solicitação ainda está pendente de aprovação pelo professor.' })
+
+      return res.status(401).json({ message: 'RA ou código de turma inválido.' })
+    }
+
+    const aluno = result.rows[0]
+
+    const jwt = require('jsonwebtoken')
+    const token = jwt.sign(
+      { id: aluno.id, perfil: aluno.perfil },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '8h', issuer: 'mat-ia', audience: 'mat-ia-app' }
+    )
+
+    res.cookie('access_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 8 * 60 * 60 * 1000
+    })
+
+    return res.json({
+      usuario: {
+        id: aluno.id,
+        nome: aluno.nome,
+        ra: aluno.ra,
+        perfil: aluno.perfil,
+        diagnostico_status: aluno.diagnostico_status
+      }
+    })
+  } catch (e) {
+    console.error('[login/aluno-turma] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
 // ─── LOGOUT ──────────────────────────────────────────────────────────────────
 router.post('/logout', (req, res) => {
   res.clearCookie('access_token', {
