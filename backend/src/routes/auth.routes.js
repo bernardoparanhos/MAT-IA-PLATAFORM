@@ -364,7 +364,7 @@ router.post('/aluno/esqueci-senha', limiterEsqueciSenha, async (req, res) => {
   const { email } = req.body;
   const MENSAGEM_GENERICA = 'Se esse email estiver cadastrado, você receberá as instruções em breve.';
   if (!email) return res.status(400).json({ message: 'Email é obrigatório.' });
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido';
+  const ip = req.ip || req.socket.remoteAddress || 'desconhecido';
 
   try {
     const result = await db.query("SELECT id FROM usuarios WHERE email = $1 AND perfil = 'aluno'", [email]);
@@ -396,7 +396,7 @@ router.post('/professor/esqueci-senha', limiterEsqueciSenha, async (req, res) =>
   const { email } = req.body;
   const MENSAGEM_GENERICA = 'Se esse email estiver cadastrado, você receberá as instruções em breve.';
   if (!email) return res.status(400).json({ message: 'Email é obrigatório.' });
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido';
+  const ip = req.ip || req.socket.remoteAddress || 'desconhecido';
 
   try {
     const result = await db.query("SELECT id FROM usuarios WHERE email = $1 AND perfil = 'professor'", [email]);
@@ -1564,7 +1564,7 @@ router.get('/admin/solicitacoes-professor', limiterAdmin, verificarAdmin, async 
 router.patch('/admin/solicitacoes-professor/:id/aprovar', limiterAdmin, verificarAdmin, async (req, res) => {
   try {
     const sol = await db.query(
-      "SELECT * FROM solicitacoes_professor WHERE id = $1 AND status = 'pendente'",
+      "SELECT nome, email, tipo_instituicao FROM solicitacoes_professor WHERE id = $1 AND status = 'pendente'",
       [req.params.id]
     )
     if (sol.rows.length === 0)
@@ -1610,7 +1610,7 @@ router.patch('/admin/solicitacoes-professor/:id/aprovar', limiterAdmin, verifica
 
     await db.query(
       'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
-      [req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido', 'aprovar_professor', true, `ID: ${req.params.id} — ${email}`]
+      [req.ip || req.socket.remoteAddress || 'desconhecido', 'aprovar_professor', true, `ID: ${req.params.id} — ${email}`]
     ).catch(() => {})
 
     return res.json({ message: 'Professor aprovado e credenciais enviadas.' })
@@ -1631,7 +1631,7 @@ router.patch('/admin/solicitacoes-professor/:id/rejeitar', limiterAdmin, verific
 
     await db.query(
       'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
-      [req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido', 'rejeitar_professor', true, `ID: ${req.params.id}`]
+      [req.ip || req.socket.remoteAddress || 'desconhecido', 'rejeitar_professor', true, `ID: ${req.params.id}`]
     ).catch(() => {})
 
     await enviarEmail({
@@ -1639,7 +1639,7 @@ router.patch('/admin/solicitacoes-professor/:id/rejeitar', limiterAdmin, verific
       subject: 'MAT-IA — Solicitação de acesso',
       html: `<div style="font-family:Arial,sans-serif;padding:24px;background:#0f172a;color:#fff;border-radius:12px;">
         <h1 style="color:#f97316;">MAT<span style="color:#fff;">-IA</span></h1>
-        <p>Olá, ${result.rows[0].nome}.</p>
+        <p>Olá, ${escapeHtml(result.rows[0].nome)}.</p>
         <p style="color:#94a3b8;">Infelizmente não foi possível aprovar sua solicitação de acesso no momento. Entre em contato para mais informações.</p>
       </div>`
     })

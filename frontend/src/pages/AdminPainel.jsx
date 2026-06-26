@@ -16,7 +16,7 @@ function AdminPainel() {
   function adminHeaders() {
     const headers = { 'x-admin-secret': secret }
     if (sessionToken) headers['x-admin-session'] = sessionToken
-    if (totp) headers['x-totp-code'] = totp
+    if (totp && !sessionToken) headers['x-totp-code'] = totp
     return headers
   }
 
@@ -34,7 +34,10 @@ function AdminPainel() {
       const data = await res.json()
       setSolicitacoes(data.solicitacoes || [])
       const resLogs = await fetch(`${API}/auth/admin/logs`, {
-        headers: adminHeaders()
+        headers: {
+          'x-admin-secret': secret,
+          ...(newSessionToken ? { 'x-admin-session': newSessionToken } : { 'x-totp-code': totp })
+        }
       })
       const dataLogs = await resLogs.json()
       setLogs(dataLogs.logs || [])
