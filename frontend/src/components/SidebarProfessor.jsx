@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useNotificacoes } from '../context/NotificacoesContext'
+
+const API = import.meta.env.VITE_API_URL
 
 // ─── Ícones SVG ───────────────────────────────────────────────────────────────
 const icons = {
@@ -29,18 +32,20 @@ const MENU_ITEMS = [
 const GESTAO_ITEMS = [
   { label: 'Métricas', path: '/metricas', icon: icons.metricas },
   { label: 'Turmas', path: '/turmas-professor', icon: icons.turmas },
-    { label: 'Atividades', path: '/atividades-professor', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6m-6 4h4"/></svg> },
+  { label: 'Atividades', path: '/atividades-professor', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6m-6 4h4"/></svg> },
+  { label: 'Solicitações', path: '/solicitacoes-professor', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"/></svg>, hasBadge: 'solicitacoes' },
   { label: 'Notificações', path: '/notificacoes-professor', icon: icons.notificacoes, hasBadge: true },
   { label: 'Perfil', path: '/perfil-professor', icon: icons.perfil },
 ]
 
 // ─── Item de navegação (único componente reutilizável) ───────────────────────
-function NavItem({ item, ativo, naoLidas, onNavigate }) {
+function NavItem({ item, ativo, naoLidas, solicitacoesPendentes, onNavigate }) {
   const handleClick = () => {
     if (item.path) onNavigate(item.path)
   }
 
-  const showBadge = item.hasBadge && naoLidas > 0
+  const badgeCount = item.hasBadge === 'solicitacoes' ? solicitacoesPendentes : (item.hasBadge ? naoLidas : 0)
+  const showBadge = badgeCount > 0
   const isDisabled = !item.path
 
   return (
@@ -64,7 +69,7 @@ function NavItem({ item, ativo, naoLidas, onNavigate }) {
       <span>{item.label}</span>
       {showBadge && (
         <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-          {naoLidas}
+          {badgeCount}
         </span>
       )}
     </button>
@@ -77,6 +82,14 @@ function SidebarContent({ onClose }) {
   const { naoLidas } = useNotificacoes()
   const navigate = useNavigate()
   const location = useLocation()
+  const [solicitacoesPendentes, setSolicitacoesPendentes] = useState(0)
+
+  useEffect(() => {
+    fetch(`${API}/auth/professor/solicitacoes`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => setSolicitacoesPendentes((d.solicitacoes || []).filter(s => s.status === 'pendente').length))
+      .catch(() => {})
+  }, [])
 
   const handleNavigate = (path) => {
     navigate(path)
@@ -95,6 +108,7 @@ function SidebarContent({ onClose }) {
             item={item}
             ativo={isAtivo(item.path)}
             naoLidas={naoLidas}
+            solicitacoesPendentes={solicitacoesPendentes}
             onNavigate={handleNavigate}
           />
         ))}
@@ -107,6 +121,7 @@ function SidebarContent({ onClose }) {
             item={item}
             ativo={isAtivo(item.path)}
             naoLidas={naoLidas}
+            solicitacoesPendentes={solicitacoesPendentes}
             onNavigate={handleNavigate}
           />
         ))}

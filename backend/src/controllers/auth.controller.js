@@ -153,10 +153,18 @@ async function loginProfessor(req, res) {
   const { siape, senha } = req.body;
 
   try {
-    const result = await db.query(
-      `SELECT id, nome, email, senha, perfil FROM usuarios WHERE siape = $1 AND perfil = 'professor'`,
+    let result = await db.query(
+      "SELECT id, nome, email, senha, perfil FROM usuarios WHERE email = $1 AND perfil = 'professor'",
       [siape]
-    );
+    )
+
+    if (result.rows.length === 0) {
+      result = await db.query(
+        "SELECT id, nome, email, senha, perfil FROM usuarios WHERE siape = $1 AND perfil = 'professor'",
+        [siape]
+      )
+    }
+
     const usuario = result.rows[0];
 
     const hashFake = '$2b$12$invalido.hash.para.evitar.timing.xxxxxxxxxxxxxxxx';

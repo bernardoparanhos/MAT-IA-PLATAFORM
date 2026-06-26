@@ -8,6 +8,8 @@ const db = require('../config/database');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
+const { TOTP, generateSecret: totpGenerateSecret, NobleCryptoPlugin, ScureBase32Plugin } = require('otplib')
+const totp = new TOTP({ crypto: new NobleCryptoPlugin(), base32: new ScureBase32Plugin() })
 
 const limiterEsqueciSenha = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -94,8 +96,8 @@ const loginAlunoValidation = [
 ];
 
 const loginProfessorValidation = [
-  body('siape').trim().notEmpty().withMessage('SIAPE é obrigatório')
-    .matches(/^\d{6,7}$/).withMessage('SIAPE inválido'),
+  body('siape').trim().notEmpty().withMessage('Email ou SIAPE é obrigatório')
+    .isLength({ max: 100 }).withMessage('Campo inválido'),
   body('senha').notEmpty().withMessage('Senha é obrigatória').isLength({ max: 128 }),
 ];
 
@@ -1431,6 +1433,19 @@ router.post('/solicitar-professor', limiterEsqueciSenha, async (req, res) => {
 })
 
 // ─── PAINEL ADMIN ─────────────────────────────────────────────────────────────
+router.get('/admin/setup-totp', async (req, res) => {
+  try {
+    const secret = process.env.TOTP_SECRET
+    if (!secret) return res.status(500).json({ message: 'TOTP_SECRET não configurado.' })
+    const otpauth = await totp.toURI({ secret, label: 'bernardo', issuer: 'MAT-IA Admin' })
+    const QRCode = require('qrcode')
+    const qr = await QRCode.toDataURL(otpauth)
+    return res.json({ qr, secret })
+  } catch (e) {
+    console.error('[admin/setup-totp] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
 const limiterAdmin = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 3,
@@ -1439,18 +1454,60 @@ const limiterAdmin = rateLimit({
   legacyHeaders: false,
 })
 
-function verificarAdmin(req, res, next) {
+async function verificarAdmin(req, res, next) {
   const secret = req.headers['x-admin-secret']
-  if (!secret) return res.status(403).json({ message: 'Sem permissão.' })
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido'
+
+  if (!secret) {
+    await db.query(
+      'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+      [ip, 'acesso_admin', false, 'Header ausente']
+    ).catch(() => {})
+    return res.status(403).json({ message: 'Sem permissão.' })
+  }
+
   const { timingSafeEqual } = require('crypto')
   try {
     const a = Buffer.from(secret)
     const b = Buffer.from(process.env.ADMIN_SECRET || '')
-    if (a.length !== b.length || !timingSafeEqual(a, b))
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      await db.query(
+        'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+        [ip, 'acesso_admin', false, 'Chave inválida']
+      ).catch(() => {})
       return res.status(403).json({ message: 'Sem permissão.' })
+    }
   } catch {
     return res.status(403).json({ message: 'Sem permissão.' })
   }
+
+  const totpCode = req.headers['x-totp-code']
+  if (!totpCode) {
+    await db.query(
+      'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+      [ip, 'acesso_admin', false, 'Código TOTP ausente']
+    ).catch(() => {})
+    return res.status(403).json({ message: 'Código de autenticação obrigatório.', totp_required: true })
+  }
+
+  const totpSecret = process.env.TOTP_SECRET
+  if (!totpSecret) return res.status(500).json({ message: 'TOTP não configurado.' })
+
+  const resultado = await totp.verify(totpCode, { secret: totpSecret })
+  const valido = resultado?.valid === true
+  if (!valido) {
+    await db.query(
+      'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+      [ip, 'acesso_admin', false, 'Código TOTP inválido']
+    ).catch(() => {})
+    return res.status(403).json({ message: 'Código de autenticação inválido.', totp_required: true })
+  }
+
+  await db.query(
+    'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+    [ip, 'acesso_admin', true, `Rota: ${req.method} ${req.path}`]
+  ).catch(() => {})
+
   next()
 }
 
@@ -1515,6 +1572,11 @@ router.patch('/admin/solicitacoes-professor/:id/aprovar', limiterAdmin, verifica
       </div>`
     })
 
+    await db.query(
+      'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+      [req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido', 'aprovar_professor', true, `ID: ${req.params.id} — ${email}`]
+    ).catch(() => {})
+
     return res.json({ message: 'Professor aprovado e credenciais enviadas.' })
   } catch (e) {
     console.error('[admin/aprovar-professor] Erro:', e)
@@ -1531,6 +1593,11 @@ router.patch('/admin/solicitacoes-professor/:id/rejeitar', limiterAdmin, verific
     if (result.rows.length === 0)
       return res.status(404).json({ message: 'Solicitação não encontrada ou já processada.' })
 
+    await db.query(
+      'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+      [req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido', 'rejeitar_professor', true, `ID: ${req.params.id}`]
+    ).catch(() => {})
+
     await enviarEmail({
       to: result.rows[0].email,
       subject: 'MAT-IA — Solicitação de acesso',
@@ -1544,6 +1611,21 @@ router.patch('/admin/solicitacoes-professor/:id/rejeitar', limiterAdmin, verific
     return res.json({ message: 'Solicitação rejeitada.' })
   } catch (e) {
     console.error('[admin/rejeitar-professor] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+router.get('/admin/logs', limiterAdmin, verificarAdmin, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT id, ip, acao, sucesso, detalhes, criado_em
+      FROM log_admin
+      ORDER BY criado_em DESC
+      LIMIT 100
+    `)
+    return res.json({ logs: result.rows })
+  } catch (e) {
+    console.error('[admin/logs] Erro:', e)
     return res.status(500).json({ message: 'Erro interno.' })
   }
 })

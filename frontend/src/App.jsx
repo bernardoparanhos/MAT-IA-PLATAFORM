@@ -30,6 +30,10 @@ import AtividadesProfessorSubmissoes from './pages/AtividadesProfessorSubmissoes
 import Atividades from './pages/Atividades'
 import AtividadesAluno from './pages/AtividadesAluno'
 import AtividadesAlunoResultado from './pages/AtividadesAlunoResultado'
+import SolicitacaoProfessor from './pages/SolicitacaoProfessor'
+import SolicitacaoAluno from './pages/SolicitacaoAluno'
+import SolicitacoesProfessor from './pages/SolicitacoesProfessor'
+import AdminPainel from './pages/AdminPainel'
 
 
 const EM_MANUTENCAO = true
@@ -55,6 +59,9 @@ function App() {
           <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           <Route path="/termos" element={<Termos />} />
           <Route path="/privacidade" element={<Privacidade />} />
+          <Route path="/solicitar-professor" element={<SolicitacaoProfessor />} />
+          <Route path="/solicitar-acesso" element={<SolicitacaoAluno />} />
+          <Route path="/admin" element={<AdminPainel />} />
 
           {/* Protegidas — Professor */}
           <Route path="/dashboard-professor" element={
@@ -105,6 +112,11 @@ function App() {
           <Route path="/metricas" element={
             <ProtectedRoute perfil="professor">
               <Metricas />
+            </ProtectedRoute>
+          } />
+          <Route path="/solicitacoes-professor" element={
+            <ProtectedRoute perfil="professor">
+              <SolicitacoesProfessor />
             </ProtectedRoute>
           } />
           <Route path="/diagnostico/preview" element={
