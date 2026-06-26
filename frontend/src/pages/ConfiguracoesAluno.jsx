@@ -105,17 +105,6 @@ function ConfiguracoesAluno() {
               </div>
             </div>
 
-            {/* Segurança */}
-            <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6 lg:p-8">
-              <p className="text-slate-500 text-xs uppercase tracking-widest mb-4">Segurança</p>
-              <p className="text-slate-400 text-sm font-light mb-4">A troca de senha está disponível na página de Perfil.</p>
-              <button onClick={() => navigate('/perfil-aluno')}
-                className="flex items-center gap-2 text-orange-400 hover:text-orange-300 text-sm font-light transition-colors">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                Ir para o Perfil
-              </button>
-            </div>
-
             {/* Sobre */}
             <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6 lg:p-8">
               <p className="text-slate-500 text-xs uppercase tracking-widest mb-6">Sobre</p>

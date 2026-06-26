@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getPerfil, alterarSenha } from '../services/alunoService'
+import { getPerfil } from '../services/alunoService'
 import SidebarAluno from '../components/SidebarAluno'
 
 function PerfilAluno() {
@@ -11,12 +11,6 @@ function PerfilAluno() {
   const [carregando, setCarregando] = useState(true)
   const [sidebarAberta, setSidebarAberta] = useState(false)
 
-  const [senhaAtual, setSenhaAtual] = useState('')
-  const [novaSenha, setNovaSenha] = useState('')
-  const [confirmarSenha, setConfirmarSenha] = useState('')
-  const [salvando, setSalvando] = useState(false)
-  const [mensagem, setMensagem] = useState({ tipo: '', texto: '' })
-
   useEffect(() => {
     async function carregar() {
       try {
@@ -24,7 +18,6 @@ function PerfilAluno() {
         setPerfil(data.aluno)
       } catch (e) {
         console.error('Erro ao carregar perfil', e)
-        setMensagem({ tipo: 'erro', texto: 'Erro ao carregar perfil.' })
       } finally {
         setCarregando(false)
       }
@@ -40,35 +33,7 @@ function PerfilAluno() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  async function handleAlterarSenha() {
-    setMensagem({ tipo: '', texto: '' })
-    if (!senhaAtual || !novaSenha || !confirmarSenha) {
-      return setMensagem({ tipo: 'erro', texto: 'Preencha todos os campos.' })
-    }
-    if (novaSenha !== confirmarSenha) {
-      return setMensagem({ tipo: 'erro', texto: 'A nova senha e a confirmação não coincidem.' })
-    }
-    setSalvando(true)
-    try {
-      const data = await alterarSenha(senhaAtual, novaSenha)
-      if (data.message === 'Senha alterada com sucesso.') {
-        setMensagem({ tipo: 'sucesso', texto: 'Senha alterada com sucesso!' })
-        setSenhaAtual('')
-        setNovaSenha('')
-        setConfirmarSenha('')
-      } else {
-        setMensagem({ tipo: 'erro', texto: data.message || 'Erro ao alterar senha.' })
-      }
-    } catch (e) {
-      console.error('Erro ao alterar senha', e)
-      setMensagem({ tipo: 'erro', texto: 'Erro de conexão.' })
-    } finally {
-      setSalvando(false)
-    }
-  }
-
   const labelClass = "text-slate-400 text-xs uppercase tracking-wider font-light mb-1.5 block"
-  const inputClass = "w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-2.5 text-sm font-light focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent placeholder-slate-600"
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex" style={{ fontFamily: 'Outfit, sans-serif' }}>
@@ -160,43 +125,6 @@ function PerfilAluno() {
                         : '—'}
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Alterar senha */}
-              <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-6 lg:p-8">
-                <p className="text-slate-500 text-xs uppercase tracking-widest mb-6">Alterar Senha</p>
-
-                {mensagem.texto && (
-                  <div className={`mb-5 rounded-xl px-4 py-3 text-sm font-light border ${
-                    mensagem.tipo === 'sucesso'
-                      ? 'bg-green-500/10 border-green-500/20 text-green-400'
-                      : 'bg-red-500/10 border-red-500/20 text-red-400'
-                  }`}>
-                    {mensagem.texto}
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <div>
-                    <label className={labelClass}>Senha atual</label>
-                    <input type="password" value={senhaAtual} onChange={e => setSenhaAtual(e.target.value)}
-                      placeholder="••••••••" className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Nova senha</label>
-                    <input type="password" value={novaSenha} onChange={e => setNovaSenha(e.target.value)}
-                      placeholder="Mín. 8 chars, 1 maiúscula, 1 número" className={inputClass} />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Confirmar nova senha</label>
-                    <input type="password" value={confirmarSenha} onChange={e => setConfirmarSenha(e.target.value)}
-                      placeholder="••••••••" className={inputClass} />
-                  </div>
-                  <button onClick={handleAlterarSenha} disabled={salvando}
-                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium px-6 py-2.5 rounded-xl text-sm transition-colors mt-2">
-                    {salvando ? 'Salvando...' : 'Alterar senha'}
-                  </button>
                 </div>
               </div>
 
