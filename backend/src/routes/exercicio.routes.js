@@ -254,7 +254,7 @@ router.post('/submissoes', verifyToken, requirePerfil('aluno'), limiterUpload, u
       'SELECT COUNT(*) FROM submissoes_exercicio WHERE lista_id = $1 AND questao_id = $2 AND aluno_id = $3',
       [listaId, listaquestaoId, req.usuario.id]
     )
-        if (parseInt(tentativas.rows[0].count) >= 1)
+        if (parseInt(tentativas.rows[0].count) >= 3)
       return res.status(400).json({ message: 'Limite de 3 tentativas atingido.' })
 
     // Idempotência — hash do buffer

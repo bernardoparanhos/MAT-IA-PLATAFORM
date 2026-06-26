@@ -11,6 +11,12 @@ const rateLimit = require('express-rate-limit');
 const { TOTP, generateSecret: totpGenerateSecret, NobleCryptoPlugin, ScureBase32Plugin } = require('otplib')
 const totp = new TOTP({ crypto: new NobleCryptoPlugin(), base32: new ScureBase32Plugin() })
 const adminSessions = new Map() // token -> { expira_em }
+setInterval(() => {
+  const agora = Date.now()
+  for (const [token, session] of adminSessions) {
+    if (session.expira_em <= agora) adminSessions.delete(token)
+  }
+}, 15 * 60 * 1000)
 
 const limiterEsqueciSenha = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -37,6 +43,15 @@ const limiterTurmasPublicas = rateLimit({
 })
 
 const router = express.Router();
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 async function enviarEmail({ to, subject, html }) {
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -115,7 +130,7 @@ router.get('/turmas/minhas', verifyToken, requirePerfil('professor'), async (req
 });
 
 router.get('/turmas/disponiveis', verifyToken, requirePerfil('professor'), async (req, res) => {
-  const result = await db.query(`SELECT id, nome, codigo_acesso FROM turmas WHERE professor_id IS NULL`);
+  const result = await db.query(`SELECT id, nome FROM turmas WHERE professor_id IS NULL`);
   return res.json({ turmas: result.rows });
 });
 
@@ -178,7 +193,7 @@ router.get('/aluno/minha-turma', verifyToken, requirePerfil('aluno'), async (req
   `, [turma.id]);
 
   const colegasResult = await db.query(`
-    SELECT u.id, u.nome, u.email, u.ra, u.criado_em as entrou_em
+    SELECT u.id, u.nome
     FROM usuarios u
     INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
     WHERE ta.turma_id = $1 AND u.id != $2
@@ -307,8 +322,8 @@ router.post('/musicas-favoritas', verifyToken, requirePerfil('aluno'), async (re
 // ─── REGISTER / LOGIN ─────────────────────────────────────────────────────────
 router.post('/register/aluno', limiterEsqueciSenha, registerAlunoValidation, (req, res) => register(req, res, 'aluno'));
 router.post('/register/professor', limiterEsqueciSenha, registerProfessorValidation, (req, res) => register(req, res, 'professor'));
-router.post('/login/aluno', loginAlunoValidation, loginAluno);
-router.post('/login/professor', loginProfessorValidation, loginProfessor);
+router.post('/login/aluno', limiterLoginAluno, loginAlunoValidation, loginAluno);
+router.post('/login/professor', limiterLoginAluno, loginProfessorValidation, loginProfessor);
 
 // ─── ALUNO PERFIL ─────────────────────────────────────────────────────────────
 router.get('/aluno/perfil', verifyToken, requirePerfil('aluno'), async (req, res) => {
@@ -1417,11 +1432,11 @@ router.post('/solicitar-professor', limiterEsqueciSenha, async (req, res) => {
       subject: '[MAT-IA] Nova solicitação de professor',
       html: `<div style="font-family:Arial,sans-serif;padding:24px;background:#0f172a;color:#fff;border-radius:12px;">
         <h2 style="color:#f97316;">Nova solicitação de professor</h2>
-        <p><strong>Nome:</strong> ${nome}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Instituição:</strong> ${instituicao}</p>
-        <p><strong>Tipo:</strong> ${tipo_instituicao}</p>
-        ${mensagem ? `<p><strong>Mensagem:</strong> ${mensagem}</p>` : ''}
+        <p><strong>Nome:</strong> ${escapeHtml(nome)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Instituição:</strong> ${escapeHtml(instituicao)}</p>
+        <p><strong>Tipo:</strong> ${escapeHtml(tipo_instituicao)}</p>
+        ${mensagem ? `<p><strong>Mensagem:</strong> ${escapeHtml(mensagem)}</p>` : ''}
         <p style="color:#94a3b8;font-size:12px;">Acesse o painel admin para aprovar ou rejeitar.</p>
       </div>`
     })
@@ -1434,19 +1449,6 @@ router.post('/solicitar-professor', limiterEsqueciSenha, async (req, res) => {
 })
 
 // ─── PAINEL ADMIN ─────────────────────────────────────────────────────────────
-router.get('/admin/setup-totp', async (req, res) => {
-  try {
-    const secret = process.env.TOTP_SECRET
-    if (!secret) return res.status(500).json({ message: 'TOTP_SECRET não configurado.' })
-    const otpauth = await totp.toURI({ secret, label: 'bernardo', issuer: 'MAT-IA Admin' })
-    const QRCode = require('qrcode')
-    const qr = await QRCode.toDataURL(otpauth)
-    return res.json({ qr, secret })
-  } catch (e) {
-    console.error('[admin/setup-totp] Erro:', e)
-    return res.status(500).json({ message: 'Erro interno.' })
-  }
-})
 const limiterAdmin = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 3,
@@ -1571,11 +1573,11 @@ router.patch('/admin/solicitacoes-professor/:id/aprovar', limiterAdmin, verifica
       subject: 'MAT-IA — Acesso aprovado!',
       html: `<div style="font-family:Arial,sans-serif;padding:24px;background:#0f172a;color:#fff;border-radius:12px;">
         <h1 style="color:#f97316;">MAT<span style="color:#fff;">-IA</span></h1>
-        <h2>Bem-vindo(a), ${nome}!</h2>
+        <h2>Bem-vindo(a), ${escapeHtml(nome)}!</h2>
         <p style="color:#94a3b8;">Seu acesso foi aprovado. Aqui estão suas credenciais:</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Senha temporária:</strong> <span style="color:#f97316;font-size:1.2em;">${senhaTemp}</span></p>
-        <p><strong>Código da sua turma:</strong> <span style="color:#f97316;font-size:1.2em;">${codigoTurma}</span></p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Senha temporária:</strong> <span style="color:#f97316;font-size:1.2em;">${escapeHtml(senhaTemp)}</span></p>
+        <p><strong>Código da sua turma:</strong> <span style="color:#f97316;font-size:1.2em;">${escapeHtml(codigoTurma)}</span></p>
         <p style="color:#94a3b8;font-size:12px;">Por segurança, altere sua senha no primeiro acesso.</p>
         <a href="${process.env.FRONTEND_URL}/login" style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;margin-top:16px;">Acessar plataforma</a>
       </div>`
@@ -1652,12 +1654,12 @@ router.post('/solicitar-acesso', limiterEsqueciSenha, async (req, res) => {
       [codigoTurma.toUpperCase()]
     )
     if (turma.rows.length === 0)
-      return res.status(404).json({ message: 'Código de turma inválido.' })
+      return res.status(401).json({ message: 'RA ou código de turma inválido.' })
 
     const turmaId = turma.rows[0].id
 
     const existente = await db.query(
-      "SELECT id FROM solicitacoes_aluno WHERE ra = $1 AND turma_id = $2 AND status = 'pendente'",
+      "SELECT id FROM solicitacoes_aluno WHERE ra = $1 AND turma_id = $2 AND status IN ('pendente', 'aprovado')",
       [ra, turmaId]
     )
     if (existente.rows.length > 0)
@@ -1757,11 +1759,11 @@ router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('
         subject: 'MAT-IA — Seu acesso foi aprovado!',
         html: `<div style="font-family:Arial,sans-serif;padding:24px;background:#0f172a;color:#fff;border-radius:12px;">
           <h1 style="color:#f97316;">MAT<span style="color:#fff;">-IA</span></h1>
-          <h2>Olá, ${nome}!</h2>
+          <h2>Olá, ${escapeHtml(nome)}!</h2>
           <p style="color:#94a3b8;">Seu acesso à plataforma foi aprovado pelo professor. Já pode entrar!</p>
-          <p><strong>Turma:</strong> ${nomeTurma}</p>
-          <p><strong>Seu RA:</strong> ${ra}</p>
-          <p><strong>Código da turma:</strong> <span style="color:#f97316;font-size:1.2em;">${codigoTurmaAluno}</span></p>
+          <p><strong>Turma:</strong> ${escapeHtml(nomeTurma)}</p>
+          <p><strong>Seu RA:</strong> ${escapeHtml(ra)}</p>
+          <p><strong>Código da turma:</strong> <span style="color:#f97316;font-size:1.2em;">${escapeHtml(codigoTurmaAluno)}</span></p>
           <p style="color:#94a3b8;font-size:12px;">Use seu RA e o código da turma para entrar na plataforma.</p>
           <a href="${process.env.FRONTEND_URL}/login" style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;margin-top:16px;">Acessar plataforma</a>
         </div>`
