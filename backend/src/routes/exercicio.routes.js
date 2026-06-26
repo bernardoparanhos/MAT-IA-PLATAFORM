@@ -733,6 +733,8 @@ router.patch('/submissoes/:id/feedback', verifyToken, requirePerfil('professor')
     const { feedback } = req.body
     if (!feedback || typeof feedback !== 'string')
       return res.status(400).json({ message: 'Feedback inválido.' })
+    if (feedback.length > 2000)
+      return res.status(400).json({ message: 'Feedback muito longo. Máximo 2000 caracteres.' })
 
     const check = await db.query(`
       SELECT se.id FROM submissoes_exercicio se
@@ -747,7 +749,7 @@ router.patch('/submissoes/:id/feedback', verifyToken, requirePerfil('professor')
       UPDATE submissoes_exercicio
       SET feedback_professor = $1, feedback_editado = true
       WHERE id = $2
-    `, [feedback.slice(0, 2000), req.params.id])
+    `, [feedback, req.params.id])
 
     return res.json({ ok: true })
   } catch (e) {

@@ -315,7 +315,8 @@ router.get('/musicas-favoritas', verifyToken, requirePerfil('aluno'), async (req
 router.post('/musicas-favoritas', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const { favoritas } = req.body
-    if (!Array.isArray(favoritas) || favoritas.length > 200)
+    if (!Array.isArray(favoritas) || favoritas.length > 200 ||
+        JSON.stringify(favoritas).length > 50000)
       return res.status(400).json({ erro: 'Favoritas inválidas.' })
     await db.query(
       'UPDATE usuarios SET musicas_favoritas = $1 WHERE id = $2',
@@ -557,6 +558,9 @@ router.post('/diagnostico/feedback', verifyToken, requirePerfil('aluno'), async 
     
     if (nota === undefined || nota === null)
       return res.status(400).json({ message: 'Nota é obrigatória.' })
+
+    if (comentario && comentario.length > 1000)
+      return res.status(400).json({ message: 'Comentário muito longo. Máximo 1000 caracteres.' })
 
     if (typeof nota !== 'number' || !Number.isFinite(nota))
       return res.status(400).json({ message: 'Nota inválida.' })
@@ -1851,7 +1855,7 @@ router.post('/login/aluno-turma', limiterLoginAluno, async (req, res) => {
   try {
     const { ra, codigoTurma } = req.body
 
-    if (!ra || !codigoTurma)
+    if (!ra || !codigoTurma || ra.length > 30 || codigoTurma.length > 20)
       return res.status(400).json({ message: 'RA e código da turma são obrigatórios.' })
 
     const turma = await db.query(
