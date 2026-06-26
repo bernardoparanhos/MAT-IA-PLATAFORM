@@ -24,7 +24,8 @@ app.use(cors({
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-secret', 'x-totp-code'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-secret', 'x-totp-code', 'x-admin-session'],
+  exposedHeaders: ['x-admin-session-token'],
   credentials: true
 }));
 

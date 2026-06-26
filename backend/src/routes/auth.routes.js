@@ -10,6 +10,7 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const { TOTP, generateSecret: totpGenerateSecret, NobleCryptoPlugin, ScureBase32Plugin } = require('otplib')
 const totp = new TOTP({ crypto: new NobleCryptoPlugin(), base32: new ScureBase32Plugin() })
+const adminSessions = new Map() // token -> { expira_em }
 
 const limiterEsqueciSenha = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -1459,10 +1460,8 @@ async function verificarAdmin(req, res, next) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido'
 
   if (!secret) {
-    await db.query(
-      'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
-      [ip, 'acesso_admin', false, 'Header ausente']
-    ).catch(() => {})
+    await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+      [ip, 'acesso_admin', false, 'Header ausente']).catch(() => {})
     return res.status(403).json({ message: 'Sem permissão.' })
   }
 
@@ -1471,43 +1470,53 @@ async function verificarAdmin(req, res, next) {
     const a = Buffer.from(secret)
     const b = Buffer.from(process.env.ADMIN_SECRET || '')
     if (a.length !== b.length || !timingSafeEqual(a, b)) {
-      await db.query(
-        'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
-        [ip, 'acesso_admin', false, 'Chave inválida']
-      ).catch(() => {})
+      await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+        [ip, 'acesso_admin', false, 'Chave inválida']).catch(() => {})
       return res.status(403).json({ message: 'Sem permissão.' })
     }
   } catch {
     return res.status(403).json({ message: 'Sem permissão.' })
   }
 
+  // Verifica se tem token de sessão válido
+  const sessionToken = req.headers['x-admin-session']
+  if (sessionToken) {
+    const session = adminSessions.get(sessionToken)
+    if (session && session.expira_em > Date.now()) {
+      await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+        [ip, 'acesso_admin', true, `Sessão: ${req.method} ${req.path}`]).catch(() => {})
+      return next()
+    }
+    adminSessions.delete(sessionToken)
+  }
+
+  // Sem sessão válida — exige TOTP
   const totpCode = req.headers['x-totp-code']
   if (!totpCode) {
-    await db.query(
-      'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
-      [ip, 'acesso_admin', false, 'Código TOTP ausente']
-    ).catch(() => {})
+    await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+      [ip, 'acesso_admin', false, 'TOTP ausente']).catch(() => {})
     return res.status(403).json({ message: 'Código de autenticação obrigatório.', totp_required: true })
   }
 
   const totpSecret = process.env.TOTP_SECRET
   if (!totpSecret) return res.status(500).json({ message: 'TOTP não configurado.' })
 
-  const resultado = await totp.verify(totpCode, { secret: totpSecret })
+  const resultado = await totp.verify(totpCode, { secret: totpSecret, epochTolerance: 1 })
   const valido = resultado?.valid === true
   if (!valido) {
-    await db.query(
-      'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
-      [ip, 'acesso_admin', false, 'Código TOTP inválido']
-    ).catch(() => {})
+    await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+      [ip, 'acesso_admin', false, 'TOTP inválido']).catch(() => {})
     return res.status(403).json({ message: 'Código de autenticação inválido.', totp_required: true })
   }
 
-  await db.query(
-    'INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
-    [ip, 'acesso_admin', true, `Rota: ${req.method} ${req.path}`]
-  ).catch(() => {})
+  // TOTP válido — gera token de sessão válido por 1 hora
+  const novoToken = crypto.randomBytes(32).toString('hex')
+  adminSessions.set(novoToken, { expira_em: Date.now() + 60 * 60 * 1000 })
 
+  await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+    [ip, 'acesso_admin', true, `Login: ${req.method} ${req.path}`]).catch(() => {})
+
+  res.setHeader('x-admin-session-token', novoToken)
   next()
 }
 

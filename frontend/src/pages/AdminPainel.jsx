@@ -5,6 +5,7 @@ const API = import.meta.env.VITE_API_URL
 function AdminPainel() {
   const [secret, setSecret] = useState('')
   const [totp, setTotp] = useState('')
+  const [sessionToken, setSessionToken] = useState('')
   const [autenticado, setAutenticado] = useState(false)
   const [solicitacoes, setSolicitacoes] = useState([])
   const [logs, setLogs] = useState([])
@@ -12,19 +13,28 @@ function AdminPainel() {
   const [processando, setProcessando] = useState(null)
   const [erro, setErro] = useState('')
 
+  function adminHeaders() {
+    const headers = { 'x-admin-secret': secret }
+    if (sessionToken) headers['x-admin-session'] = sessionToken
+    if (totp) headers['x-totp-code'] = totp
+    return headers
+  }
+
   async function autenticar(e) {
     e.preventDefault()
     setErro('')
     setCarregando(true)
     try {
       const res = await fetch(`${API}/auth/admin/solicitacoes-professor`, {
-        headers: { 'x-admin-secret': secret, 'x-totp-code': totp }
+        headers: adminHeaders()
       })
       if (!res.ok) { setErro('Chave ou código inválido.'); return }
+      const newSessionToken = res.headers.get('x-admin-session-token')
+      if (newSessionToken) setSessionToken(newSessionToken)
       const data = await res.json()
       setSolicitacoes(data.solicitacoes || [])
       const resLogs = await fetch(`${API}/auth/admin/logs`, {
-        headers: { 'x-admin-secret': secret, 'x-totp-code': totp }
+        headers: adminHeaders()
       })
       const dataLogs = await resLogs.json()
       setLogs(dataLogs.logs || [])
@@ -41,7 +51,7 @@ function AdminPainel() {
     try {
       await fetch(`${API}/auth/admin/solicitacoes-professor/${id}/aprovar`, {
         method: 'PATCH',
-        headers: { 'x-admin-secret': secret, 'x-totp-code': totp }
+        headers: adminHeaders()
       })
       setSolicitacoes(prev => prev.map(s =>
         s.id === id ? { ...s, status: 'aprovado' } : s
@@ -58,7 +68,7 @@ function AdminPainel() {
     try {
       await fetch(`${API}/auth/admin/solicitacoes-professor/${id}/rejeitar`, {
         method: 'PATCH',
-        headers: { 'x-admin-secret': secret, 'x-totp-code': totp }
+        headers: adminHeaders()
       })
       setSolicitacoes(prev => prev.map(s =>
         s.id === id ? { ...s, status: 'rejeitado' } : s
