@@ -1409,6 +1409,15 @@ router.post('/solicitar-professor', limiterEsqueciSenha, async (req, res) => {
     if (!nome || !email || !instituicao || !tipo_instituicao)
       return res.status(400).json({ message: 'Nome, email, instituição e tipo são obrigatórios.' })
 
+    if (nome.length > 100)
+      return res.status(400).json({ message: 'Nome muito longo. Máximo 100 caracteres.' })
+    if (email.length > 150)
+      return res.status(400).json({ message: 'Email muito longo. Máximo 150 caracteres.' })
+    if (instituicao.length > 200)
+      return res.status(400).json({ message: 'Nome da instituição muito longo. Máximo 200 caracteres.' })
+    if (mensagem && mensagem.length > 1000)
+      return res.status(400).json({ message: 'Mensagem muito longa. Máximo 1000 caracteres.' })
+
     if (!['universitario', 'medio', 'fundamental'].includes(tipo_instituicao))
       return res.status(400).json({ message: 'Tipo de instituição inválido.' })
 
@@ -1654,6 +1663,13 @@ router.post('/solicitar-acesso', limiterEsqueciSenha, async (req, res) => {
 
     if (!nome || !ra || !codigoTurma || !email)
       return res.status(400).json({ message: 'Nome, RA, email e código da turma são obrigatórios.' })
+
+    if (nome.length > 100)
+      return res.status(400).json({ message: 'Nome muito longo. Máximo 100 caracteres.' })
+    if (ra.length > 30)
+      return res.status(400).json({ message: 'RA muito longo. Máximo 30 caracteres.' })
+    if (email && email.length > 150)
+      return res.status(400).json({ message: 'Email muito longo. Máximo 150 caracteres.' })
 
     const turma = await db.query(
       'SELECT id, nome FROM turmas WHERE codigo_acesso = $1',

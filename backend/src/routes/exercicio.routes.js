@@ -689,6 +689,9 @@ router.patch('/listas/:id/questoes/:listaquestaoId/criterio', verifyToken, requi
     if (lista.rows.length === 0)
       return res.status(403).json({ message: 'Sem permissão.' })
 
+    if (req.body.criterios_ia && req.body.criterios_ia.length > 500)
+      return res.status(400).json({ message: 'Critério muito longo. Máximo 500 caracteres.' })
+
     await db.query(
       'UPDATE lista_questoes SET criterios_ia = $1 WHERE id = $2 AND lista_id = $3',
       [req.body.criterios_ia || null, req.params.listaquestaoId, req.params.id]
