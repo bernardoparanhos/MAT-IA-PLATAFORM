@@ -519,7 +519,10 @@ function Dashboard() {
                       <div>
                         <label className="block text-xs uppercase tracking-wider text-slate-400 font-medium mb-2">Mensagem</label>
                         <textarea value={feedbackMensagem} onChange={(e) => setFeedbackMensagem(e.target.value)} maxLength={500} rows={5} placeholder="Descreva sua sugestão, problema ou comentário..." className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 border border-white/10 focus:border-orange-500 focus:outline-none font-light resize-none" required />
-                        <p className="text-xs text-slate-500 mt-1 text-right">{feedbackMensagem.length}/500 caracteres</p>
+                        <p className={`text-xs mt-1 text-right ${feedbackMensagem.length < 10 ? 'text-orange-400' : 'text-slate-500'}`}>
+  {feedbackMensagem.length}/500 caracteres
+  {feedbackMensagem.length < 10 && ` — mínimo ${10 - feedbackMensagem.length} caractere${10 - feedbackMensagem.length !== 1 ? 's' : ''}`}
+</p>
                       </div>
 
                       <div className="flex items-start gap-3">

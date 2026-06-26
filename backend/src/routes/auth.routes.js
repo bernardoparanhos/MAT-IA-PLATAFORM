@@ -26,6 +26,16 @@ const limiterEsqueciSenha = rateLimit({
   legacyHeaders: false,
 });
 
+// ─── LOGIN ALUNO — RA + CÓDIGO DA TURMA ──────────────────────────────────────
+const limiterLoginAluno = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Muitas tentativas de login. Aguarde 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+
 const limiterSolicitacoes = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -1840,15 +1850,6 @@ router.patch('/professor/solicitacoes/:id/rejeitar', verifyToken, requirePerfil(
     console.error('[professor/rejeitar-aluno] Erro:', e)
     return res.status(500).json({ message: 'Erro interno.' })
   }
-})
-
-// ─── LOGIN ALUNO — RA + CÓDIGO DA TURMA ──────────────────────────────────────
-const limiterLoginAluno = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { message: 'Muitas tentativas de login. Aguarde 15 minutos.' },
-  standardHeaders: true,
-  legacyHeaders: false,
 })
 
 router.post('/login/aluno-turma', limiterLoginAluno, async (req, res) => {
