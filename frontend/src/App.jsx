@@ -36,7 +36,7 @@ import SolicitacoesProfessor from './pages/SolicitacoesProfessor'
 import AdminPainel from './pages/AdminPainel'
 
 
-const EM_MANUTENCAO = true
+const EM_MANUTENCAO = false // Mudar para true para ativar a tela de manutenção
 
 function App() {
   const location = useLocation()
