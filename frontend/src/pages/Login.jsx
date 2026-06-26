@@ -51,6 +51,10 @@ function Login() {
         body: JSON.stringify({ siape: formProfessor.email, senha: formProfessor.senha })
       })
       const data = await res.json()
+      if (res.status === 403 && data.trocar_senha) {
+        navigate('/trocar-senha', { state: { email: formProfessor.email } })
+        return
+      }
       if (!res.ok) { setErro(data.message || 'Erro ao entrar.'); return }
       login(data.usuario)
       navigate('/dashboard-professor')

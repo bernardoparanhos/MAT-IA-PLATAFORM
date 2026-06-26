@@ -154,13 +154,13 @@ async function loginProfessor(req, res) {
 
   try {
     let result = await db.query(
-      "SELECT id, nome, email, senha, perfil FROM usuarios WHERE email = $1 AND perfil = 'professor'",
+      "SELECT id, nome, email, senha, perfil, deve_trocar_senha FROM usuarios WHERE email = $1 AND perfil = 'professor'",
       [siape]
     )
 
     if (result.rows.length === 0) {
       result = await db.query(
-        "SELECT id, nome, email, senha, perfil FROM usuarios WHERE siape = $1 AND perfil = 'professor'",
+        "SELECT id, nome, email, senha, perfil, deve_trocar_senha FROM usuarios WHERE siape = $1 AND perfil = 'professor'",
         [siape]
       )
     }
@@ -172,6 +172,13 @@ async function loginProfessor(req, res) {
     const senhaCorreta = await bcrypt.compare(senha, hashParaComparar);
 
     if (!usuario || !senhaCorreta) return res.status(401).json({ message: 'SIAPE ou senha inválidos.' });
+
+    if (usuario.deve_trocar_senha) {
+      return res.status(403).json({
+        message: 'Você precisa trocar sua senha antes de continuar.',
+        trocar_senha: true
+      })
+    }
 
     const token = gerarToken({ id: usuario.id, perfil: 'professor' });
     res.cookie('access_token', token, {

@@ -1559,8 +1559,8 @@ router.patch('/admin/solicitacoes-professor/:id/aprovar', limiterAdmin, verifica
     const codigoTurma = crypto.randomBytes(4).toString('hex').toUpperCase()
 
     const professor = await db.query(`
-      INSERT INTO usuarios (nome, email, senha, perfil)
-      VALUES ($1, $2, $3, 'professor')
+      INSERT INTO usuarios (nome, email, senha, perfil, deve_trocar_senha)
+      VALUES ($1, $2, $3, 'professor', true)
       RETURNING id
     `, [nome, email, senhaHash])
 
@@ -1886,6 +1886,44 @@ router.post('/logout', (req, res) => {
   });
   return res.status(200).json({ ok: true });
 });
+
+// ─── TROCA DE SENHA TEMPORÁRIA ────────────────────────────────────────────────
+router.post('/professor/trocar-senha-temp', limiterEsqueciSenha, async (req, res) => {
+  try {
+    const { email, senhaAtual, novaSenha, confirmarSenha } = req.body
+
+    if (!email || !senhaAtual || !novaSenha || !confirmarSenha)
+      return res.status(400).json({ message: 'Todos os campos são obrigatórios.' })
+
+    if (novaSenha !== confirmarSenha)
+      return res.status(400).json({ message: 'As senhas não coincidem.' })
+
+    if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(novaSenha))
+      return res.status(400).json({ message: 'Mín. 8 caracteres, 1 maiúscula e 1 número.' })
+
+    const result = await db.query(
+      "SELECT id, senha FROM usuarios WHERE email = $1 AND perfil = 'professor' AND deve_trocar_senha = true",
+      [email]
+    )
+    if (result.rows.length === 0)
+      return res.status(404).json({ message: 'Professor não encontrado ou senha já atualizada.' })
+
+    const senhaOk = await bcrypt.compare(senhaAtual, result.rows[0].senha)
+    if (!senhaOk)
+      return res.status(401).json({ message: 'Senha atual incorreta.' })
+
+    const novaHash = await bcrypt.hash(novaSenha, 12)
+    await db.query(
+      'UPDATE usuarios SET senha = $1, deve_trocar_senha = false WHERE id = $2',
+      [novaHash, result.rows[0].id]
+    )
+
+    return res.json({ message: 'Senha atualizada com sucesso! Faça login com a nova senha.' })
+  } catch (e) {
+    console.error('[professor/trocar-senha-temp] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
 
 router.post('/admin/logout', limiterAdmin, verificarAdmin, async (req, res) => {
   const sessionToken = req.headers['x-admin-session']

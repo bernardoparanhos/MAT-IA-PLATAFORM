@@ -34,6 +34,7 @@ import SolicitacaoProfessor from './pages/SolicitacaoProfessor'
 import SolicitacaoAluno from './pages/SolicitacaoAluno'
 import SolicitacoesProfessor from './pages/SolicitacoesProfessor'
 import AdminPainel from './pages/AdminPainel'
+import TrocarSenhaTemp from './pages/TrocarSenhaTemp'
 
 
 const EM_MANUTENCAO = false // Mudar para true para ativar a tela de manutenção
@@ -62,6 +63,7 @@ function App() {
           <Route path="/solicitar-professor" element={<SolicitacaoProfessor />} />
           <Route path="/solicitar-acesso" element={<SolicitacaoAluno />} />
           <Route path="/admin" element={<AdminPainel />} />
+          <Route path="/trocar-senha" element={<TrocarSenhaTemp />} />
 
           {/* Protegidas — Professor */}
           <Route path="/dashboard-professor" element={
