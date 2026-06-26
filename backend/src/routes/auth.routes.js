@@ -1712,14 +1712,19 @@ router.get('/professor/solicitacoes', verifyToken, requirePerfil('professor'), a
 // ─── PROFESSOR: APROVA ALUNO ──────────────────────────────────────────────────
 router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('professor'), async (req, res) => {
   try {
+    await db.query('BEGIN')
+
     const sol = await db.query(`
       SELECT sa.* FROM solicitacoes_aluno sa
       INNER JOIN turmas t ON t.id = sa.turma_id
       WHERE sa.id = $1 AND t.professor_id = $2 AND sa.status = 'pendente'
+      FOR UPDATE
     `, [req.params.id, req.usuario.id])
 
-    if (sol.rows.length === 0)
+    if (sol.rows.length === 0) {
+      await db.query('ROLLBACK')
       return res.status(404).json({ message: 'Solicitação não encontrada ou já processada.' })
+    }
 
     const { nome, ra, turma_id, email: emailAluno } = sol.rows[0]
 
@@ -1752,12 +1757,15 @@ router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('
       [req.params.id]
     )
 
+    await db.query('COMMIT')
+
+    // Envia email fire-and-forget após commit
     if (emailAluno) {
       const turmaInfo = await db.query(
         'SELECT codigo_acesso, nome FROM turmas WHERE id = $1',
         [turma_id]
       )
-      const codigoTurmaAluno = turmaInfo.rows[0]?.codigo_acesso
+      const codigoTurma = turmaInfo.rows[0]?.codigo_acesso
       const nomeTurma = turmaInfo.rows[0]?.nome
 
       enviarEmail({
@@ -1769,7 +1777,7 @@ router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('
           <p style="color:#94a3b8;">Seu acesso à plataforma foi aprovado pelo professor. Já pode entrar!</p>
           <p><strong>Turma:</strong> ${escapeHtml(nomeTurma)}</p>
           <p><strong>Seu RA:</strong> ${escapeHtml(ra)}</p>
-          <p><strong>Código da turma:</strong> <span style="color:#f97316;font-size:1.2em;">${escapeHtml(codigoTurmaAluno)}</span></p>
+          <p><strong>Código da turma:</strong> <span style="color:#f97316;font-size:1.2em;">${escapeHtml(codigoTurma)}</span></p>
           <p style="color:#94a3b8;font-size:12px;">Use seu RA e o código da turma para entrar na plataforma.</p>
           <a href="${process.env.FRONTEND_URL}/login" style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;margin-top:16px;">Acessar plataforma</a>
         </div>`
@@ -1778,6 +1786,7 @@ router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('
 
     return res.json({ message: 'Aluno aprovado com sucesso.' })
   } catch (e) {
+    await db.query('ROLLBACK').catch(() => {})
     console.error('[professor/aprovar-aluno] Erro:', e)
     return res.status(500).json({ message: 'Erro interno.' })
   }
