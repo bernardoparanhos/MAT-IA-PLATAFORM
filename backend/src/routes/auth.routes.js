@@ -26,6 +26,14 @@ const limiterEsqueciSenha = rateLimit({
   legacyHeaders: false,
 });
 
+const limiterSolicitacoes = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Muitas tentativas. Aguarde 15 minutos e tente novamente.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 const limiterIA = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
@@ -307,6 +315,8 @@ router.get('/musicas-favoritas', verifyToken, requirePerfil('aluno'), async (req
 router.post('/musicas-favoritas', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
     const { favoritas } = req.body
+    if (!Array.isArray(favoritas) || favoritas.length > 200)
+      return res.status(400).json({ erro: 'Favoritas inválidas.' })
     await db.query(
       'UPDATE usuarios SET musicas_favoritas = $1 WHERE id = $2',
       [JSON.stringify(favoritas), req.usuario.id]
@@ -1402,7 +1412,7 @@ router.post('/jogos/partida', async (req, res) => {
 })
 
 // ─── SOLICITAÇÃO DE PROFESSOR ─────────────────────────────────────────────────
-router.post('/solicitar-professor', limiterEsqueciSenha, async (req, res) => {
+router.post('/solicitar-professor', limiterSolicitacoes, async (req, res) => {
   try {
     const { nome, email, instituicao, tipo_instituicao, mensagem } = req.body
 
@@ -1468,7 +1478,7 @@ const limiterAdmin = rateLimit({
 
 async function verificarAdmin(req, res, next) {
   const secret = req.headers['x-admin-secret']
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido'
+  const ip = req.ip || req.socket.remoteAddress || 'desconhecido'
 
   if (!secret) {
     await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
@@ -1657,7 +1667,7 @@ router.get('/admin/logs', limiterAdmin, verificarAdmin, async (req, res) => {
 })
 
 // ─── SOLICITAÇÃO DE ALUNO ─────────────────────────────────────────────────────
-router.post('/solicitar-acesso', limiterEsqueciSenha, async (req, res) => {
+router.post('/solicitar-acesso', limiterSolicitacoes, async (req, res) => {
   try {
     const { nome, ra, codigoTurma, email } = req.body
 

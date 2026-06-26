@@ -42,7 +42,7 @@ async function alterarSenha(req, res) {
     return res.status(400).json({ message: 'A nova senha deve ter no mínimo 8 caracteres, uma letra maiúscula e um número.' });
 
   try {
-    const result = await db.query('SELECT * FROM usuarios WHERE id = $1', [req.usuario.id]);
+    const result = await db.query('SELECT id, senha FROM usuarios WHERE id = $1', [req.usuario.id]);
     const aluno = result.rows[0];
 
     if (!aluno) return res.status(404).json({ message: 'Aluno não encontrado.' });
