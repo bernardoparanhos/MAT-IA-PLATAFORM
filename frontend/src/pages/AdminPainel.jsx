@@ -146,7 +146,18 @@ function AdminPainel() {
             <p className="text-slate-400 text-sm font-light">Painel Admin — Solicitações de professores</p>
           </div>
           <button
-            onClick={() => setAutenticado(false)}
+            onClick={async () => {
+              try {
+                await fetch(`${API}/auth/admin/logout`, {
+                  method: 'POST',
+                  headers: adminHeaders()
+                })
+              } catch (e) {
+                console.error('Erro ao fazer logout admin', e)
+              }
+              setAutenticado(false)
+              setSessionToken('')
+            }}
             className="text-slate-500 hover:text-white text-sm transition-colors"
           >
             Sair

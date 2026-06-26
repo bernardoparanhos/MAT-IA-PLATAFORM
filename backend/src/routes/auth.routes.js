@@ -1485,6 +1485,12 @@ async function verificarAdmin(req, res, next) {
   if (sessionToken) {
     const session = adminSessions.get(sessionToken)
     if (session && session.expira_em > Date.now()) {
+      if (session.ip !== ip) {
+        await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
+          [ip, 'acesso_admin', false, `IP inválido para sessão — esperado: ${session.ip}`]).catch(() => {})
+        adminSessions.delete(sessionToken)
+        return res.status(403).json({ message: 'Sessão inválida.' })
+      }
       await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
         [ip, 'acesso_admin', true, `Sessão: ${req.method} ${req.path}`]).catch(() => {})
       return next()
@@ -1513,7 +1519,7 @@ async function verificarAdmin(req, res, next) {
 
   // TOTP válido — gera token de sessão válido por 1 hora
   const novoToken = crypto.randomBytes(32).toString('hex')
-  adminSessions.set(novoToken, { expira_em: Date.now() + 60 * 60 * 1000 })
+  adminSessions.set(novoToken, { expira_em: Date.now() + 60 * 60 * 1000, ip })
 
   await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
     [ip, 'acesso_admin', true, `Login: ${req.method} ${req.path}`]).catch(() => {})
@@ -1880,5 +1886,11 @@ router.post('/logout', (req, res) => {
   });
   return res.status(200).json({ ok: true });
 });
+
+router.post('/admin/logout', limiterAdmin, verificarAdmin, async (req, res) => {
+  const sessionToken = req.headers['x-admin-session']
+  if (sessionToken) adminSessions.delete(sessionToken)
+  return res.json({ ok: true })
+})
 
 module.exports = router;
