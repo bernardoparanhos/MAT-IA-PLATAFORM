@@ -1642,10 +1642,10 @@ router.get('/admin/logs', limiterAdmin, verificarAdmin, async (req, res) => {
 // ─── SOLICITAÇÃO DE ALUNO ─────────────────────────────────────────────────────
 router.post('/solicitar-acesso', limiterEsqueciSenha, async (req, res) => {
   try {
-    const { nome, ra, codigoTurma } = req.body
+    const { nome, ra, codigoTurma, email } = req.body
 
-    if (!nome || !ra || !codigoTurma)
-      return res.status(400).json({ message: 'Nome, RA e código da turma são obrigatórios.' })
+    if (!nome || !ra || !codigoTurma || !email)
+      return res.status(400).json({ message: 'Nome, RA, email e código da turma são obrigatórios.' })
 
     const turma = await db.query(
       'SELECT id, nome FROM turmas WHERE codigo_acesso = $1',
@@ -1672,9 +1672,9 @@ router.post('/solicitar-acesso', limiterEsqueciSenha, async (req, res) => {
       return res.status(409).json({ message: 'Este RA já está cadastrado nessa turma.' })
 
     await db.query(`
-      INSERT INTO solicitacoes_aluno (nome, ra, turma_id)
-      VALUES ($1, $2, $3)
-    `, [nome, ra, turmaId])
+      INSERT INTO solicitacoes_aluno (nome, ra, turma_id, email)
+      VALUES ($1, $2, $3, $4)
+    `, [nome, ra, turmaId, email])
 
     return res.json({ message: 'Solicitação enviada! Aguarde a aprovação do professor.' })
   } catch (e) {
@@ -1713,7 +1713,7 @@ router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('
     if (sol.rows.length === 0)
       return res.status(404).json({ message: 'Solicitação não encontrada ou já processada.' })
 
-    const { nome, ra, turma_id } = sol.rows[0]
+    const { nome, ra, turma_id, email: emailAluno } = sol.rows[0]
 
     let alunoId
     const usuarioExistente = await db.query(
@@ -1729,7 +1729,7 @@ router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('
         INSERT INTO usuarios (nome, ra, senha, perfil, email)
         VALUES ($1, $2, $3, 'aluno', $4)
         RETURNING id
-      `, [nome, ra, senhaHash, `${ra}@aluno.mat-ia`])
+      `, [nome, ra, senhaHash, emailAluno || `${ra}@aluno.mat-ia`])
       alunoId = novoAluno.rows[0].id
     }
 
@@ -1743,6 +1743,30 @@ router.patch('/professor/solicitacoes/:id/aprovar', verifyToken, requirePerfil('
       "UPDATE solicitacoes_aluno SET status = 'aprovado' WHERE id = $1",
       [req.params.id]
     )
+
+    if (emailAluno) {
+      const turmaInfo = await db.query(
+        'SELECT codigo_acesso, nome FROM turmas WHERE id = $1',
+        [turma_id]
+      )
+      const codigoTurmaAluno = turmaInfo.rows[0]?.codigo_acesso
+      const nomeTurma = turmaInfo.rows[0]?.nome
+
+      enviarEmail({
+        to: emailAluno,
+        subject: 'MAT-IA — Seu acesso foi aprovado!',
+        html: `<div style="font-family:Arial,sans-serif;padding:24px;background:#0f172a;color:#fff;border-radius:12px;">
+          <h1 style="color:#f97316;">MAT<span style="color:#fff;">-IA</span></h1>
+          <h2>Olá, ${nome}!</h2>
+          <p style="color:#94a3b8;">Seu acesso à plataforma foi aprovado pelo professor. Já pode entrar!</p>
+          <p><strong>Turma:</strong> ${nomeTurma}</p>
+          <p><strong>Seu RA:</strong> ${ra}</p>
+          <p><strong>Código da turma:</strong> <span style="color:#f97316;font-size:1.2em;">${codigoTurmaAluno}</span></p>
+          <p style="color:#94a3b8;font-size:12px;">Use seu RA e o código da turma para entrar na plataforma.</p>
+          <a href="${process.env.FRONTEND_URL}/login" style="display:inline-block;background:#f97316;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;margin-top:16px;">Acessar plataforma</a>
+        </div>`
+      }).catch(e => console.error('[professor/aprovar-aluno] Erro email:', e))
+    }
 
     return res.json({ message: 'Aluno aprovado com sucesso.' })
   } catch (e) {

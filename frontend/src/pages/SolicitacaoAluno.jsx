@@ -5,7 +5,7 @@ const API = import.meta.env.VITE_API_URL
 
 function SolicitacaoAluno() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ nome: '', ra: '', codigoTurma: '' })
+  const [form, setForm] = useState({ nome: '', ra: '', codigoTurma: '', email: '' })
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState(false)
@@ -81,6 +81,18 @@ function SolicitacaoAluno() {
                 onChange={e => setForm(f => ({ ...f, ra: e.target.value }))}
                 required
                 placeholder="Seu RA ou número de matrícula"
+                className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 border border-white/10 focus:border-orange-500 focus:outline-none font-light"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-slate-400 mb-2">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                required
+                placeholder="seu@email.com"
                 className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-3 border border-white/10 focus:border-orange-500 focus:outline-none font-light"
               />
             </div>
