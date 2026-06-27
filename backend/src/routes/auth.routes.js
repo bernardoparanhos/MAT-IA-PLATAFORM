@@ -969,6 +969,13 @@ INSTRUÇÕES:
 
 router.get('/materias/stats', verifyToken, requirePerfil('aluno', 'professor'), async (req, res) => {
   try {
+    const nivelStatsResult = await db.query(`
+      SELECT t.tipo_teste FROM turmas t
+      INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+      WHERE ta.aluno_id = $1
+    `, [req.usuario.id])
+    const nivelStats = nivelStatsResult.rows[0]?.tipo_teste || 'universitario'
+
     const [resFeitas, resTotal] = await Promise.all([
       db.query(`
         SELECT
@@ -982,7 +989,11 @@ router.get('/materias/stats', verifyToken, requirePerfil('aluno', 'professor'), 
         ORDER BY questao_id, respondido_em DESC
       ) ultima
       `, [req.usuario.id]),
-      db.query(`SELECT COUNT(*) as total FROM questoes WHERE ativa = true`)
+      db.query(`
+        SELECT COUNT(*) as total FROM questoes
+        WHERE ativa = true
+          AND (nivel_ensino = $1 OR nivel_ensino = 'todos')
+      `, [nivelStats])
     ])
         const { total: feitas, acertos, erros } = resFeitas.rows[0]
     const { total } = resTotal.rows[0]
@@ -1002,11 +1013,20 @@ router.get('/materias/blocos', verifyToken, requirePerfil('aluno', 'professor'),
   try {
     const blocos = ['inteiros', 'fracoes', 'raizes', 'potencias', 'geometria', 'equacao1', 'equacao2', 'modulo', 'exponencial', 'trigonometria']
 
+    const nivelBlocos = await db.query(`
+      SELECT t.tipo_teste FROM turmas t
+      INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+      WHERE ta.aluno_id = $1
+    `, [req.usuario.id])
+    const nivelAlunoBlocos = nivelBlocos.rows[0]?.tipo_teste || 'universitario'
+
     const totais = await db.query(`
       SELECT bloco, COUNT(*) as total
-      FROM questoes WHERE ativa = true
+      FROM questoes
+      WHERE ativa = true
+        AND (nivel_ensino = $1 OR nivel_ensino = 'todos')
       GROUP BY bloco
-    `)
+    `, [nivelAlunoBlocos])
 
     const historico = await db.query(`
       SELECT bloco,
@@ -1055,12 +1075,20 @@ router.get('/materias/:bloco/questoes', verifyToken, requirePerfil('aluno', 'pro
     if (!blocosValidos.includes(req.params.bloco))
       return res.status(400).json({ message: 'Bloco inválido.' })
 
+    const nivelResult = await db.query(`
+      SELECT t.tipo_teste FROM turmas t
+      INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+      WHERE ta.aluno_id = $1
+    `, [req.usuario.id])
+    const nivelAluno = nivelResult.rows[0]?.tipo_teste || 'universitario'
+
     const questoesResult = await db.query(`
       SELECT id, enunciado, alternativas, latex, dificuldade
       FROM questoes
       WHERE bloco = $1 AND ativa = true
+        AND (nivel_ensino = $2 OR nivel_ensino = 'todos')
       ORDER BY id ASC
-    `, [req.params.bloco])
+    `, [req.params.bloco, nivelAluno])
 
     const historicoResult = await db.query(`
       SELECT questao_id, acertou, resposta_dada, respondido_em
