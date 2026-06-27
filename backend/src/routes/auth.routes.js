@@ -1492,8 +1492,7 @@ const limiterAdmin = rateLimit({
 
 async function verificarAdmin(req, res, next) {
   const secret = req.headers['x-admin-secret']
-  const ip = req.ip || req.socket.remoteAddress || 'desconhecido'
-
+const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.socket.remoteAddress || 'desconhecido'
   if (!secret) {
     await db.query('INSERT INTO log_admin (ip, acao, sucesso, detalhes) VALUES ($1, $2, $3, $4)',
       [ip, 'acesso_admin', false, 'Header ausente']).catch(() => {})
