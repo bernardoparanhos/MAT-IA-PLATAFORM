@@ -1351,46 +1351,52 @@ router.post('/feedback', verifyToken, requirePerfil('aluno'), async (req, res) =
 
 router.get('/ranking', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {
-    const alunoLogadoId = req.usuario.id;
+    const alunoLogadoId = req.usuario.id
+
+    const nivelResult = await db.query(`
+      SELECT t.tipo_teste FROM turmas t
+      INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+      WHERE ta.aluno_id = $1
+    `, [alunoLogadoId])
+
+    const nivelAluno = nivelResult.rows[0]?.tipo_teste || 'universitario'
 
     const result = await db.query(`
-      SELECT 
-        id, -- Precisamos do ID para comparar
-        nome, 
-        ra, 
-        pontos_totais, 
-        questoes_corretas, 
-        questoes_respondidas,
-        CASE WHEN questoes_respondidas > 0 
-             THEN ROUND((questoes_corretas::numeric / questoes_respondidas::numeric) * 100, 1)
+      SELECT
+        u.id,
+        u.nome,
+        u.ra,
+        u.pontos_totais,
+        u.questoes_corretas,
+        u.questoes_respondidas,
+        CASE WHEN u.questoes_respondidas > 0
+             THEN ROUND((u.questoes_corretas::numeric / u.questoes_respondidas::numeric) * 100, 1)
              ELSE 0 END as taxa_acerto
-      FROM usuarios 
-      WHERE perfil = 'aluno' AND pontos_totais > 0
-      ORDER BY 
-        pontos_totais DESC, 
-        questoes_corretas DESC, 
-        questoes_respondidas ASC, -- Desempate: quem errou menos ganha
-        nome ASC
+      FROM usuarios u
+      INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+      INNER JOIN turmas t ON t.id = ta.turma_id
+      WHERE u.perfil = 'aluno'
+        AND u.pontos_totais > 0
+        AND t.tipo_teste = $1
+      ORDER BY
+        u.pontos_totais DESC,
+        u.questoes_corretas DESC,
+        u.questoes_respondidas ASC,
+        u.nome ASC
       LIMIT 10
-    `);
+    `, [nivelAluno])
 
-    // Adiciona o "(você)" com uma comparação mais robusta
-    const rankingFormatado = result.rows.map(aluno => {
-      // Forçamos a comparação como String para garantir que tipos diferentes não quebrem a lógica
-      const ehUsuarioLogado = String(aluno.id) === String(alunoLogadoId);
+    const rankingFormatado = result.rows.map(aluno => ({
+      ...aluno,
+      nome: String(aluno.id) === String(alunoLogadoId) ? `${aluno.nome} (você)` : aluno.nome
+    }))
 
-      return {
-        ...aluno,
-        nome: ehUsuarioLogado ? `${aluno.nome} (você)` : aluno.nome
-      };
-    });
-
-    res.json(rankingFormatado);
+    return res.json({ ranking: rankingFormatado, nivel: nivelAluno })
   } catch (e) {
-    console.error('[ranking] Erro:', e);
-    res.status(500).json({ error: 'Erro ao buscar ranking' });
+    console.error('[ranking] Erro:', e)
+    return res.status(500).json({ error: 'Erro ao buscar ranking' })
   }
-});
+})
 
 router.get('/meu-progresso', verifyToken, requirePerfil('aluno'), async (req, res) => {
   try {

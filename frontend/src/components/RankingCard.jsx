@@ -4,6 +4,7 @@ import { Trophy, Medal, Award, Crown } from 'lucide-react';
 export default function RankingCard() {
     const [ranking, setRanking] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [nivelRanking, setNivelRanking] = useState(null);
     const [minimizado, setMinimizado] = useState(() => {
         return localStorage.getItem('ranking_minimizado') === 'true'
     });
@@ -19,7 +20,8 @@ export default function RankingCard() {
 
                 if (res.ok) {
                     const data = await res.json();
-                    setRanking(data);
+                    setRanking(data.ranking || []);
+                    setNivelRanking(data.nivel || 'universitario');
                 }
             } catch (error) {
                 console.error('Erro ao buscar ranking:', error);
@@ -64,9 +66,19 @@ export default function RankingCard() {
                         <Crown className="w-5 h-5 text-orange-400" strokeWidth="1.5" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-medium text-white uppercase tracking-wider text-sm">
-                            Ranking Global
-                        </h2>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-lg font-medium text-white uppercase tracking-wider text-sm">🏆 Ranking</h2>
+                            {nivelRanking && (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                                    nivelRanking === 'medio' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                    nivelRanking === 'fundamental' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                    'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                }`}>
+                                    {nivelRanking === 'medio' ? 'Ensino Médio' :
+                                     nivelRanking === 'fundamental' ? 'Fundamental' : 'Universitário'}
+                                </span>
+                            )}
+                        </div>
                         <p className="text-xs text-slate-400 font-light">Os melhores do MAT-IA</p>
                     </div>
                 </div>
