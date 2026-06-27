@@ -15,6 +15,8 @@ function AdminPainel() {
   const [abaAtiva, setAbaAtiva] = useState('solicitacoes')
   const [consumo, setConsumo] = useState(null)
   const [carregandoConsumo, setCarregandoConsumo] = useState(false)
+  const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7))
+  const [filtroProfessor, setFiltroProfessor] = useState('')
 
   function adminHeaders() {
     const headers = { 'x-admin-secret': secret }
@@ -55,7 +57,10 @@ function AdminPainel() {
   async function buscarConsumo() {
     setCarregandoConsumo(true)
     try {
-      const res = await fetch(`${API}/auth/admin/uso-ia`, {
+      const params = new URLSearchParams()
+      if (filtroMes) params.append('mes', filtroMes)
+      if (filtroProfessor) params.append('professor_id', filtroProfessor)
+      const res = await fetch(`${API}/auth/admin/uso-ia?${params}`, {
         headers: adminHeaders()
       })
       const data = await res.json()
@@ -298,6 +303,40 @@ function AdminPainel() {
               </div>
             ) : consumo ? (
               <>
+                {/* Filtros */}
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs uppercase tracking-wider text-slate-400 mb-2">Mês</label>
+                    <input
+                      type="month"
+                      value={filtroMes}
+                      onChange={e => setFiltroMes(e.target.value)}
+                      className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-2.5 border border-white/10 focus:border-orange-500 focus:outline-none font-light text-sm"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs uppercase tracking-wider text-slate-400 mb-2">Professor</label>
+                    <select
+                      value={filtroProfessor}
+                      onChange={e => setFiltroProfessor(e.target.value)}
+                      className="w-full bg-[#0f172a] text-white rounded-xl px-4 py-2.5 border border-white/10 focus:border-orange-500 focus:outline-none font-light text-sm"
+                    >
+                      <option value="">Todos</option>
+                      {consumo?.porProfessor?.map(p => (
+                        <option key={p.id} value={p.id}>{p.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={buscarConsumo}
+                      className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-medium transition-colors"
+                    >
+                      Filtrar
+                    </button>
+                  </div>
+                </div>
+
                 {/* Cards gerais */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl p-4">
@@ -323,26 +362,49 @@ function AdminPainel() {
                   </div>
                 </div>
 
-                {/* Por professor */}
                 {consumo.porProfessor?.length > 0 && (
                   <div>
                     <h3 className="text-white font-medium mb-3">Por professor</h3>
-                    <div className="bg-[#1e2d3d] border border-white/5 rounded-2xl overflow-hidden">
-                      {consumo.porProfessor.map((p, i) => (
-                        <div key={p.id} className={`px-4 py-3 flex items-center gap-4 ${i < consumo.porProfessor.length - 1 ? 'border-b border-white/5' : ''}`}>
-                          <div className="w-8 h-8 bg-orange-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-orange-400 text-xs font-medium">{p.nome?.charAt(0)}</span>
+                    <div className="space-y-3">
+                      {consumo.porProfessor.map(p => {
+                        const detalhes = (consumo.porProfessorTipo || []).filter(d => d.professor_id === p.id)
+                        const tipoNome = (tipo) => ({
+                          correcao_atividade: 'Correção de Atividade',
+                          revisao_resolucao: 'Revisão de Resolução',
+                          analise_turma: 'Análise de Turma',
+                          analise_aluno: 'Análise Individual'
+                        }[tipo] || tipo)
+
+                        return (
+                          <div key={p.id} className="bg-[#1e2d3d] border border-white/5 rounded-2xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-white/5 flex items-center gap-3">
+                              <div className="w-8 h-8 bg-orange-500/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-orange-400 text-xs font-medium">{p.nome?.charAt(0)}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white text-sm font-medium">{p.nome}</p>
+                                <p className="text-slate-500 text-xs font-light">{p.email}</p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-orange-400 text-sm font-semibold">${parseFloat(p.custo_total || 0).toFixed(4)}</p>
+                                <p className="text-slate-500 text-xs">total do período</p>
+                              </div>
+                            </div>
+                            {detalhes.map((d, i) => (
+                              <div key={d.tipo} className={`px-4 py-2.5 flex items-center justify-between ${i < detalhes.length - 1 ? 'border-b border-white/5' : ''} bg-black/10`}>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-1 h-4 bg-orange-500/30 rounded-full" />
+                                  <div>
+                                    <p className="text-slate-300 text-xs font-light">{tipoNome(d.tipo)}</p>
+                                    <p className="text-slate-600 text-xs">{d.total_chamadas} chamada{d.total_chamadas !== '1' ? 's' : ''} · {parseInt(d.tokens_total).toLocaleString('pt-BR')} tokens</p>
+                                  </div>
+                                </div>
+                                <p className="text-slate-400 text-xs font-medium">${parseFloat(d.custo_total || 0).toFixed(4)}</p>
+                              </div>
+                            ))}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white text-sm font-medium">{p.nome}</p>
-                            <p className="text-slate-500 text-xs font-light">{p.email}</p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-white text-sm font-medium">${parseFloat(p.custo_total || 0).toFixed(4)}</p>
-                            <p className="text-slate-500 text-xs">{p.total_chamadas} correções</p>
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -375,8 +437,11 @@ function AdminPainel() {
                 <button
                   onClick={async () => {
                     try {
-                      const mes = new Date().toISOString().slice(0, 7)
-                      const res = await fetch(`${API}/auth/admin/uso-ia/export?mes=${mes}`, {
+                      const params = new URLSearchParams()
+                      params.append('mes', filtroMes)
+                      if (filtroProfessor) params.append('professor_id', filtroProfessor)
+                      const mes = filtroMes
+                      const res = await fetch(`${API}/auth/admin/uso-ia/export?${params}`, {
                         headers: adminHeaders()
                       })
                       if (!res.ok) { console.error('Erro ao exportar'); return }

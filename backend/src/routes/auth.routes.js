@@ -1974,17 +1974,32 @@ router.post('/admin/logout', limiterAdmin, verificarAdmin, async (req, res) => {
 // ─── ADMIN: RELATÓRIO DE USO DA IA ───────────────────────────────────────────
 router.get('/admin/uso-ia', limiterAdmin, verificarAdmin, async (req, res) => {
   try {
-    // Total geral
+    const { mes, professor_id } = req.query
+
+    const condicoes = []
+    const params = []
+
+    if (mes) {
+      params.push(mes)
+      condicoes.push(`TO_CHAR(ui.criado_em, 'YYYY-MM') = $${params.length}`)
+    }
+    if (professor_id) {
+      params.push(parseInt(professor_id))
+      condicoes.push(`ui.professor_id = $${params.length}`)
+    }
+
+    const where = condicoes.length > 0 ? `WHERE ${condicoes.join(' AND ')}` : ''
+
     const totalGeral = await db.query(`
       SELECT
         COUNT(*) as total_chamadas,
         SUM(tokens_input) as total_tokens_input,
         SUM(tokens_output) as total_tokens_output,
         SUM(custo_estimado) as custo_total
-      FROM uso_ia
-    `)
+      FROM uso_ia ui
+      ${where}
+    `, params)
 
-    // Por professor
     const porProfessor = await db.query(`
       SELECT
         u.id, u.nome, u.email,
@@ -1995,11 +2010,11 @@ router.get('/admin/uso-ia', limiterAdmin, verificarAdmin, async (req, res) => {
         MAX(ui.criado_em) as ultimo_uso
       FROM uso_ia ui
       INNER JOIN usuarios u ON u.id = ui.professor_id
+      ${where}
       GROUP BY u.id, u.nome, u.email
       ORDER BY custo_total DESC
-    `)
+    `, params)
 
-    // Por tipo
     const porTipo = await db.query(`
       SELECT
         tipo,
@@ -2007,27 +2022,42 @@ router.get('/admin/uso-ia', limiterAdmin, verificarAdmin, async (req, res) => {
         SUM(tokens_input) as tokens_input,
         SUM(tokens_output) as tokens_output,
         SUM(custo_estimado) as custo_total
-      FROM uso_ia
+      FROM uso_ia ui
+      ${where}
       GROUP BY tipo
       ORDER BY custo_total DESC
-    `)
+    `, params)
 
-    // Evolução mensal (últimos 6 meses)
     const mensal = await db.query(`
       SELECT
-        TO_CHAR(criado_em, 'YYYY-MM') as mes,
+        TO_CHAR(ui.criado_em, 'YYYY-MM') as mes,
         COUNT(*) as total_chamadas,
-        SUM(custo_estimado) as custo_total
-      FROM uso_ia
-      WHERE criado_em >= NOW() - INTERVAL '6 months'
+        SUM(ui.custo_estimado) as custo_total
+      FROM uso_ia ui
+      ${where}
       GROUP BY mes
       ORDER BY mes ASC
-    `)
+    `, params)
+
+    const porProfessorTipo = await db.query(`
+      SELECT
+        u.id as professor_id,
+        ui.tipo,
+        COUNT(ui.id) as total_chamadas,
+        SUM(ui.custo_estimado) as custo_total,
+        SUM(ui.tokens_input + ui.tokens_output) as tokens_total
+      FROM uso_ia ui
+      INNER JOIN usuarios u ON u.id = ui.professor_id
+      ${where}
+      GROUP BY u.id, ui.tipo
+      ORDER BY u.id, custo_total DESC
+    `, params)
 
     return res.json({
       geral: totalGeral.rows[0],
       porProfessor: porProfessor.rows,
       porTipo: porTipo.rows,
+      porProfessorTipo: porProfessorTipo.rows,
       mensal: mensal.rows
     })
   } catch (e) {
@@ -2039,9 +2069,15 @@ router.get('/admin/uso-ia', limiterAdmin, verificarAdmin, async (req, res) => {
 // ─── ADMIN: EXPORTAR USO IA EM CSV ───────────────────────────────────────────
 router.get('/admin/uso-ia/export', limiterAdmin, verificarAdmin, async (req, res) => {
   try {
-    const { mes } = req.query // formato: YYYY-MM (opcional)
+    const { mes, professor_id } = req.query
 
-    let query = `
+    const condicoes = []
+    const params = []
+    if (mes) { params.push(mes); condicoes.push(`TO_CHAR(ui.criado_em, 'YYYY-MM') = $${params.length}`) }
+    if (professor_id) { params.push(parseInt(professor_id)); condicoes.push(`ui.professor_id = $${params.length}`) }
+    const where = condicoes.length > 0 ? `WHERE ${condicoes.join(' AND ')}` : ''
+
+    const query = `
       SELECT
         ui.criado_em,
         u.nome as professor,
@@ -2052,15 +2088,9 @@ router.get('/admin/uso-ia/export', limiterAdmin, verificarAdmin, async (req, res
         ui.custo_estimado
       FROM uso_ia ui
       INNER JOIN usuarios u ON u.id = ui.professor_id
+      ${where}
+      ORDER BY ui.criado_em DESC
     `
-    const params = []
-
-    if (mes) {
-      query += ` WHERE TO_CHAR(ui.criado_em, 'YYYY-MM') = $1`
-      params.push(mes)
-    }
-
-    query += ` ORDER BY ui.criado_em DESC`
 
     const result = await db.query(query, params)
 
