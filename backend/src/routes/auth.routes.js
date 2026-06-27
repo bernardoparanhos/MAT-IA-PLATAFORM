@@ -478,9 +478,17 @@ router.post('/redefinir-senha', limiterEsqueciSenha, async (req, res) => {
 });
 
 // ─── DIAGNÓSTICO ──────────────────────────────────────────────────────────────
-const questoes = require('../data/questoes.json')
+const questoesUniversitario = require('../data/questoes_universitario.json')
+const questoesMedio = require('../data/questoes_medio.json')
+const questoesFundamental = require('../data/questoes_fundamental.json')
 
-function calcularResultado(respostas) {
+function getQuestoesPorNivel(nivelTeste) {
+  if (nivelTeste === 'fundamental') return questoesFundamental
+  if (nivelTeste === 'medio') return questoesMedio
+  return questoesUniversitario
+}
+
+function calcularResultado(respostas, questoes) {
   const blocos = { inteiros: { acertos: 0, total: 0 }, fracoes: { acertos: 0, total: 0 }, raizes: { acertos: 0, total: 0 }, potencias: { acertos: 0, total: 0 }, geometria: { acertos: 0, total: 0 } }
   let pontuacao = 0
   questoes.forEach(q => {
@@ -514,7 +522,15 @@ router.post('/diagnostico/responder', verifyToken, requirePerfil('aluno'), async
   if (!respostas || typeof respostas !== 'object')
     return res.status(400).json({ message: 'Respostas inválidas.' })
 
-  const { nivel, pontuacao, blocos } = calcularResultado(respostas)
+  const turmaResult2 = await db.query(`
+    SELECT t.tipo_teste FROM turmas t
+    INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+    WHERE ta.aluno_id = $1
+  `, [req.usuario.id])
+
+  const nivelTeste = turmaResult2.rows[0]?.tipo_teste || 'universitario'
+  const questoes = getQuestoesPorNivel(nivelTeste)
+  const { nivel, pontuacao, blocos } = calcularResultado(respostas, questoes)
   const tempo_segundos = iniciado_em ? Math.round((Date.now() - iniciado_em) / 1000) : null
   const resultado_json = JSON.stringify({ nivel, pontuacao, blocos, usou_dicas: usou_dicas || [], pulou: pulou || [], respostas, tempo_segundos })
 
@@ -683,9 +699,22 @@ router.get('/diagnostico/feedback-enviado', verifyToken, requirePerfil('aluno'),
   }
 })
 
-router.get('/diagnostico/questoes', verifyToken, requirePerfil('aluno'), (req, res) => {
-  const semGabarito = questoes.map(({ correta, ...q }) => q)
-  return res.json({ questoes: semGabarito })
+router.get('/diagnostico/questoes', verifyToken, requirePerfil('aluno'), async (req, res) => {
+  try {
+    const turma = await db.query(`
+      SELECT t.tipo_teste FROM turmas t
+      INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+      WHERE ta.aluno_id = $1
+    `, [req.usuario.id])
+
+    const nivelTeste = turma.rows[0]?.tipo_teste || 'universitario'
+    const questoes = getQuestoesPorNivel(nivelTeste)
+    const semGabarito = questoes.map(({ correta, ...q }) => q)
+    return res.json({ questoes: semGabarito, nivel: nivelTeste })
+  } catch (e) {
+    console.error('[diagnostico/questoes] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
 })
 
 // ─── MÉTRICAS — DIAGNÓSTICO POR TURMA ────────────────────────────────────────
