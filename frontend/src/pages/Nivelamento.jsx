@@ -4,7 +4,7 @@ import Formula from '../components/Formula'
 import DOMPurify from 'dompurify'
 
 // ─── TELA: BOAS-VINDAS ────────────────────────────────────────────────────────
-function TelaBoasVindas({ onIniciar, onPular }) {
+function TelaBoasVindas({ onIniciar, onPular, nivelTeste }) {
   return (
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
       <div className="w-full max-w-md">
@@ -24,6 +24,18 @@ function TelaBoasVindas({ onIniciar, onPular }) {
           </div>
 
           <h2 className="text-xl font-semibold text-white text-center mb-2">Diagnóstico MAT-IA</h2>
+          {nivelTeste && (
+            <div className="flex justify-center mb-3">
+              <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${
+                nivelTeste === 'universitario' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                nivelTeste === 'medio' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                'bg-green-500/10 text-green-400 border border-green-500/20'
+              }`}>
+                {nivelTeste === 'universitario' ? '🎓 Diagnóstico Universitário' :
+                 nivelTeste === 'medio' ? '📚 Diagnóstico Ensino Médio' : '🏫 Diagnóstico Fundamental'}
+              </span>
+            </div>
+          )}
           <p className="text-slate-400 text-sm text-center font-light mb-6">
             Responda as questões abaixo. Seu professor receberá os resultados para acompanhar seu desempenho.
           </p>
@@ -320,12 +332,22 @@ function Nivelamento({ modo = 'aluno' }) {
 
   const [tela, setTela] = useState('boasVindas') // boasVindas | questao | analisando
   const [questoes, setQuestoes] = useState([])
+  const [nivelTeste, setNivelTeste] = useState(null)
   const [questaoAtual, setQuestaoAtual] = useState(0)
   const [questaoMaisAvancada, setQuestaoMaisAvancada] = useState(0)
   const [respostas, setRespostas] = useState({})   // { "1": "A", ... }
   const [dicasUsadas, setDicasUsadas] = useState([]) // [1, 3, ...]
   const [puladas, setPuladas] = useState([])          // [2, 5, ...]
   const [historicoDicas, setHistoricoDicas] = useState({}) // { "1": [0, 1], "3": [0], ... }
+
+  useEffect(() => {
+    if (modo !== 'preview') {
+      fetch(`${API}/auth/aluno/minha-turma`, { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => setNivelTeste(d.turma?.tipo_teste || 'universitario'))
+        .catch(() => {})
+    }
+  }, [API, modo])
 
   async function carregarQuestoes() {
     try {
@@ -334,6 +356,7 @@ function Nivelamento({ modo = 'aluno' }) {
       })
       const data = await res.json()
       setQuestoes((data.questoes || []).map(embaralharQuestao))
+      setNivelTeste(data.nivel || 'universitario')
     } catch (e) {
       console.error('Erro ao carregar questões', e)
     }
@@ -438,7 +461,7 @@ function avancar(respostasAtuais, puladasAtuais = puladas) {
 
   // ── Renderização por tela ──
   if (tela === 'boasVindas') {
-    return <TelaBoasVindas onIniciar={handleIniciar} onPular={handlePular} />
+    return <TelaBoasVindas onIniciar={handleIniciar} onPular={handlePular} nivelTeste={nivelTeste} />
   }
 
   if (tela === 'analisando') {

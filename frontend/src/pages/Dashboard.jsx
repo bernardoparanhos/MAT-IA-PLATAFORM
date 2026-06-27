@@ -33,6 +33,7 @@ function Dashboard() {
   const [enviandoFeedback, setEnviandoFeedback] = useState(false)
   const [feedbackEnviado, setFeedbackEnviado] = useState(false)
   const [dropdownAberto, setDropdownAberto] = useState(false)
+  const [nivelEnsino, setNivelEnsino] = useState(null)
 
   const API = import.meta.env.VITE_API_URL
   const handleEnviarFeedback = async (e) => {
@@ -87,14 +88,17 @@ function Dashboard() {
       sessionStorage.setItem('diagnostico_verificado', 'true')
 
       // Busca último acesso às matérias
-      const [resAcesso, resStats] = await Promise.all([
+      const [resAcesso, resStats, resTurma] = await Promise.all([
         fetch(`${API}/auth/materias/ultimo-acesso`, { credentials: 'include' }),
         fetch(`${API}/auth/materias/stats`, { credentials: 'include' }),
+        fetch(`${API}/auth/aluno/minha-turma`, { credentials: 'include' }),
       ])
       const dataAcesso = await resAcesso.json()
       const dataStats = await resStats.json()
+      const dataTurma = await resTurma.json()
       if (dataAcesso.bloco) setUltimoAcesso(dataAcesso)
       setStats(dataStats)
+      setNivelEnsino(dataTurma.turma?.tipo_teste || 'universitario')
 
     } catch (e) {
       console.error('Erro ao verificar diagnóstico', e)
@@ -220,6 +224,16 @@ function Dashboard() {
               <p className="text-slate-400 text-sm mt-1 font-light">
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
+              {nivelEnsino && (
+                <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium mt-1 ${
+                  nivelEnsino === 'universitario' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                  nivelEnsino === 'medio' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                  'bg-green-500/10 text-green-400 border border-green-500/20'
+                }`}>
+                  {nivelEnsino === 'universitario' ? '🎓 Universitário' :
+                   nivelEnsino === 'medio' ? '📚 Ensino Médio' : '🏫 Fundamental'}
+                </span>
+              )}
             </div>
             <div className="hidden lg:block">
               <SinoBotao />

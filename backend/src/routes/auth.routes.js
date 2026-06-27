@@ -138,7 +138,7 @@ const loginProfessorValidation = [
 // ─── TURMAS ───────────────────────────────────────────────────────────────────
 router.get('/turmas/minhas', verifyToken, requirePerfil('professor'), async (req, res) => {
   const result = await db.query(`
-    SELECT t.id, t.nome, t.codigo_acesso, COUNT(ta.aluno_id) as total_alunos
+    SELECT t.id, t.nome, t.codigo_acesso, t.tipo_teste, COUNT(ta.aluno_id) as total_alunos
     FROM turmas t
     LEFT JOIN turma_alunos ta ON ta.turma_id = t.id
     WHERE t.professor_id = $1
@@ -197,7 +197,7 @@ router.get('/turmas/:id/alunos', verifyToken, requirePerfil('professor'), async 
 // ─── MINHA TURMA — ALUNO ──────────────────────────────────────────────────────
 router.get('/aluno/minha-turma', verifyToken, requirePerfil('aluno'), async (req, res) => {
   const turmaResult = await db.query(`
-    SELECT t.id, t.nome, t.criado_em
+    SELECT t.id, t.nome, t.criado_em, t.tipo_teste
     FROM turmas t
     INNER JOIN turma_alunos ta ON ta.turma_id = t.id
     WHERE ta.aluno_id = $1
