@@ -367,6 +367,29 @@ router.post('/submissoes', verifyToken, requirePerfil('aluno'), limiterUpload, u
           tempo_segundos: null
         }).catch(e => console.error('[sheets] Erro ao registrar correção:', e))
 
+        // Registra uso da IA
+        if (resultado.usage) {
+          const tokensInput = resultado.usage.prompt_tokens || 0
+          const tokensOutput = resultado.usage.completion_tokens || 0
+          // GPT-4o Vision: $2.50/1M input, $10.00/1M output
+          const custoEstimado = (tokensInput * 0.0000025) + (tokensOutput * 0.00001)
+
+          const professorResult = await db.query(
+            'SELECT professor_id FROM turmas WHERE id = (SELECT turma_id FROM listas_exercicios WHERE id = $1)',
+            [listaId]
+          )
+          const professorId = professorResult.rows[0]?.professor_id
+
+          if (professorId) {
+            await db.query(`
+              INSERT INTO uso_ia (professor_id, tipo, tokens_input, tokens_output, custo_estimado, referencia_id)
+              VALUES ($1, 'correcao_atividade', $2, $3, $4, $5)
+            `, [professorId, tokensInput, tokensOutput, custoEstimado, submissaoId]).catch(e =>
+              console.error('[uso_ia] Erro ao registrar uso:', e)
+            )
+          }
+        }
+
       } catch (e) {
         console.error('[exercicios/submissoes background] Erro:', e)
         await db.query(

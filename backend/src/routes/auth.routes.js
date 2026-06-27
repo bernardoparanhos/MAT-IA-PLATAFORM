@@ -1484,7 +1484,7 @@ router.post('/solicitar-professor', limiterSolicitacoes, async (req, res) => {
 // ─── PAINEL ADMIN ─────────────────────────────────────────────────────────────
 const limiterAdmin = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 3,
+  max: 30,
   message: { message: 'Muitas tentativas. Aguarde 5 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -1969,6 +1969,135 @@ router.post('/admin/logout', limiterAdmin, verificarAdmin, async (req, res) => {
   const sessionToken = req.headers['x-admin-session']
   if (sessionToken) adminSessions.delete(sessionToken)
   return res.json({ ok: true })
+})
+
+// ─── ADMIN: RELATÓRIO DE USO DA IA ───────────────────────────────────────────
+router.get('/admin/uso-ia', limiterAdmin, verificarAdmin, async (req, res) => {
+  try {
+    // Total geral
+    const totalGeral = await db.query(`
+      SELECT
+        COUNT(*) as total_chamadas,
+        SUM(tokens_input) as total_tokens_input,
+        SUM(tokens_output) as total_tokens_output,
+        SUM(custo_estimado) as custo_total
+      FROM uso_ia
+    `)
+
+    // Por professor
+    const porProfessor = await db.query(`
+      SELECT
+        u.id, u.nome, u.email,
+        COUNT(ui.id) as total_chamadas,
+        SUM(ui.tokens_input) as tokens_input,
+        SUM(ui.tokens_output) as tokens_output,
+        SUM(ui.custo_estimado) as custo_total,
+        MAX(ui.criado_em) as ultimo_uso
+      FROM uso_ia ui
+      INNER JOIN usuarios u ON u.id = ui.professor_id
+      GROUP BY u.id, u.nome, u.email
+      ORDER BY custo_total DESC
+    `)
+
+    // Por tipo
+    const porTipo = await db.query(`
+      SELECT
+        tipo,
+        COUNT(*) as total_chamadas,
+        SUM(tokens_input) as tokens_input,
+        SUM(tokens_output) as tokens_output,
+        SUM(custo_estimado) as custo_total
+      FROM uso_ia
+      GROUP BY tipo
+      ORDER BY custo_total DESC
+    `)
+
+    // Evolução mensal (últimos 6 meses)
+    const mensal = await db.query(`
+      SELECT
+        TO_CHAR(criado_em, 'YYYY-MM') as mes,
+        COUNT(*) as total_chamadas,
+        SUM(custo_estimado) as custo_total
+      FROM uso_ia
+      WHERE criado_em >= NOW() - INTERVAL '6 months'
+      GROUP BY mes
+      ORDER BY mes ASC
+    `)
+
+    return res.json({
+      geral: totalGeral.rows[0],
+      porProfessor: porProfessor.rows,
+      porTipo: porTipo.rows,
+      mensal: mensal.rows
+    })
+  } catch (e) {
+    console.error('[admin/uso-ia] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
+})
+
+// ─── ADMIN: EXPORTAR USO IA EM CSV ───────────────────────────────────────────
+router.get('/admin/uso-ia/export', limiterAdmin, verificarAdmin, async (req, res) => {
+  try {
+    const { mes } = req.query // formato: YYYY-MM (opcional)
+
+    let query = `
+      SELECT
+        ui.criado_em,
+        u.nome as professor,
+        u.email,
+        ui.tipo,
+        ui.tokens_input,
+        ui.tokens_output,
+        ui.custo_estimado
+      FROM uso_ia ui
+      INNER JOIN usuarios u ON u.id = ui.professor_id
+    `
+    const params = []
+
+    if (mes) {
+      query += ` WHERE TO_CHAR(ui.criado_em, 'YYYY-MM') = $1`
+      params.push(mes)
+    }
+
+    query += ` ORDER BY ui.criado_em DESC`
+
+    const result = await db.query(query, params)
+
+    const tipoLabel = (tipo) => {
+      const labels = {
+        correcao_atividade: 'Correção de Atividade',
+        revisao_resolucao: 'Revisão de Resolução',
+        analise_turma: 'Análise de Turma',
+        analise_aluno: 'Análise Individual'
+      }
+      return labels[tipo] || tipo
+    }
+
+    const linhas = [
+      ['Data/Hora', 'Professor', 'Email', 'Tipo', 'Tokens Entrada', 'Tokens Saída', 'Custo USD', 'Custo BRL (x5.5)'],
+      ...result.rows.map(r => [
+        new Date(r.criado_em).toLocaleString('pt-BR'),
+        r.professor,
+        r.email,
+        tipoLabel(r.tipo),
+        r.tokens_input,
+        r.tokens_output,
+        parseFloat(r.custo_estimado).toFixed(6),
+        (parseFloat(r.custo_estimado) * 5.5).toFixed(4)
+      ])
+    ]
+
+    const csv = linhas.map(linha => linha.map(campo => `"${campo}"`).join(';')).join('\n')
+    const nomeMes = mes || new Date().toISOString().slice(0, 7)
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition', `attachment; filename="mat-ia-uso-ia-${nomeMes}.csv"`)
+    res.send('﻿' + csv) // BOM UTF-8 para Excel reconhecer acentos
+  } catch (e) {
+    console.error('[admin/uso-ia/export] Erro:', e)
+    return res.status(500).json({ message: 'Erro interno.' })
+  }
 })
 
 module.exports = router;
