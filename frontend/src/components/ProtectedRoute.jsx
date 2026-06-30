@@ -9,7 +9,8 @@ function ProtectedRoute({ children, perfil }) {
   }
 
   // Perfil errado — ex: aluno tentando acessar dashboard do professor
-  if (perfil && usuario.perfil !== perfil) {
+  const perfisPermitidos = Array.isArray(perfil) ? perfil : [perfil]
+  if (perfil && !perfisPermitidos.includes(usuario.perfil)) {
     const destino = usuario.perfil === 'professor' ? '/dashboard-professor' : '/dashboard'
     return <Navigate to={destino} replace />
   }

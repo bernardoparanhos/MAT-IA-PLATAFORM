@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SidebarAluno from '../components/SidebarAluno'
+import SidebarProfessor from '../components/SidebarProfessor'
 import HUDAluno from '../components/HUDAluno'
 
 const BLOCOS_CONFIG = {
@@ -78,12 +79,10 @@ function Materias() {
         <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={() => setSidebarAberta(false)} />
       )}
 
-      <SidebarAluno
-        sidebarAberta={sidebarAberta}
-        setSidebarAberta={setSidebarAberta}
-        navigate={navigate}
-        logout={logout}
-      />
+      {isProfessor
+        ? <SidebarProfessor sidebarAberta={sidebarAberta} setSidebarAberta={setSidebarAberta} />
+        : <SidebarAluno sidebarAberta={sidebarAberta} setSidebarAberta={setSidebarAberta} navigate={navigate} logout={logout} />
+      }
 
       <div className="flex-1 flex flex-col lg:ml-56">
 

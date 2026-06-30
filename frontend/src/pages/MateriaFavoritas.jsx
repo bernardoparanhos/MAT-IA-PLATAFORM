@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SidebarAluno from '../components/SidebarAluno'
+import SidebarProfessor from '../components/SidebarProfessor'
 import Formula from '../components/Formula'
 import DOMPurify from 'dompurify'
 
@@ -20,7 +21,8 @@ const BLOCOS_CONFIG = {
 }
 
 function MateriaFavoritas() {
-  const { logout } = useAuth()
+  const { usuario, logout } = useAuth()
+  const isProfessor = usuario?.perfil === 'professor'
   const navigate = useNavigate()
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [porBloco, setPorBloco] = useState({})
@@ -114,12 +116,10 @@ function MateriaFavoritas() {
         <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={() => setSidebarAberta(false)} />
       )}
 
-      <SidebarAluno
-        sidebarAberta={sidebarAberta}
-        setSidebarAberta={setSidebarAberta}
-        navigate={navigate}
-        logout={logout}
-      />
+      {isProfessor
+        ? <SidebarProfessor sidebarAberta={sidebarAberta} setSidebarAberta={setSidebarAberta} />
+        : <SidebarAluno sidebarAberta={sidebarAberta} setSidebarAberta={setSidebarAberta} navigate={navigate} logout={logout} />
+      }
 
       <div className="flex-1 flex flex-col lg:ml-56">
 

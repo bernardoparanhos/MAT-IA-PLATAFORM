@@ -489,19 +489,31 @@ function getQuestoesPorNivel(nivelTeste) {
 }
 
 function calcularResultado(respostas, questoes) {
-  const blocos = { inteiros: { acertos: 0, total: 0 }, fracoes: { acertos: 0, total: 0 }, raizes: { acertos: 0, total: 0 }, potencias: { acertos: 0, total: 0 }, geometria: { acertos: 0, total: 0 } }
+  const blocos = {}
   let pontuacao = 0
+
   questoes.forEach(q => {
-    const bloco = blocos[q.bloco]
-    bloco.total++
-    const corretaReal = q.correta
-if (respostas[q.id] === corretaReal) { bloco.acertos++; pontuacao++ }
+    if (!blocos[q.bloco]) blocos[q.bloco] = { acertos: 0, total: 0 }
+    blocos[q.bloco].total++
+    if (respostas[q.id] === q.correta) {
+      blocos[q.bloco].acertos++
+      pontuacao++
+    }
   })
+
   Object.keys(blocos).forEach(b => {
     const { acertos, total } = blocos[b]
-    blocos[b].nivel = acertos / total === 0 ? 'fraco' : acertos / total < 1 ? 'medio' : 'forte'
+    if (total === 0) {
+      blocos[b].nivel = 'medio'
+    } else {
+      blocos[b].nivel = acertos === 0 ? 'fraco' : acertos === total ? 'forte' : 'medio'
+    }
   })
-  const nivel = pontuacao <= 6 ? 'basico' : pontuacao <= 13 ? 'intermediario' : 'avancado'
+
+  const totalQuestoes = questoes.length
+  const percentual = totalQuestoes > 0 ? pontuacao / totalQuestoes : 0
+  const nivel = percentual <= 0.35 ? 'basico' : percentual <= 0.70 ? 'intermediario' : 'avancado'
+
   return { nivel, pontuacao, blocos }
 }
 
@@ -1075,12 +1087,24 @@ router.get('/materias/:bloco/questoes', verifyToken, requirePerfil('aluno', 'pro
     if (!blocosValidos.includes(req.params.bloco))
       return res.status(400).json({ message: 'Bloco inválido.' })
 
-    const nivelResult = await db.query(`
-      SELECT t.tipo_teste FROM turmas t
-      INNER JOIN turma_alunos ta ON ta.turma_id = t.id
-      WHERE ta.aluno_id = $1
-    `, [req.usuario.id])
-    const nivelAluno = nivelResult.rows[0]?.tipo_teste || 'universitario'
+    const { listaId } = req.query
+    let nivelAluno = 'universitario'
+
+    if (req.usuario.perfil === 'professor' && listaId) {
+      const nivelProfResult = await db.query(`
+        SELECT t.tipo_teste FROM turmas t
+        INNER JOIN listas_exercicios le ON le.turma_id = t.id
+        WHERE le.id = $1 AND t.professor_id = $2
+      `, [listaId, req.usuario.id])
+      nivelAluno = nivelProfResult.rows[0]?.tipo_teste || 'universitario'
+    } else if (req.usuario.perfil === 'aluno') {
+      const nivelResult = await db.query(`
+        SELECT t.tipo_teste FROM turmas t
+        INNER JOIN turma_alunos ta ON ta.turma_id = t.id
+        WHERE ta.aluno_id = $1
+      `, [req.usuario.id])
+      nivelAluno = nivelResult.rows[0]?.tipo_teste || 'universitario'
+    }
 
     const questoesResult = await db.query(`
       SELECT id, enunciado, alternativas, latex, dificuldade
@@ -1390,27 +1414,30 @@ router.get('/ranking', verifyToken, requirePerfil('aluno'), async (req, res) => 
     const nivelAluno = nivelResult.rows[0]?.tipo_teste || 'universitario'
 
     const result = await db.query(`
-      SELECT
-        u.id,
-        u.nome,
-        u.ra,
-        u.pontos_totais,
-        u.questoes_corretas,
-        u.questoes_respondidas,
-        CASE WHEN u.questoes_respondidas > 0
-             THEN ROUND((u.questoes_corretas::numeric / u.questoes_respondidas::numeric) * 100, 1)
-             ELSE 0 END as taxa_acerto
-      FROM usuarios u
-      INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
-      INNER JOIN turmas t ON t.id = ta.turma_id
-      WHERE u.perfil = 'aluno'
-        AND u.pontos_totais > 0
-        AND t.tipo_teste = $1
+      SELECT * FROM (
+        SELECT DISTINCT ON (u.id)
+          u.id,
+          u.nome,
+          u.ra,
+          u.pontos_totais,
+          u.questoes_corretas,
+          u.questoes_respondidas,
+          CASE WHEN u.questoes_respondidas > 0
+               THEN ROUND((u.questoes_corretas::numeric / u.questoes_respondidas::numeric) * 100, 1)
+               ELSE 0 END as taxa_acerto
+        FROM usuarios u
+        INNER JOIN turma_alunos ta ON ta.aluno_id = u.id
+        INNER JOIN turmas t ON t.id = ta.turma_id
+        WHERE u.perfil = 'aluno'
+          AND u.pontos_totais > 0
+          AND t.tipo_teste = $1
+        ORDER BY u.id, u.pontos_totais DESC
+      ) deduplicado
       ORDER BY
-        u.pontos_totais DESC,
-        u.questoes_corretas DESC,
-        u.questoes_respondidas ASC,
-        u.nome ASC
+        pontos_totais DESC,
+        questoes_corretas DESC,
+        questoes_respondidas ASC,
+        nome ASC
       LIMIT 10
     `, [nivelAluno])
 

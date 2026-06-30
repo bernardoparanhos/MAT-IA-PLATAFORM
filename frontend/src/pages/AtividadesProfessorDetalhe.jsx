@@ -80,7 +80,7 @@ function AtividadesProfessorDetalhe() {
       // Busca questões de todos os blocos
       const blocos = ['inteiros','fracoes','raizes','potencias','geometria','equacao1','equacao2','modulo','exponencial','trigonometria']
       const todasPromises = blocos.map(b =>
-        fetch(`${API}/auth/materias/${b}/questoes`, { credentials: 'include' })
+        fetch(`${API}/auth/materias/${b}/questoes?listaId=${id}`, { credentials: 'include' })
           .then(r => r.json())
           .then(d => (d.questoes || []).map(q => ({ ...q, bloco: b })))
       )

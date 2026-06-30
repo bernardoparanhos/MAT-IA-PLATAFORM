@@ -163,9 +163,21 @@ function App() {
               <MinhaTurma />
             </ProtectedRoute>
           } />
-          <Route path="/materias" element={<Materias />} />
-          <Route path="/materias/:bloco" element={<MateriaBloco />} />
-          <Route path="/materias/favoritas" element={<MateriaFavoritas />} />
+          <Route path="/materias" element={
+            <ProtectedRoute perfil={['aluno', 'professor']}>
+              <Materias />
+            </ProtectedRoute>
+          } />
+          <Route path="/materias/:bloco" element={
+            <ProtectedRoute perfil={['aluno', 'professor']}>
+              <MateriaBloco />
+            </ProtectedRoute>
+          } />
+          <Route path="/materias/favoritas" element={
+            <ProtectedRoute perfil={['aluno', 'professor']}>
+              <MateriaFavoritas />
+            </ProtectedRoute>
+          } />
 
           <Route path="/atividades" element={
             <ProtectedRoute perfil="aluno">
