@@ -228,13 +228,9 @@ function DashboardProfessor() {
                         {turma.total_alunos} {turma.total_alunos === 1 ? 'aluno' : 'alunos'}
                       </p>
                       {turma.tipo_teste && (
-                        <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium mt-1.5 ${
-                          turma.tipo_teste === 'universitario' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                          turma.tipo_teste === 'medio' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                          'bg-green-500/10 text-green-400 border border-green-500/20'
-                        }`}>
-                          {turma.tipo_teste === 'universitario' ? '🎓 Universitário' :
-                           turma.tipo_teste === 'medio' ? '📚 Ensino Médio' : '🏫 Fundamental'}
+                        <span className="inline-flex items-center text-[10px] uppercase tracking-wider text-slate-400 border border-white/10 px-2.5 py-1 rounded-full font-medium mt-1.5">
+                          {turma.tipo_teste === 'universitario' ? 'Universitário' :
+                           turma.tipo_teste === 'medio' ? 'Ensino Médio' : 'Fundamental'}
                         </span>
                       )}
                     </div>

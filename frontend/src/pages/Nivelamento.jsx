@@ -26,13 +26,9 @@ function TelaBoasVindas({ onIniciar, onPular, nivelTeste }) {
           <h2 className="text-xl font-semibold text-white text-center mb-2">Diagnóstico MAT-IA</h2>
           {nivelTeste && (
             <div className="flex justify-center mb-3">
-              <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${
-                nivelTeste === 'universitario' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                nivelTeste === 'medio' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                'bg-green-500/10 text-green-400 border border-green-500/20'
-              }`}>
-                {nivelTeste === 'universitario' ? '🎓 Diagnóstico Universitário' :
-                 nivelTeste === 'medio' ? '📚 Diagnóstico Ensino Médio' : '🏫 Diagnóstico Fundamental'}
+              <span className="inline-flex items-center text-[10px] uppercase tracking-wider text-slate-400 border border-white/10 px-2.5 py-1 rounded-full font-medium">
+                {nivelTeste === 'universitario' ? 'Universitário' :
+                 nivelTeste === 'medio' ? 'Ensino Médio' : 'Fundamental'}
               </span>
             </div>
           )}
