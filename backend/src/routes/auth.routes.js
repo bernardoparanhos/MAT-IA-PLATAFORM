@@ -987,6 +987,8 @@ router.get('/materias/stats', verifyToken, requirePerfil('aluno', 'professor'), 
       WHERE ta.aluno_id = $1
     `, [req.usuario.id])
     const nivelStats = nivelStatsResult.rows[0]?.tipo_teste || 'universitario'
+    const niveisAceitos = { universitario: ['universitario', 'todos'], medio: ['medio', 'universitario', 'todos'], fundamental: ['fundamental', 'todos'] }
+    const niveisValidosStats = niveisAceitos[nivelStats] || ['todos']
 
     const [resFeitas, resTotal] = await Promise.all([
       db.query(`
@@ -1004,8 +1006,8 @@ router.get('/materias/stats', verifyToken, requirePerfil('aluno', 'professor'), 
       db.query(`
         SELECT COUNT(*) as total FROM questoes
         WHERE ativa = true
-          AND (nivel_ensino = $1 OR nivel_ensino = 'todos')
-      `, [nivelStats])
+          AND nivel_ensino = ANY($1)
+      `, [niveisValidosStats])
     ])
         const { total: feitas, acertos, erros } = resFeitas.rows[0]
     const { total } = resTotal.rows[0]
@@ -1031,14 +1033,16 @@ router.get('/materias/blocos', verifyToken, requirePerfil('aluno', 'professor'),
       WHERE ta.aluno_id = $1
     `, [req.usuario.id])
     const nivelAlunoBlocos = nivelBlocos.rows[0]?.tipo_teste || 'universitario'
+    const niveisAceitos = { universitario: ['universitario', 'todos'], medio: ['medio', 'universitario', 'todos'], fundamental: ['fundamental', 'todos'] }
+    const niveisValidosBlocos = niveisAceitos[nivelAlunoBlocos] || ['todos']
 
     const totais = await db.query(`
       SELECT bloco, COUNT(*) as total
       FROM questoes
       WHERE ativa = true
-        AND (nivel_ensino = $1 OR nivel_ensino = 'todos')
+        AND nivel_ensino = ANY($1)
       GROUP BY bloco
-    `, [nivelAlunoBlocos])
+    `, [niveisValidosBlocos])
 
     const historico = await db.query(`
       SELECT bloco,
@@ -1106,13 +1110,16 @@ router.get('/materias/:bloco/questoes', verifyToken, requirePerfil('aluno', 'pro
       nivelAluno = nivelResult.rows[0]?.tipo_teste || 'universitario'
     }
 
+    const niveisAceitos = { universitario: ['universitario', 'todos'], medio: ['medio', 'universitario', 'todos'], fundamental: ['fundamental', 'todos'] }
+    const niveisValidos = niveisAceitos[nivelAluno] || ['todos']
+
     const questoesResult = await db.query(`
       SELECT id, enunciado, alternativas, latex, dificuldade
       FROM questoes
       WHERE bloco = $1 AND ativa = true
-        AND (nivel_ensino = $2 OR nivel_ensino = 'todos')
+        AND nivel_ensino = ANY($2)
       ORDER BY id ASC
-    `, [req.params.bloco, nivelAluno])
+    `, [req.params.bloco, niveisValidos])
 
     const historicoResult = await db.query(`
       SELECT questao_id, acertou, resposta_dada, respondido_em
